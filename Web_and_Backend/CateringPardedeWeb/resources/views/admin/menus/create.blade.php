@@ -1,37 +1,74 @@
-@extends('layouts.app')
+@extends('layouts.app', [
+    'page' => __('Add Menu'),
+    'pageSlug' => 'menus'
+])
 
 @section('content')
 
-<h3>Add Menu</h3>
+<div class="row">
+    <div class="col-md-8 ml-auto mr-auto">
 
-<form action="{{ route('menus.store') }}" method="POST" enctype="multipart/form-data">
-    @csrf
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Add Menu</h4>
+            </div>
 
-    <div>
-        Name:
-        <input type="text" name="name">
+            <div class="card-body">
+
+                <form action="{{ route('menus.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    {{-- NAME --}}
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" 
+                               name="name" 
+                               class="form-control"
+                               value="{{ old('name') }}">
+                    </div>
+
+                    {{-- CATEGORY --}}
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category_id" class="form-control">
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}">
+                                    {{ $cat->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- DESCRIPTION --}}
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" 
+                                  class="form-control" 
+                                  rows="4">{{ old('description') }}</textarea>
+                    </div>
+
+                    {{-- IMAGE --}}
+                    <div class="form-group">
+                        <label>Image</label>
+                        <input type="file" 
+                               name="image" 
+                               class="form-control">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Save
+                    </button>
+
+                    <a href="{{ route('menus.index') }}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </form>
+
+            </div>
+        </div>
+
     </div>
-
-    <div>
-        Category:
-        <select name="category_id">
-            @foreach($categories as $cat)
-                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-            @endforeach
-        </select>
-    </div>
-
-    <div>
-        Description:
-        <textarea name="description"></textarea>
-    </div>
-
-    <div>
-        Image:
-        <input type="file" name="image">
-    </div>
-
-    <button type="submit">Save</button>
-</form>
+</div>
 
 @endsection

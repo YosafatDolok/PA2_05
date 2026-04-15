@@ -1,68 +1,84 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Login</title>
+@extends('layouts.app', [
+    'class' => 'login-page',
+    'page' => __('Login Page'),
+    'contentClass' => 'login-page'
+])
 
-    <style>
+@section('content')
+    <div class="col-md-10 text-center ml-auto mr-auto">
+        <h3 class="mb-5">
+            Log in to your admin panel
+        </h3>
+    </div>
 
-        body{
-            font-family: Arial;
-            background:#f4f6f9;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
-        }
+    <div class="col-lg-4 col-md-6 ml-auto mr-auto">
+        <form class="form" method="POST" action="{{ route('login') }}">
+            @csrf
 
-        .login-box{
-            background:white;
-            padding:30px;
-            width:300px;
-            border-radius:8px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        }
+            <div class="card card-login card-white">
+                <div class="card-header">
+                    <img src="{{ asset('black/img/card-primary.png') }}" alt="">
+                    <h1 class="card-title">{{ __('Log in') }}</h1>
+                </div>
 
-        input{
-            width:100%;
-            padding:10px;
-            margin-top:10px;
-        }
+                <div class="card-body">
 
-        button{
-            width:100%;
-            padding:10px;
-            margin-top:15px;
-            background:#3498db;
-            color:white;
-            border:none;
-        }
+                    {{-- SESSION ERROR (from your old page) --}}
+                    @if(session('error'))
+                        <p class="text-danger text-center">{{ session('error') }}</p>
+                    @endif
 
-    </style>
-</head>
+                    {{-- EMAIL --}}
+                    <div class="input-group{{ $errors->has('email') ? ' has-danger' : '' }}">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text" style="padding-left: 8px; padding-right: 8px;">
+                                <i class="tim-icons icon-email-85" ></i>
+                            </div>
+                        </div>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            class="form-control{{ $errors->has('email') ? ' is-invalid' : '' }}" 
+                            placeholder="{{ __('Email') }}"
+                            value="{{ old('email') }}"
+                        >
+                        @if($errors->has('email'))
+                            <div class="invalid-feedback d-block">
+                                {{ $errors->first('email') }}
+                            </div>
+                        @endif
+                    </div>
 
-<body>
+                    {{-- PASSWORD --}}
+                    <div class="input-group{{ $errors->has('password') ? ' has-danger' : '' }}">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text" style="padding-left: 8px; padding-right: 8px;">
+                                <i class="tim-icons icon-lock-circle"></i>
+                            </div>
+                        </div>
+                        <input 
+                            type="password" 
+                            name="password" 
+                            class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }}" 
+                            placeholder="{{ __('Password') }}"
+                        >
+                        @if($errors->has('password'))
+                            <div class="invalid-feedback d-block">
+                                {{ $errors->first('password') }}
+                            </div>
+                        @endif
+                    </div>
 
-<div class="login-box">
+                </div>
 
-<h2>Admin Login</h2>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary btn-lg btn-block mb-3">
+                        {{ __('Get Started') }}
+                    </button>
 
-@if(session('error'))
-<p style="color:red">{{ session('error') }}</p>
-@endif
+                </div>
 
-<form method="POST" action="/login">
-
-@csrf
-
-<input type="email" name="email" placeholder="Email">
-
-<input type="password" name="password" placeholder="Password">
-
-<button type="submit">Login</button>
-
-</form>
-
-</div>
-
-</body>
-</html>
+            </div>
+        </form>
+    </div>
+@endsection
