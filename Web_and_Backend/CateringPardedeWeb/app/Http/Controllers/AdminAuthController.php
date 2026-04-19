@@ -9,6 +9,10 @@ class AdminAuthController extends Controller
 {
     public function showLogin()
     {
+        if (auth()->check()) {
+            return redirect('/admin/dashboard');
+        }
+        
         return view('admin.login');
     }
 
@@ -30,6 +34,8 @@ class AdminAuthController extends Controller
 
         return back()->with('error','Invalid email or password');
     }
+
+    
 
     public function logout(Request $request)
     {

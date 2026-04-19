@@ -29,12 +29,13 @@ class MenuCategoryController extends Controller
             'name' => $request->name
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'category created');
+        return redirect()->route('categories.index')
+            ->with('success', 'Category created successfully');
     }
 
     public function edit($id)
     {
-        $cateogry = MenuCategory::findOrFail($id);
+        $category = MenuCategory::findOrFail($id);
         return view('admin.categories.edit', compact('category'));
     }
 
@@ -43,19 +44,28 @@ class MenuCategoryController extends Controller
         $category = MenuCategory::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|unique:menu_categories,name,' . $id
+            'name' => 'required|unique:menu_categories,name,' . $id . ',category_id'
         ]);
 
         $category->update([
             'name' => $request->name
         ]);
 
-        return redirect()->route('categories.index')->with('success', 'Category updated');
+        return redirect()->route('categories.index')
+            ->with('success', 'Category updated successfully');
     }
 
     public function destroy($id)
     {
-        MenuCategory::findOrFail($id)->delete();
-        return back()->with('success', 'Category deleted');
+        try {
+            MenuCategory::findOrFail($id)->delete();
+
+            return redirect()->route('categories.index')
+                ->with('success', 'Category deleted successfully');
+
+        } catch (\Exception $e) {
+            return redirect()->route('categories.index')
+                ->with('error', 'Failed to delete category');
+        }
     }
 }

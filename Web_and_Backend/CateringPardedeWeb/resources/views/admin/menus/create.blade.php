@@ -32,7 +32,7 @@
                         <label>Category</label>
                         <select name="category_id" class="form-control">
                             @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">
+                                <option value="{{ $cat->category_id }}">
                                     {{ $cat->name }}
                                 </option>
                             @endforeach
@@ -43,16 +43,46 @@
                     <div class="form-group">
                         <label>Description</label>
                         <textarea name="description" 
-                                  class="form-control" 
+                                  class="form-control custom-scrollbar" 
                                   rows="4">{{ old('description') }}</textarea>
+                    </div>
+
+                    {{-- AVAILABLE --}}
+                    <div class="form-group">
+                        <label>Available</label>
+                        <div class="d-flex align-items-center mt-2">
+                            <label class="switch">
+                                <input type="checkbox" 
+                                       name="available" 
+                                       value="1"
+                                       {{ old('available', 1) ? 'checked' : '' }}>
+                                <span class="slider round"></span>
+                            </label>
+                            <span class="ml-2 text-primary">
+                                {{ old('available', 1) ? 'Yes' : 'No' }}
+                            </span>
+                        </div>
                     </div>
 
                     {{-- IMAGE --}}
                     <div class="form-group">
                         <label>Image</label>
-                        <input type="file" 
-                               name="image" 
-                               class="form-control">
+
+                        <div class="mb-2">
+                            <img id="preview-image" 
+                                 src="#" 
+                                 alt="Preview" 
+                                 style="display:none; width:120px; height:120px; object-fit:cover; border-radius:8px;">
+                        </div>
+
+                        <label class="btn btn-info btn-sm">
+                            Choose Image
+                            <input type="file" 
+                                   name="image" 
+                                   accept="image/*"
+                                   onchange="previewImage(event)"
+                                   hidden>
+                        </label>
                     </div>
 
                     <button type="submit" class="btn btn-primary">

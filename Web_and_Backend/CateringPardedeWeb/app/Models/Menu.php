@@ -24,4 +24,6 @@ class Menu extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    protected $primaryKey = 'menu_id';
 }

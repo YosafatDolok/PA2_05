@@ -33,23 +33,25 @@
                                 <td>{{ $cat->name }}</td>
 
                                 <td class="text-center">
-                                    <a href="{{ route('categories.edit', $cat->id) }}" 
+                                    <a href="{{ route('categories.edit', $cat->category_id) }}" 
                                        class="btn btn-warning btn-sm">
                                         Edit
                                     </a>
 
-                                    <form action="{{ route('categories.destroy', $cat->id) }}" 
+                                    {{-- DELETE WITH SWEETALERT --}}
+                                    <form action="{{ route('categories.destroy', $cat->category_id) }}" 
                                           method="POST" 
-                                          style="display:inline;">
+                                          class="d-inline">
                                         @csrf
                                         @method('DELETE')
 
-                                        <button type="submit" 
-                                                class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Delete this category?')">
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm btn-delete"
+                                                data-name="{{ $cat->name }}">
                                             Delete
                                         </button>
                                     </form>
+
                                 </td>
                             </tr>
                             @endforeach
