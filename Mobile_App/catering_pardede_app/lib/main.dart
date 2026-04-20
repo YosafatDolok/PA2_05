@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
           border: OutlineInputBorder(),
         ),
       ),
-      initialRoute: '/login',
+      initialRoute: '/landing',
       routes: AppRoutes.routes, // 🔥 ini ambil dari file lain
     );
   }

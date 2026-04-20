@@ -3,6 +3,7 @@ import '/views/auth/login_page.dart';
 import '/views/auth/register_page.dart';
 import '/views/dashboard/admin_dashboard_page.dart';
 import '/views/dashboard/user_dashboard_page.dart';
+import '/views/landing/landing_page.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
@@ -10,5 +11,6 @@ class AppRoutes {
   '/register': (context) => const RegisterPage(),
   '/admin-dashboard': (context) => const AdminDashboardPage(),
   '/user-dashboard': (context) => const UserDashboardPage(),
+  '/landing': (context) => const LandingPage(),
 };
 }
