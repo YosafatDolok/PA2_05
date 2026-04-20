@@ -12,11 +12,21 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        // ✅ ambil role admin dulu
+        $adminRole = Role::where('name', 'admin')->first();
+
+        // ❗ cek kalau role tidak ada
+        if (!$adminRole) {
+            echo "Role admin tidak ditemukan\n";
+            return;
+        }
+
+        // ✅ buat user admin
         User::create([
             'name' => 'CateringPardede',
-            'email' => 'admin@example.com',
+            'email' => 'admin2@example.com',
             'password' => Hash::make('password123'),
-            'role_id' => 1,
+            'role_id' => $adminRole->id,
         ]);
     }
 }

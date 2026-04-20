@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use App\Models\User, Role;
+use App\Models\User;
+use App\Models\Role;
 
 class AuthController extends Controller
 {
@@ -18,6 +19,12 @@ class AuthController extends Controller
         ]);
 
         $userRole = Role::where('name', 'user')->first();
+
+        if (!$userRole) {
+    return response()->json([
+        'message' => 'Role user tidak ditemukan'
+    ], 500);
+}
 
         $user = User::create([
             'name' => $validated['name'],

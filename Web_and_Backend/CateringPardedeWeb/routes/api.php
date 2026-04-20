@@ -12,7 +12,7 @@ Route::get('/menus', [MenuController::class, 'apiIndex']);
 Route::get('/menus/{id}', [MenuController::class, 'apiShow']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/user', [AuthController::class, 'user']);
+    Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/admin/dashboard', function () {
         return response()->json(['message' => 'Selamat Datang, Admin']);

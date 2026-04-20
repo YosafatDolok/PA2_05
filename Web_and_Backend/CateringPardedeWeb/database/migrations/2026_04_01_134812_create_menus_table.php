@@ -13,8 +13,16 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id('menu_id');
-            $table->foreignId('user_id')->constrained('users', 'user_id')->cascadeOnDelete();
-            $table->foreignId('category_id')->constrained('menu_categories', 'category_id')->cascadeOnDelete();
+            $table->foreignId('user_id')
+                  ->references('user_id')
+                  ->on('users')
+                  ->onDelete('cascade');
+                  
+            $table->foreignId('category_id')
+                  ->references('category_id')
+                  ->on('menu_categories')
+                  ->onDelete('cascade');
+
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('image');
