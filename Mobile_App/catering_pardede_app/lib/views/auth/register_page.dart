@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '/controllers/auth_controller.dart';
-import '/views/widgets/custom_button.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -31,50 +30,156 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Create Account',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      backgroundColor: const Color(0xFF8B1E1E),
+      body: Stack(
+        children: [
+
+          // ================= HEADER =================
+          Positioned(
+            top: 50,
+            left: 20,
+            child: Row(
+              children: [
+                const Icon(Icons.local_fire_department,
+                    color: Colors.orange, size: 30),
+                const SizedBox(width: 5),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      "Pardede",
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      "CATERING",
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 12,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
-                border: OutlineInputBorder(),
+          ),
+
+          // ================= FORM =================
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEDE7DF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Register",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // NAME
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      hintText: "Full Name",
+                      prefixIcon:
+                          const Icon(Icons.person, color: Colors.orange),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // EMAIL
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      hintText: "Email",
+                      prefixIcon:
+                          const Icon(Icons.email, color: Colors.orange),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // PASSWORD
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: "Password",
+                      prefixIcon:
+                          const Icon(Icons.lock, color: Colors.orange),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // BUTTON REGISTER
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: handleRegister,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD4A017),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white)
+                          : const Text(
+                              "Daftar",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // ================= LOGIN LINK =================
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/login');
+                    },
+                    child: const Text(
+                      "Sudah punya akun? Login sekarang",
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 25),
-            CustomButton(text: 'Daftar', onPressed: handleRegister, loading: isLoading),
-            const SizedBox(height: 15),
-            TextButton(
-              onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-              child: const Text("Already have an account? Login here"),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -5,22 +5,36 @@ import '/core/storage/local_storage.dart';
 
 class AuthService {
   // Register new user
-  static Future<bool> register(String name, String email, String password) async {
-    final res = await http.post(
-      Uri.parse(ApiEndpoints.register),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'password': password,
-      }),
-    );
+static Future<bool> register(
+    String name, String email, String password) async {
+  try {
+    final res = await http
+        .post(
+          Uri.parse(ApiEndpoints.register),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'name': name,
+            'email': email,
+            'password': password,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    // 🔥 DEBUG
+    print("STATUS: ${res.statusCode}");
+    print("BODY: ${res.body}");
 
     return res.statusCode == 201;
+  } catch (e) {
+    print("ERROR: $e");
+    return false;
   }
+}
 
   // Login
-  static Future<bool> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email, String password) async {
+  try {
     final res = await http.post(
       Uri.parse(ApiEndpoints.login),
       headers: {'Content-Type': 'application/json'},
@@ -30,15 +44,26 @@ class AuthService {
       }),
     );
 
+    final data = jsonDecode(res.body);
+
     if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
       final token = data['token'];
       await LocalStorage.saveToken(token);
-      return true;
+
+      return {
+        'success': true,
+        'user': data['user'], // ⬅️ penting
+      };
     } else {
-      return false;
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Login gagal'
+      };
     }
+  } catch (e) {
+    return {'success': false, 'message': 'Error: $e'};
   }
+}
 
   // Get current user
   static Future<Map<String, dynamic>?> getUser() async {
@@ -75,4 +100,8 @@ class AuthService {
 
     await LocalStorage.clearToken();
   }
+
+  
 }
+
+

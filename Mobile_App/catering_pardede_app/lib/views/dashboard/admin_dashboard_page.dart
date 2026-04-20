@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/controllers/auth_controller.dart';
+import '../../controllers/auth_controller.dart';
 
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});

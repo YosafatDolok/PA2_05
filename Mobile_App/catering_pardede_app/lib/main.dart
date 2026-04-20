@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       initialRoute: '/login',
-      routes: AppRoutes.routes,
+      routes: AppRoutes.routes, // 🔥 ini ambil dari file lain
     );
   }
 }
