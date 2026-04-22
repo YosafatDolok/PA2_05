@@ -1,107 +1,93 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '/core/services/api_service.dart';
 import '/core/constants/api_endpoints.dart';
 import '/core/storage/local_storage.dart';
 
 class AuthService {
-  // Register new user
-static Future<bool> register(
-    String name, String email, String password) async {
-  try {
-    final res = await http
-        .post(
-          Uri.parse(ApiEndpoints.register),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'name': name,
-            'email': email,
-            'password': password,
-          }),
-        )
-        .timeout(const Duration(seconds: 10));
-
-    // 🔥 DEBUG
-    print("STATUS: ${res.statusCode}");
-    print("BODY: ${res.body}");
-
-    return res.statusCode == 201;
-  } catch (e) {
-    print("ERROR: $e");
-    return false;
-  }
-}
-
-  // Login
-  static Future<Map<String, dynamic>> login(
-    String email, String password) async {
-  try {
-    final res = await http.post(
-      Uri.parse(ApiEndpoints.login),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+  // 🔐 Register
+  static Future<Map<String, dynamic>> register(
+      String name, String email, String password) async {
+    try {
+      final data = await ApiService.post(ApiEndpoints.register, {
+        'name': name,
         'email': email,
         'password': password,
-      }),
-    );
+      });
 
-    final data = jsonDecode(res.body);
-
-    if (res.statusCode == 200) {
-      final token = data['token'];
-      await LocalStorage.saveToken(token);
+      if (data['token'] != null) {
+        await LocalStorage.saveToken(data['token']);
+      }
 
       return {
         'success': true,
-        'user': data['user'], // ⬅️ penting
+        'user': data['user'],
+        'message': data['message'],
       };
-    } else {
+    } catch (e) {
       return {
         'success': false,
-        'message': data['message'] ?? 'Login gagal'
+        'message': e.toString(),
       };
     }
-  } catch (e) {
-    return {'success': false, 'message': 'Error: $e'};
   }
-}
 
-  // Get current user
+  // 🔐 Login
+  static Future<Map<String, dynamic>> login(
+      String email, String password) async {
+    try {
+      final data = await ApiService.post(ApiEndpoints.login, {
+        'email': email,
+        'password': password,
+      });
+
+      if (data['token'] != null) {
+        await LocalStorage.saveToken(data['token']);
+
+        return {
+          'success': true,
+          'user': data['user'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Login gagal',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  // 👤 Get current user (FIXED)
   static Future<Map<String, dynamic>?> getUser() async {
-    final token = await LocalStorage.getToken();
-    if (token == null) return null;
+    try {
+      final data = await ApiService.get(ApiEndpoints.user)
+          .timeout(const Duration(seconds: 5));
 
-    final res = await http.get(
-      Uri.parse(ApiEndpoints.user),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+      print("USER DATA: $data");
 
-    if (res.statusCode == 200) {
-      return jsonDecode(res.body);
-    } else {
+      if (data != null &&
+          (data['id'] != null || data['user_id'] != null)) {
+        return data;
+      }
+
+      return null;
+    } catch (e) {
+      print("GET USER ERROR: $e"); // 🔥 shows real issue
       return null;
     }
   }
 
-  // Logout
+  // 🚪 Logout
   static Future<void> logout() async {
-    final token = await LocalStorage.getToken();
-    if (token == null) return;
-
-    await http.post(
-      Uri.parse(ApiEndpoints.logout),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+    try {
+      await ApiService.post(ApiEndpoints.logout, {});
+    } catch (_) {
+      // ignore errors
+    }
 
     await LocalStorage.clearToken();
   }
-
-  
 }
-
-

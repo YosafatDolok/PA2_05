@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'routes/app_routes.dart';
+import '/views/auth/auth_wrapper.dart';
+import '/core/theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,15 +15,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Catering Pardede App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.teal,
-        scaffoldBackgroundColor: Colors.white,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
-      ),
-      initialRoute: '/landing',
-      routes: AppRoutes.routes, // 🔥 ini ambil dari file lain
+
+      theme: AppTheme.lightTheme,
+
+      home: const AuthWrapper(),
+
+      routes: AppRoutes.routes,
     );
   }
 }

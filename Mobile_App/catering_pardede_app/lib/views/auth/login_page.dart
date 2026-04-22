@@ -14,28 +14,22 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
 
   void handleLogin() async {
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon isi email dan password')),
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
 
-    final result = await AuthController.login(
+    await AuthController.login(
+      context,
       emailController.text,
       passwordController.text,
     );
 
     setState(() => isLoading = false);
-
-    if (result['success']) {
-      final role = result['user']['role']['name'];
-
-      if (role == 'admin') {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
-      } else {
-        Navigator.pushReplacementNamed(context, '/user-dashboard');
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Login gagal')),
-      );
-    }
   }
 
   @override
@@ -44,7 +38,6 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: const Color(0xFF8B1E1E),
       body: Stack(
         children: [
-
           // ================= HEADER =================
           Positioned(
             top: 50,
@@ -136,14 +129,13 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: handleLogin,
+                      onPressed: isLoading ? null : handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD4A017),
                         padding:
                             const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: isLoading

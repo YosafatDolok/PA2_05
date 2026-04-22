@@ -17,21 +17,23 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      role: json['role'] != null ? RoleModel.fromJson(json['role']) : null,
+      id: json['user_id'],
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      role: json['role'] != null
+          ? RoleModel.fromJson(json['role'])
+          : null,
       createdAt: json['created_at'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'user_id': id,
       'name': name,
       'email': email,
       'created_at': createdAt,
-      'role': role,
+      'role': role?.toJson(),
     };
   }
 }

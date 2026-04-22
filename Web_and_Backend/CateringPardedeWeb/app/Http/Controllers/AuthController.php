@@ -33,7 +33,13 @@ class AuthController extends Controller
             'role_id' => $userRole->id,
         ]);
 
-        return response()->json(['message'=>'Registrasi berhasil', 'user' => $user], 201);
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+        'message' => 'Registrasi berhasil',
+        'user' => $user->load('role'),
+        'token' => $token
+        ], 201);
     }
 
 
@@ -53,7 +59,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json(['token' => $token, 'user' => $user]);
+        return response()->json(['token' => $token, 'user' => $user->load('role')]);
     }
 
 

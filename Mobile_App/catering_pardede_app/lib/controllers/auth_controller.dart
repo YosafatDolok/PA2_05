@@ -1,36 +1,35 @@
-import 'package:catering_pardede_app/controllers/user_controller.dart';
-
 import '/core/services/auth_service.dart';
 import '/core/utils/helpers.dart';
 import 'package:flutter/material.dart';
 
 class AuthController {
   // Login
-  static Future<Map<String, dynamic>> login(
-    String email, String password) async {
-  try {
-    final result = await AuthService.login(email, password);
+  static Future<void> login(
+      BuildContext context, String email, String password) async {
+    try {
+      final result = await AuthService.login(email, password);
 
-if (result['success']) {
-  final user = await AuthService.getUser();
+      if (result['success']) {
+        final user = result['user'];
 
-  return {
-    'success': true,
-    'user': user,
-  };
-} else {
-  return {
-    'success': false,
-    'message': result['message'],
-  };
-}
-  } catch (e) {
-    return {
-      'success': false,
-      'message': 'Error: $e',
-    };
+        final role = user['role']?['name'];
+
+        Helpers.showSnackBar(context, 'Login Berhasil');
+
+        if (role == 'admin') {
+          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/user-dashboard');
+        }
+      } else {
+        Helpers.showSnackBar(
+            context, result['message'] ?? 'Login gagal');
+      }
+    } catch (e) {
+      Helpers.showSnackBar(context, 'Error: $e');
+    }
   }
-}
+
   // Register
   static Future<void> register(
       BuildContext context, String name, String email, String password) async {
@@ -39,15 +38,27 @@ if (result['success']) {
       return;
     }
 
-    final success = await AuthService.register(name, email, password);
+    final result =
+        await AuthService.register(name, email, password);
 
-if (success) {
-  Helpers.showSnackBar(context, 'Registrasi Berhasil');
-  Navigator.pushReplacementNamed(context, '/login');
-} else {
-  Helpers.showSnackBar(context, 'Registrasi Gagal');
-}
+    if (result['success']) {
+      final user = result['user'];
+      final role = user?['role']?['name'];
+
+      Helpers.showSnackBar(
+          context, result['message'] ?? 'Registrasi Berhasil');
+
+      // 🔀 If token returned → go to dashboard
+      if (role == 'admin') {
+        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+      } else {
+        Navigator.pushReplacementNamed(context, '/user-dashboard');
       }
+    } else {
+      Helpers.showSnackBar(
+          context, result['message'] ?? 'Registrasi Gagal');
+    }
+  }
 
   // Logout
   static Future<void> logout(BuildContext context) async {
