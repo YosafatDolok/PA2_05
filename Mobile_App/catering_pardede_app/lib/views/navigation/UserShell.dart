@@ -11,18 +11,22 @@ class UserShell extends StatefulWidget {
   const UserShell({super.key});
 
   @override
-  State<UserShell> createState() => _UserShellState();
+  State<UserShell> createState() => UserShellState();
 }
 
-class _UserShellState extends State<UserShell> {
+class UserShellState extends State<UserShell> {
   int _currentIndex = 0;
 
-  static const List<Widget> _pages = [
-    HomePage(),
-    MenuPage(),
-    OrderPage(),
-    GalleryPage(),
-    AccountPage(),
+  void setIndex(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  List<Widget> get _pages => [
+    const HomePage(),
+    const MenuPage(),
+    OrderPage(onMenuRequested: () => setIndex(1)),
+    const GalleryPage(),
+    const AccountPage(),
   ];
 
   void _onTabChanged(int index) {

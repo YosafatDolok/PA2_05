@@ -68,4 +68,10 @@ class MenuCategoryController extends Controller
                 ->with('error', 'Failed to delete category');
         }
     }
+
+    public function apiIndex()
+    {
+        $categories = MenuCategory::all();
+        return response()->json($categories);
+    }
 }

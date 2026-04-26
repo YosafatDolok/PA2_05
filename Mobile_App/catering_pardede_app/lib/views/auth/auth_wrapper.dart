@@ -9,7 +9,6 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-
   @override
   void initState() {
     super.initState();
@@ -18,12 +17,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   void _checkLogin() async {
     try {
-      final user = await AuthService.getUser()
-          .timeout(const Duration(seconds: 5));
+      final user = await AuthService.getUser().timeout(const Duration(seconds: 5));
 
       if (!mounted) return;
 
-      if (user != null) {
+      // Ensure user is not null, not empty, and has a valid ID
+      if (user != null && user.isNotEmpty && (user['user_id'] != null || user['id'] != null)) {
         final role = user['role']?['name'];
 
         if (role == 'admin') {
@@ -32,13 +31,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
           Navigator.pushReplacementNamed(context, '/user-dashboard');
         }
       } else {
+        // If data is missing or empty, force them to Landing
         Navigator.pushReplacementNamed(context, '/landing');
       }
     } catch (e) {
-      print("AUTH WRAPPER ERROR: $e");
-
+      debugPrint("AUTH WRAPPER ERROR: $e");
       if (!mounted) return;
-
       Navigator.pushReplacementNamed(context, '/landing');
     }
   }

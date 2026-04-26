@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
 
       home: const AuthWrapper(),
 
-      routes: AppRoutes.routes,
+      onGenerateRoute: AppRoutes.generateRoute,
     );
   }
 }

@@ -4,101 +4,108 @@
 ])
 
 @section('content')
-
-<div class="row">
-    <div class="col-md-8 ml-auto mr-auto">
-
-        <div class="card">
-            <div class="card-header">
-                <h4 class="card-title">Add Menu</h4>
-            </div>
-
-            <div class="card-body">
-
-                <form action="{{ route('menus.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-
-                    {{-- NAME --}}
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" 
-                               name="name" 
-                               class="form-control"
-                               value="{{ old('name') }}">
-                    </div>
-
-                    {{-- CATEGORY --}}
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select name="category_id" class="form-control">
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->category_id }}">
-                                    {{ $cat->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- DESCRIPTION --}}
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" 
-                                  class="form-control custom-scrollbar" 
-                                  rows="4">{{ old('description') }}</textarea>
-                    </div>
-
-                    {{-- AVAILABLE --}}
-                    <div class="form-group">
-                        <label>Available</label>
-                        <div class="d-flex align-items-center mt-2">
-                            <label class="switch">
-                                <input type="checkbox" 
-                                       name="available" 
-                                       value="1"
-                                       {{ old('available', 1) ? 'checked' : '' }}>
-                                <span class="slider round"></span>
-                            </label>
-                            <span class="ml-2 text-primary">
-                                {{ old('available', 1) ? 'Yes' : 'No' }}
-                            </span>
-                        </div>
-                    </div>
-
-                    {{-- IMAGE --}}
-                    <div class="form-group">
-                        <label>Image</label>
-
-                        <div class="mb-2">
-                            <img id="preview-image" 
-                                 src="#" 
-                                 alt="Preview" 
-                                 style="display:none; width:120px; height:120px; object-fit:cover; border-radius:8px;">
-                        </div>
-
-                        <label class="btn btn-info btn-sm">
-                            Choose Image
-                            <input type="file" 
-                                   name="image" 
-                                   accept="image/*"
-                                   onchange="previewImage(event)"
-                                   hidden>
-                        </label>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        Save
-                    </button>
-
-                    <a href="{{ route('menus.index') }}" class="btn btn-secondary">
-                        Cancel
+    <div class="row">
+        <div class="col-xl-8 col-lg-10 mx-auto">
+            <div class="card aura-card shadow-lg">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="m-0 font-weight-bold">Add New Menu Item</h4>
+                    <a href="{{ route('menus.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                        <i class="fas fa-arrow-left me-2"></i> BACK TO LIST
                     </a>
+                </div>
 
-                </form>
+                <div class="card-body p-4">
+                    <form action="{{ route('menus.store') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
 
+                        <div class="row g-4">
+                            {{-- NAME --}}
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label>MENU NAME</label>
+                                    <input type="text" name="name" class="form-control" placeholder="e.g. Fried Rice" value="{{ old('name') }}" required>
+                                </div>
+                            </div>
+
+                            {{-- CATEGORY --}}
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label>CATEGORY</label>
+                                    <select name="category_id" class="form-select">
+                                        @foreach($categories as $cat)
+                                            <option value="{{ $cat->category_id }}">
+                                                {{ $cat->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- DESCRIPTION --}}
+                            <div class="col-12">
+                                <div class="form-group mb-0">
+                                    <label>DESCRIPTION</label>
+                                    <textarea name="description" class="form-control" rows="4" placeholder="Enter dish details...">{{ old('description') }}</textarea>
+                                </div>
+                            </div>
+
+                            {{-- IMAGE --}}
+                            <div class="col-md-8">
+                                <div class="form-group mb-0">
+                                    <label>MENU IMAGE</label>
+                                    <div class="d-flex align-items-center gap-4 mt-2">
+                                        <div class="aura-upload-zone" style="width: 120px; min-height: 120px; border-radius: 15px;">
+                                            <div class="aura-upload-placeholder" id="placeholder" style="padding: 10px;">
+                                                <i class="fas fa-image mb-0" style="font-size: 1.5rem;"></i>
+                                            </div>
+                                            <img id="previewImage" src="#" alt="Preview" class="aura-upload-preview">
+                                        </div>
+                                        <label class="btn btn-aura btn-sm mb-0">
+                                            <i class="fas fa-upload me-2"></i> UPLOAD IMAGE
+                                            <input type="file" name="image" accept="image/*" onchange="handleImagePreview(event)" hidden>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- AVAILABLE --}}
+                            <div class="col-md-4">
+                                <div class="form-group mb-0">
+                                    <label class="d-block">STATUS</label>
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" name="available" value="1" id="availableSwitch" {{ old('available', 1) ? 'checked' : '' }} style="transform: scale(1.4);">
+                                        <label class="form-check-label ms-3 text-white-50" for="availableSwitch">AVAILABLE</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-5">
+                                <button type="submit" class="btn btn-primary w-100 py-3 font-weight-bold">
+                                    SAVE MENU ITEM
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-
     </div>
-</div>
 
+    <script>
+    function handleImagePreview(event) {
+        const reader = new FileReader();
+        const placeholder = document.getElementById('placeholder');
+        const preview = document.getElementById('previewImage');
+        
+        reader.onload = function(){
+            preview.src = reader.result;
+            preview.classList.add('active');
+            placeholder.style.display = 'none';
+        };
+        
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+    </script>
 @endsection

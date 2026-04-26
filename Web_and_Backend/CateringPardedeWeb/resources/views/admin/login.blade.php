@@ -5,80 +5,54 @@
 ])
 
 @section('content')
-    <div class="col-md-10 text-center ml-auto mr-auto">
-        <h3 class="mb-5">
-            Log in to your admin panel
-        </h3>
-    </div>
+    <div class="auth-card">
+        <div class="text-center mb-5">
+            <div class="auth-logo-glow mb-4">
+                <i class="fas fa-shield-halved text-danger fs-1"></i>
+            </div>
+            <h2 class="text-white font-weight-bold mb-1">Access Protocol</h2>
+            <p class="text-muted small uppercase letter-spacing-1">Admin Authorization Required</p>
+        </div>
 
-    <div class="col-lg-4 col-md-6 ml-auto mr-auto">
         <form class="form" method="POST" action="{{ route('login') }}">
             @csrf
 
-            <div class="card card-login card-white">
-                <div class="card-header">
-                    <img src="{{ asset('black/img/card-primary.png') }}" alt="">
-                    <h1 class="card-title">{{ __('Log in') }}</h1>
-                </div>
-
-                <div class="card-body">
-
-                    {{-- SESSION ERROR (from your old page) --}}
-                    @if(session('error'))
-                        <p class="text-danger text-center">{{ session('error') }}</p>
-                    @endif
-
-                    {{-- EMAIL --}}
-                    <div class="input-group{{ $errors->has('email') ? ' has-danger' : '' }}">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text" style="padding-left: 8px; padding-right: 8px;">
-                                <i class="tim-icons icon-email-85" ></i>
-                            </div>
-                        </div>
-                        <input 
-                            type="email" 
-                            name="email" 
-                            class="form-control{{ $errors->has('email') ? ' is-invalid' : '' }}" 
-                            placeholder="{{ __('Email') }}"
-                            value="{{ old('email') }}"
-                        >
-                        @if($errors->has('email'))
-                            <div class="invalid-feedback d-block">
-                                {{ $errors->first('email') }}
-                            </div>
-                        @endif
-                    </div>
-
-                    {{-- PASSWORD --}}
-                    <div class="input-group{{ $errors->has('password') ? ' has-danger' : '' }}">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text" style="padding-left: 8px; padding-right: 8px;">
-                                <i class="tim-icons icon-lock-circle"></i>
-                            </div>
-                        </div>
-                        <input 
-                            type="password" 
-                            name="password" 
-                            class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }}" 
-                            placeholder="{{ __('Password') }}"
-                        >
-                        @if($errors->has('password'))
-                            <div class="invalid-feedback d-block">
-                                {{ $errors->first('password') }}
-                            </div>
-                        @endif
-                    </div>
-
-                </div>
-
-                <div class="card-footer">
-                    <button type="submit" class="btn btn-primary btn-lg btn-block mb-3">
-                        {{ __('Get Started') }}
-                    </button>
-
-                </div>
-
+            <div class="form-group mb-4">
+                <label class="text-muted small font-weight-bold mb-2 d-block">ID ENTITY (EMAIL)</label>
+                <input 
+                    type="email" 
+                    name="email" 
+                    class="form-control-aura" 
+                    placeholder="Enter entity email..."
+                    value="{{ old('email') }}"
+                    required
+                    autofocus
+                >
             </div>
+
+            <div class="form-group mb-5">
+                <label class="text-muted small font-weight-bold mb-2 d-block">SECRET KEY (PASSWORD)</label>
+                <input 
+                    type="password" 
+                    name="password" 
+                    class="form-control-aura mb-1" 
+                    placeholder="••••••••"
+                    required
+                >
+                @if (Route::has('password.request'))
+                    <div class="text-end">
+                        <a href="{{ route('password.request') }}" class="text-danger small text-decoration-none">Reset Key?</a>
+                    </div>
+                @endif
+            </div>
+
+            <button type="submit" class="btn btn-aura">
+                Login
+            </button>
         </form>
+
+        <div class="mt-5 text-center">
+            <p class="text-muted extra-small mb-0">SYST_VER: 2.1.0 // ACTIVE</p>
+        </div>
     </div>
 @endsection

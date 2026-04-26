@@ -70,4 +70,16 @@ class GalleryController extends Controller
         Gallery::findOrFail($id)->delete();
         return back()->with('success', 'Gallery deleted');
     }
+
+    public function apiIndex()
+    {
+        $galleries = Gallery::latest()->get();
+        return response()->json($galleries);
+    }
+
+public function apiShow($id)
+   {
+        $gallery = Gallery::findOrFail($id);
+        return response()->json($gallery);
+   }
 }

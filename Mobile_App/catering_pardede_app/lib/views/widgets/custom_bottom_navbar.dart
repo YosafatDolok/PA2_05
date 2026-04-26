@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -12,34 +13,47 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      selectedItemColor: Colors.brown,
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      onTap: onTap,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.grid_view),
-          label: 'Menu',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.receipt),
-          label: 'Order',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.image),
-          label: 'Galeri',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Akun',
-        ),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: currentIndex,
+        selectedItemColor: const Color(0xFFFFD700), // Yellow/Gold for active
+        unselectedItemColor: Colors.white.withOpacity(0.7),
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppColors.primary, // Maroon
+        onTap: onTap,
+        items: [
+          _buildNavItem(Icons.home, 'Home', 0),
+          _buildNavItem(Icons.grid_view, 'Menu', 1),
+          _buildNavItem(Icons.assignment, 'Order', 2),
+          _buildNavItem(Icons.image, 'Galeri', 3),
+          _buildNavItem(Icons.account_circle, 'Akun', 4),
+        ],
+      ),
+    );
+  }
+
+  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
+    final bool isActive = currentIndex == index;
+    return BottomNavigationBarItem(
+      icon: AnimatedScale(
+        scale: isActive ? 1.2 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        child: Icon(icon),
+      ),
+      label: label,
     );
   }
 }

@@ -4,66 +4,59 @@
 ])
 
 @section('content')
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="m-0 font-weight-bold">Categories</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage menu groups</p>
+        </div>
+        <a href="{{ route('categories.create') }}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-layer-group me-2"></i> NEW CATEGORY
+        </a>
+    </div>
 
-<div class="row">
-    <div class="col-md-12">
-
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title">Categories</h4>
-
-                <a href="{{ route('categories.create') }}" class="btn btn-primary btn-sm">
-                    Add Category
-                </a>
-            </div>
-
-            <div class="card-body">
+    <div class="row">
+        <div class="col-12">
+            <div class="card aura-card border-0 shadow-lg">
                 <div class="table-responsive">
-                    <table class="table tablesorter">
-                        <thead class="text-primary">
+                    <table class="table align-items-center mb-0">
+                        <thead>
                             <tr>
-                                <th>Name</th>
-                                <th class="text-center">Action</th>
+                                <th>CATEGORY NAME</th>
+                                <th class="text-center">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
-
                             @foreach($categories as $cat)
                             <tr>
-                                <td>{{ $cat->name }}</td>
-
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon me-3" style="width: 40px; height: 40px; font-size: 1rem;">
+                                            <i class="fas fa-folder-open"></i>
+                                        </div>
+                                        <span class="font-weight-bold text-white fs-6">{{ $cat->name }}</span>
+                                    </div>
+                                </td>
                                 <td class="text-center">
-                                    <a href="{{ route('categories.edit', $cat->category_id) }}" 
-                                       class="btn btn-warning btn-sm">
-                                        Edit
-                                    </a>
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <a href="{{ route('categories.edit', $cat->category_id) }}" class="btn btn-sm btn-icon btn-secondary rounded-circle">
+                                            <i class="fas fa-terminal"></i>
+                                        </a>
 
-                                    {{-- DELETE WITH SWEETALERT --}}
-                                    <form action="{{ route('categories.destroy', $cat->category_id) }}" 
-                                          method="POST" 
-                                          class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm btn-delete"
-                                                data-name="{{ $cat->name }}">
-                                            Delete
-                                        </button>
-                                    </form>
-
+                                        <form action="{{ route('categories.destroy', $cat->category_id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" class="btn btn-sm btn-icon btn-outline-danger shadow-sm rounded-circle btn-delete" data-name="{{ $cat->name }}">
+                                                <i class="fas fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach
-
                         </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
-
     </div>
-</div>
-
 @endsection

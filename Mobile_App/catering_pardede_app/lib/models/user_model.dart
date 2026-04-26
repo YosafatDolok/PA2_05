@@ -4,6 +4,8 @@ class UserModel {
   final int id;
   final String name;
   final String email;
+  final String? phoneNumber;
+  final String? profilePicture;
   final RoleModel? role;
   final String? createdAt;
 
@@ -11,6 +13,8 @@ class UserModel {
     required this.id,
     required this.name,
     required this.email,
+    this.phoneNumber,
+    this.profilePicture,
     this.role,
     this.createdAt,
   });
@@ -20,6 +24,8 @@ class UserModel {
       id: json['user_id'],
       name: json['name'] ?? '',
       email: json['email'] ?? '',
+      phoneNumber: json['phone_number'],
+      profilePicture: json['profile_picture'],
       role: json['role'] != null
           ? RoleModel.fromJson(json['role'])
           : null,
@@ -32,6 +38,8 @@ class UserModel {
       'user_id': id,
       'name': name,
       'email': email,
+      'phone_number': phoneNumber,
+      'profile_picture': profilePicture,
       'created_at': createdAt,
       'role': role?.toJson(),
     };

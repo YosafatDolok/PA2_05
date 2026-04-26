@@ -3,7 +3,6 @@ import '/core/constants/api_endpoints.dart';
 import '/core/storage/local_storage.dart';
 
 class AuthService {
-  // 🔐 Register
   static Future<Map<String, dynamic>> register(
       String name, String email, String password) async {
     try {
@@ -30,7 +29,6 @@ class AuthService {
     }
   }
 
-  // 🔐 Login
   static Future<Map<String, dynamic>> login(
       String email, String password) async {
     try {
@@ -60,13 +58,9 @@ class AuthService {
     }
   }
 
-  // 👤 Get current user (FIXED)
   static Future<Map<String, dynamic>?> getUser() async {
     try {
-      final data = await ApiService.get(ApiEndpoints.user)
-          .timeout(const Duration(seconds: 5));
-
-      print("USER DATA: $data");
+      final data = await ApiService.get(ApiEndpoints.user);
 
       if (data != null &&
           (data['id'] != null || data['user_id'] != null)) {
@@ -74,19 +68,15 @@ class AuthService {
       }
 
       return null;
-    } catch (e) {
-      print("GET USER ERROR: $e"); // 🔥 shows real issue
+    } catch (_) {
       return null;
     }
   }
 
-  // 🚪 Logout
   static Future<void> logout() async {
     try {
       await ApiService.post(ApiEndpoints.logout, {});
-    } catch (_) {
-      // ignore errors
-    }
+    } catch (_) {}
 
     await LocalStorage.clearToken();
   }

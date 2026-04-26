@@ -1,62 +1,61 @@
-<div class="sidebar">
-    <div class="sidebar-wrapper">
-        <div class="logo">
-            <a href="#" class="simple-text logo-mini">{{ __('BD') }}</a>
-            <a href="#" class="simple-text logo-normal">{{ __('Admin Panel') }}</a>
-        </div>
-
-        <ul class="nav">
-            {{-- Dashboard --}}
-            <li class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <a href="{{ route('admin.dashboard') }}">
-                    <i class="tim-icons icon-chart-pie-36"></i>
-                    <p>{{ __('Dashboard') }}</p>
-                </a>
-            </li>
-
-            {{-- Menus --}}
-            <li class="{{ request()->routeIs('menus.*') ? 'active' : '' }}">
-                <a href="{{ route('menus.index') }}">
-                    <i class="tim-icons icon-bullet-list-67"></i>
-                    <p>{{ __('Menus') }}</p>
-                </a>
-            </li>
-
-            {{-- Categories --}}
-            <li class="{{ request()->routeIs('categories.*') ? 'active' : '' }}">
-                <a href="{{ route('categories.index') }}">
-                    <i class="tim-icons icon-tag"></i>
-                    <p>{{ __('Categories') }}</p>
-                </a>
-            </li>
-
-            {{-- Galleries --}}
-            <li class="{{ request()->routeIs('galleries.*') ? 'active' : '' }}">
-                <a href="{{ route('galleries.index') }}">
-                    <i class="tim-icons icon-image-02"></i>
-                    <p>{{ __('Galleries') }}</p>
-                </a>
-            </li>
-
-            {{-- Profile --}}
-            <li>
-                <a href="{{ route('profile.edit') }}">
-                    <i class="tim-icons icon-single-02"></i>
-                    <p>Profile</p>
-                </a>
-            </li>
-
-            {{-- Logout --}}
-            <li>
-                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="tim-icons icon-button-power"></i>
-                    <p>{{ __('Logout') }}</p>
-                </a>
-
-                <form id="logout-form" action="{{ url('/logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-            </li>
-        </ul>
+<nav class="aura-sidebar">
+    <div class="sidebar-header">
+        <h1 class="sidebar-logo">Pardede</h1>
     </div>
-</div>
+
+    <ul class="sidebar-nav">
+        {{-- Dashboard --}}
+        <li class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" class="nav-link">
+                <i class="fas fa-rocket"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        {{-- Menus --}}
+        <li class="nav-item {{ request()->routeIs('menus.*') ? 'active' : '' }}">
+            <a href="{{ route('menus.index') }}" class="nav-link">
+                <i class="fas fa-utensils"></i>
+                <span>Menus</span>
+            </a>
+        </li>
+
+        {{-- Orders --}}
+        <li class="nav-item {{ request()->routeIs('orders.*') ? 'active' : '' }}">
+            <a href="{{ route('orders.index') }}" class="nav-link">
+                <i class="fas fa-box-open"></i>
+                <span>Orders</span>
+            </a>
+        </li>
+
+        {{-- Categories --}}
+        <li class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
+            <a href="{{ route('categories.index') }}" class="nav-link">
+                <i class="fas fa-tags"></i>
+                <span>Categories</span>
+            </a>
+        </li>
+
+        {{-- Galleries --}}
+        <li class="nav-item {{ request()->routeIs('galleries.*') ? 'active' : '' }}">
+            <a href="{{ route('galleries.index') }}" class="nav-link">
+                <i class="fas fa-camera-retro"></i>
+                <span>Gallery</span>
+            </a>
+        </li>
+
+        {{-- Profile --}}
+        <li class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
+            <a href="{{ route('profile.edit') }}" class="nav-link">
+                <i class="fas fa-user-shield"></i>
+                <span>Profile</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer p-4">
+        <a href="{{ route('logout') }}" class="nav-link text-center text-muted" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <i class="fas fa-power-off"></i>
+        </a>
+    </div>
+</nav>

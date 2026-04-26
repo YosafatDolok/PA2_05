@@ -1,0 +1,561 @@
+:root {
+    --aura-bg: #0d0d11;
+    --aura-panel: #16161e;
+    --aura-crimson: #ff334b;
+    --aura-crimson-glow: rgba(255, 51, 75, 0.4);
+    --aura-white: #ffffff;
+    --aura-text-main: #e1e1e6;
+    --aura-text-muted: #8d8d99;
+    --aura-border: rgba(255, 255, 255, 0.08);
+    --aura-glass: rgba(255, 255, 255, 0.03);
+    --aura-sidebar-width: 280px;
+    --aura-header-height: 80px;
+}
+
+* {
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--aura-crimson) transparent;
+}
+
+body {
+    background-color: var(--aura-bg);
+    color: var(--aura-text-main);
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+/* Layout */
+.aura-app {
+    display: flex;
+    min-height: 100vh;
+}
+
+.aura-sidebar {
+    width: var(--aura-sidebar-width);
+    background: var(--aura-panel);
+    border-right: 1px solid var(--aura-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.aura-main-panel {
+    flex: 1;
+    margin-left: var(--aura-sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.aura-navbar {
+    height: var(--aura-header-height);
+    background: rgba(13, 13, 17, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--aura-border);
+    padding: 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.aura-content {
+    padding: 40px;
+}
+
+/* Sidebar Components */
+.sidebar-header {
+    padding: 40px;
+    text-align: center;
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--aura-crimson);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.sidebar-nav {
+    padding: 20px;
+    flex: 1;
+}
+
+.sidebar-nav .nav-item {
+    margin-bottom: 8px;
+    list-style: none;
+}
+
+.sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    color: var(--aura-text-muted);
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.sidebar-nav .nav-link i {
+    width: 24px;
+    font-size: 1.1rem;
+    margin-right: 15px;
+}
+
+.sidebar-nav .nav-link:hover,
+.sidebar-nav .nav-item.active .nav-link {
+    background: var(--aura-glass);
+    color: var(--aura-white);
+    border: 1px solid var(--aura-border);
+}
+
+.sidebar-nav .nav-item.active .nav-link {
+    background: rgba(255, 51, 75, 0.1);
+    color: var(--aura-crimson);
+    border-color: rgba(255, 51, 75, 0.4);
+    box-shadow: 0 0 20px rgba(255, 51, 75, 0.15);
+}
+
+/* UI Components */
+.aura-card {
+    background: var(--aura-panel);
+    border: 1px solid var(--aura-border);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.aura-card:hover {
+    border-color: var(--aura-crimson-glow);
+    transform: translateY(-5px);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--aura-glass);
+    border: 1px solid var(--aura-border);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--aura-crimson);
+    font-size: 1.4rem;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--aura-white);
+}
+
+.stat-label {
+    color: var(--aura-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+/* Upload & Media Components */
+.aura-upload-zone {
+    position: relative;
+    width: 100%;
+    min-height: 250px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 2px dashed var(--aura-border);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.aura-upload-zone:hover {
+    border-color: var(--aura-crimson-glow);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.aura-upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    transition: opacity 0.3s ease;
+}
+
+.aura-upload-placeholder i {
+    font-size: 2.5rem;
+    color: var(--aura-text-muted);
+    margin-bottom: 15px;
+    opacity: 0.6;
+}
+
+.aura-upload-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 10px;
+    background: var(--aura-bg);
+    display: none;
+    z-index: 5;
+}
+
+.aura-upload-preview.active {
+    display: block;
+}
+
+.preview-only-zone {
+    min-height: 200px;
+    background: var(--aura-panel);
+    border: 1px solid var(--aura-border);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Navbar Utils */
+.search-box {
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--aura-text-muted);
+}
+
+.search-box input {
+    background: var(--aura-glass);
+    border: 1px solid var(--aura-border);
+    border-radius: 12px;
+    padding: 10px 15px 10px 45px;
+    color: var(--aura-white);
+    width: 300px;
+    transition: border-color 0.3s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--aura-crimson);
+}
+
+/* Auth Page */
+.aura-auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at top right, rgba(255, 51, 75, 0.05), transparent),
+        radial-gradient(circle at bottom left, rgba(255, 51, 75, 0.05), transparent),
+        var(--aura-bg);
+}
+
+.auth-card {
+    width: 450px;
+    background: rgba(22, 22, 30, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--aura-border);
+    padding: 50px;
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.form-control-aura {
+    background: var(--aura-glass);
+    border: 1px solid var(--aura-border);
+    border-radius: 14px;
+    padding: 15px 20px;
+    color: var(--aura-white);
+    margin-bottom: 20px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.form-control-aura:focus {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--aura-crimson);
+    outline: none;
+    box-shadow: 0 0 15px rgba(255, 51, 75, 0.2);
+}
+
+.btn-aura {
+    background: var(--aura-crimson);
+    color: var(--aura-white);
+    border: none;
+    padding: 15px;
+    border-radius: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-aura:hover {
+    background: #ff4d61;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 51, 75, 0.3);
+}
+
+/* Global Bootstrap Overrides for Contrast */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+    color: var(--aura-white);
+    font-weight: 700;
+}
+
+.text-muted,
+.text-secondary {
+    color: var(--aura-text-muted) !important;
+}
+
+.text-dark {
+    color: var(--aura-text-main) !important;
+}
+
+.card {
+    background: var(--aura-panel);
+    border: 1px solid var(--aura-border);
+    border-radius: 20px;
+    color: var(--aura-text-main);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--aura-border);
+    padding: 20px 30px;
+}
+
+.card-title {
+    color: var(--aura-white);
+    margin: 0;
+}
+
+.form-control,
+.form-select {
+    background: var(--aura-glass);
+    border: 1px solid var(--aura-border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    color: var(--aura-white);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--aura-crimson);
+    color: var(--aura-white);
+    box-shadow: 0 0 15px rgba(255, 51, 75, 0.15);
+}
+
+.form-control::placeholder {
+    color: var(--aura-text-muted);
+}
+
+label {
+    color: var(--aura-text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+/* Button Refinement */
+.btn-primary {
+    background: var(--aura-crimson);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 25px;
+    font-weight: 600;
+    box-shadow: 0 5px 15px rgba(255, 51, 75, 0.2);
+}
+
+.btn-primary:hover {
+    background: #ff4d61;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 51, 75, 0.3);
+}
+
+.btn-secondary {
+    background: var(--aura-glass);
+    border: 1px solid var(--aura-border);
+    color: var(--aura-white);
+    border-radius: 12px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--aura-white);
+}
+
+/* Badge System */
+.badge {
+    padding: 8px 14px;
+    font-weight: 600;
+    border-radius: 30px;
+}
+
+.bg-danger-light {
+    background: rgba(255, 51, 75, 0.1) !important;
+    color: var(--aura-crimson) !important;
+}
+
+.bg-success-light {
+    background: rgba(46, 213, 115, 0.1) !important;
+    color: #2ed573 !important;
+}
+
+/* Table Refinement */
+.table {
+    --bs-table-bg: transparent !important;
+    --bs-table-accent-bg: transparent !important;
+    --bs-table-striped-bg: transparent !important;
+    --bs-table-active-bg: transparent !important;
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.05) !important;
+    --bs-table-border-color: var(--aura-border) !important;
+    color: var(--aura-text-main) !important;
+    border-color: var(--aura-border) !important;
+    background-color: transparent !important;
+}
+
+.table> :not(caption)>*>* {
+    background-color: transparent !important;
+    box-shadow: inset 0 0 0 9999px transparent !important;
+    color: inherit !important;
+    border-bottom-width: 1px !important;
+    border-color: var(--aura-border) !important;
+}
+
+.table thead th {
+    background: rgba(255, 255, 255, 0.02) !important;
+    color: var(--aura-text-muted) !important;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 15px 25px;
+    border-bottom: 1px solid var(--aura-border) !important;
+}
+
+.table tbody td {
+    padding: 20px 25px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid var(--aura-border) !important;
+}
+
+.aura-card .table,
+.aura-card .table-responsive {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Dropdown Refinement */
+.dropdown-menu {
+    background: rgba(22, 22, 30, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--aura-border) !important;
+    border-radius: 16px !important;
+    padding: 10px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dropdown-item {
+    color: var(--aura-text-main) !important;
+    padding: 12px 20px !important;
+    border-radius: 10px !important;
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--aura-white) !important;
+}
+
+.dropdown-item i {
+    width: 20px;
+    margin-right: 10px;
+}
+
+.dropdown-divider {
+    border-color: var(--aura-border) !important;
+    opacity: 0.5 !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--aura-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--aura-border);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--aura-crimson);
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .aura-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .aura-sidebar.active {
+        transform: translateX(0);
+    }
+
+    .aura-main-panel {
+        margin-left: 0;
+    }
+
+    .aura-navbar {
+        padding: 0 20px;
+    }
+
+    .aura-content {
+        padding: 20px;
+    }
+}

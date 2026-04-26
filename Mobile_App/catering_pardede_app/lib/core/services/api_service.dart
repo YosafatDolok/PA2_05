@@ -8,6 +8,7 @@ class ApiService {
 
     return {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
@@ -21,7 +22,6 @@ class ApiService {
     return _handleResponse(response);
   }
 
-
   static Future<dynamic> post(String url, Map<String, dynamic> body) async {
     final response = await http.post(
       Uri.parse(url),
@@ -29,16 +29,17 @@ class ApiService {
       body: jsonEncode(body),
     );
 
-    print("URL: $url");
-    print("BODY: $body");
-    print("STATUS: ${response.statusCode}");
-    print("RESPONSE: ${response.body}");
-
     return _handleResponse(response);
   }
 
   static dynamic _handleResponse(http.Response response) {
     final data = jsonDecode(response.body);
+
+    // 🔥 Handle expired token
+    if (response.statusCode == 401) {
+      LocalStorage.clearToken();
+      throw Exception('Session expired');
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return data;
