@@ -8,6 +8,7 @@ import '/views/navigation/userShell.dart';
 import '/views/pages/menu_detail_page.dart';
 import '/views/pages/gallery_detail_page.dart';
 import '/views/pages/order_detail_page.dart';
+import '/views/pages/notification_page.dart';
 
 import '/core/guards/role_guard.dart';
 import '/models/menu_model.dart';
@@ -32,6 +33,9 @@ class AppRoutes {
       // ================= User Navigation =================
       case '/user-dashboard':
         return MaterialPageRoute(builder: (_) => const UserShell());
+
+      case '/notifications':
+        return MaterialPageRoute(builder: (_) => const NotificationPage());
 
       // ================= Admin =================
       case '/admin-dashboard':

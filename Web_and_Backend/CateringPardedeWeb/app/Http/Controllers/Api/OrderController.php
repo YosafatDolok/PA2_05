@@ -75,6 +75,15 @@ class OrderController extends Controller
             ]);
         }
 
+        // Notify Admin
+        \App\Models\Notification::create([
+            'user_id' => 1, // Admin
+            'type' => 'new_order',
+            'title' => 'Pesanan Baru #' . $order->order_id,
+            'message' => $request->user()->name . ' baru saja memesan katering.',
+            'related_id' => $order->order_id,
+        ]);
+
         return response()->json([
             'message' => 'Order created successfully',
             'order' => $order->load(['status', 'items.menu'])
@@ -83,7 +92,7 @@ class OrderController extends Controller
 
     public function show($id, Request $request)
     {
-        $order = Order::with(['status', 'driver'])
+        $order = Order::with(['status', 'driver', 'items.menu'])
             ->where('user_id', $request->user()->user_id)
             ->findOrFail($id);
 
@@ -104,6 +113,15 @@ class OrderController extends Controller
 
         $order->update([
             'status_id' => 9 // Cancelled
+        ]);
+
+        // Notify Admin
+        \App\Models\Notification::create([
+            'user_id' => 1, // Admin
+            'type' => 'system',
+            'title' => 'Pesanan Dibatalkan #' . $order->order_id,
+            'message' => $request->user()->name . ' membatalkan pesanannya.',
+            'related_id' => $order->order_id,
         ]);
 
         return response()->json([

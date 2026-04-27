@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderStatus;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -35,6 +36,16 @@ class OrderController extends Controller
             $order->final_price = $request->final_price;
         }
         $order->save();
+
+        // Create Notification for User
+        $statusName = $order->status->name;
+        Notification::create([
+            'user_id' => $order->user_id,
+            'type' => 'order_status',
+            'title' => 'Update Pesanan #' . $order->order_id,
+            'message' => 'Pesanan Anda sekarang: ' . $statusName,
+            'related_id' => $order->order_id,
+        ]);
 
         return redirect()->back()->with('success', 'Detail pesanan berhasil diperbarui');
     }

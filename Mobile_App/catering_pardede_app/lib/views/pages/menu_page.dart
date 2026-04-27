@@ -106,10 +106,18 @@ class _MenuPageState extends State<MenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF9F7F2), // Sync background with Home
       body: Column(
         children: [
-          _buildTopBar(),
+          CustomHeader(
+            showIcons: true,
+            showSearch: true,
+            searchHint: "Cari hidangan favoritmu...",
+            onSearchChanged: (val) {
+              searchQuery = val;
+              _filterMenus();
+            },
+          ),
           _buildCategoryBar(),
           Expanded(
             child: RefreshIndicator(
@@ -121,71 +129,6 @@ class _MenuPageState extends State<MenuPage> {
         ],
       ),
       floatingActionButton: _buildFloatingCart(),
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Container(
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 10, bottom: 20, left: 20, right: 20),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text("Selamat Datang!", style: TextStyle(color: Colors.white70, fontSize: 14)),
-                  Text("Menu Catering", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                ],
-              ),
-              TapScale(
-                onTap: _showCart,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildSearchBar(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (val) {
-          searchQuery = val;
-          _filterMenus();
-        },
-        decoration: InputDecoration(
-          icon: const Icon(Icons.search_rounded, color: AppColors.primary),
-          hintText: "Cari hidangan favoritmu...",
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-          border: InputBorder.none,
-        ),
-      ),
     );
   }
 

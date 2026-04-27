@@ -32,6 +32,16 @@ class ApiService {
     return _handleResponse(response);
   }
 
+  static Future<dynamic> patch(String url, Map<String, dynamic> body) async {
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+
+    return _handleResponse(response);
+  }
+
   static dynamic _handleResponse(http.Response response) {
     final data = jsonDecode(response.body);
 

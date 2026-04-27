@@ -3,10 +3,42 @@
     <div class="dropdown me-4">
         <a href="#" class="text-white op-8 position-relative" data-bs-toggle="dropdown">
             <i class="far fa-bell fs-5"></i>
-            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 8px; height: 8px;"></span>
+            @if($unreadCount > 0)
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-aura-crimson border border-dark rounded-circle pulse-red" style="width: 10px; height: 10px;"></span>
+            @endif
         </a>
-        <div class="dropdown-menu dropdown-menu-end aura-card border-0 p-3 mt-3" style="width: 300px;">
-            <p class="small text-muted mb-0 text-center">No new transmissions</p>
+        <div class="dropdown-menu dropdown-menu-end aura-dropdown-dark border-0 p-0 mt-3 shadow-lg" style="width: 320px;">
+            <div class="p-3 border-bottom border-white-5 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold text-white">Notifications</h6>
+                <span class="badge bg-aura-crimson-soft text-aura-crimson rounded-pill px-3">{{ $unreadCount }} New</span>
+            </div>
+            <div class="aura-notification-list custom-scrollbar" style="max-height: 350px; overflow-y: auto;">
+                @forelse($notifications as $notification)
+                    <a href="{{ $notification->related_id ? route('orders.show', $notification->related_id) : '#' }}" 
+                       class="dropdown-item p-3 border-bottom border-white-5 notification-item {{ $notification->is_read ? 'op-6' : 'unread-item' }}">
+                        <div class="d-flex align-items-start">
+                            <div class="aura-icon-circle-sm bg-aura-crimson-transparent text-aura-crimson me-3">
+                                <i class="fas {{ $notification->type == 'new_order' ? 'fa-shopping-basket' : 'fa-info-circle' }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-1 fw-bold small text-white">{{ $notification->title }}</p>
+                                <p class="mb-1 text-white-50 smaller">{{ $notification->message }}</p>
+                                <p class="mb-0 smaller text-aura-crimson op-8 fw-bold">{{ $notification->created_at->diffForHumans() }}</p>
+                            </div>
+                        </div>
+                    </a>
+                @empty
+                    <div class="p-5 text-center">
+                        <div class="op-2 mb-3">
+                            <i class="far fa-bell-slash fs-1 text-white"></i>
+                        </div>
+                        <p class="small text-white-50 mb-0">No new transmissions</p>
+                    </div>
+                @endforelse
+            </div>
+            <div class="p-2">
+                <a href="#" class="btn btn-aura-crimson-outline btn-sm w-100 fw-bold py-2">VIEW ALL NOTIFICATIONS</a>
+            </div>
         </div>
     </div>
 

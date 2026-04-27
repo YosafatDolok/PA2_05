@@ -10,4 +10,5 @@ class ApiEndpoints {
   static const String galleries = '$baseUrl/galleries';
   static const String updateProfile = '$baseUrl/user/update';
   static const String orders = '$baseUrl/orders';
+  static const String notifications = '$baseUrl/notifications';
 }
