@@ -9,9 +9,15 @@ use App\Http\Controllers\Admin\GalleryController;
 use App\Http\Controllers\Admin\MenuCategoryController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PasswordResetController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Password Reset Routes
+Route::post('/password/forgot', [PasswordResetController::class, 'sendOtp']);
+Route::post('/password/verify', [PasswordResetController::class, 'verifyOtp']);
+Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
 
 Route::get('/menus', [MenuController::class, 'apiIndex']);
 Route::get('/menus/{id}', [MenuController::class, 'apiShow']);

@@ -84,9 +84,12 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 15),
             Align(
               alignment: Alignment.centerRight,
-              child: Text(
-                "Lupa Password?",
-                style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+              child: GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/forgot-password'),
+                child: Text(
+                  "Lupa Password?",
+                  style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+                ),
               ),
             ),
             const SizedBox(height: 50),

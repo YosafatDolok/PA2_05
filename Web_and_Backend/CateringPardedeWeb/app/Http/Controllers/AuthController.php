@@ -28,7 +28,7 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role_id' => $userRole->role_id, // Match your migration column name
+            'role_id' => $userRole->id, // Corrected from role_id to id
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;

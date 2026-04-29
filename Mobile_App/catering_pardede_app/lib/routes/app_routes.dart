@@ -9,6 +9,9 @@ import '/views/pages/menu_detail_page.dart';
 import '/views/pages/gallery_detail_page.dart';
 import '/views/pages/order_detail_page.dart';
 import '/views/pages/notification_page.dart';
+import '/views/auth/forgot_password/forgot_password_page.dart';
+import '/views/auth/forgot_password/otp_verification_page.dart';
+import '/views/auth/forgot_password/reset_password_page.dart';
 
 import '/core/guards/role_guard.dart';
 import '/models/menu_model.dart';
@@ -36,6 +39,22 @@ class AppRoutes {
 
       case '/notifications':
         return MaterialPageRoute(builder: (_) => const NotificationPage());
+
+      case '/forgot-password':
+        return MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
+
+      case '/otp-verify':
+        final email = settings.arguments as String;
+        return MaterialPageRoute(builder: (_) => OtpVerificationPage(email: email));
+
+      case '/password-reset':
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => ResetPasswordPage(
+            email: args['email'],
+            otp: args['otp'],
+          ),
+        );
 
       // ================= Admin =================
       case '/admin-dashboard':
