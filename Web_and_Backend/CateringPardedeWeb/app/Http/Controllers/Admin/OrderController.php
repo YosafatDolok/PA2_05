@@ -18,8 +18,16 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::with(['user', 'driver', 'status', 'items.menu'])->findOrFail($id);
-        $statuses = OrderStatus::all();
+        $order = Order::with([
+            'user', 
+            'driver', 
+            'status', 
+            'items.menu',
+            'additions.items.menu',
+            'additions.status'
+        ])->findOrFail($id);
+        
+        $statuses = OrderStatus::all()->unique('status_name');
         return view('admin.orders.show', compact('order', 'statuses'));
     }
 
@@ -28,6 +36,10 @@ class OrderController extends Controller
         $request->validate([
             'status_id' => 'required|exists:order_statuses,status_id',
             'final_price' => 'nullable|numeric|min:0',
+        ], [
+            'status_id.required' => 'Status pesanan wajib dipilih.',
+            'final_price.numeric' => 'Harga final harus berupa angka.',
+            'final_price.min' => 'Harga final tidak boleh negatif.',
         ]);
 
         $order = Order::findOrFail($id);

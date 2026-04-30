@@ -14,6 +14,19 @@
         </a>
     </div>
 
+    @php
+        $pendingAdditions = $order->additions->where('status_id', 1)->count();
+    @endphp
+
+    @if($pendingAdditions > 0)
+        <div class="alert alert-crimson aura-card mb-4 border-0 shadow-lg animate-pulse" style="background: rgba(225, 48, 108, 0.1); border-left: 4px solid #e1306c !important; color: #e1306c;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-circle mr-3"></i>
+                <span class="font-weight-bold">PERHATIAN: Ada {{ $pendingAdditions }} permintaan menu tambahan yang perlu ditinjau!</span>
+            </div>
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-md-8">
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
@@ -44,6 +57,65 @@
                     </table>
                 </div>
             </div>
+
+            @if($order->additions->count() > 0)
+            <div id="additions-section" class="card aura-card border-0 shadow-lg p-4 mb-4">
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Additional Menus (Additions)</h4>
+                @foreach($order->additions as $addition)
+                    <div class="addition-request mb-4 p-3 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid {{ $addition->status_id == 1 ? '#ff9800' : ($addition->status_id == 2 ? '#4caf50' : '#f44336') }}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge {{ $addition->status_id == 1 ? 'bg-warning' : ($addition->status_id == 2 ? 'bg-success' : 'bg-danger') }} small uppercase mb-2">
+                                    {{ $addition->status->status_name }}
+                                </span>
+                                <p class="text-muted extra-small mb-0">Request Date: {{ $addition->created_at->format('d M Y, H:i') }}</p>
+                            </div>
+                            @if($addition->status_id == 2)
+                                <h5 class="text-secondary font-weight-bold">Rp {{ number_format($addition->items->sum('final_price'), 0, ',', '.') }}</h5>
+                            @endif
+                        </div>
+
+                        <ul class="list-unstyled mb-3">
+                            @foreach($addition->items as $item)
+                                <li class="text-white d-flex justify-content-between">
+                                    <span>• {{ $item->menu->name }}</span>
+                                    @if($addition->status_id == 2)
+                                        <span class="text-muted small">Rp {{ number_format($item->final_price, 0, ',', '.') }}</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        @if($addition->notes)
+                            <div class="bg-dark p-2 rounded mb-3">
+                                <p class="text-muted extra-small italic mb-0">"{{ $addition->notes }}"</p>
+                            </div>
+                        @endif
+
+                        @if($addition->status_id == 1)
+                            <form action="{{ route('additions.approve', $addition->id) }}" method="POST" class="mt-3">
+                                @csrf
+                                <div class="row align-items-end">
+                                    @foreach($addition->items as $item)
+                                        <div class="col-md-6 mb-2">
+                                            <label class="extra-small text-muted mb-1">{{ $item->menu->name }} Price (Rp)</label>
+                                            <input type="number" name="prices[{{ $item->id }}]" class="form-control form-control-sm bg-dark border-secondary text-white animate-pulse-crimson" placeholder="Harga per request...">
+                                        </div>
+                                    @endforeach
+                                    <div class="col-12 mt-2">
+                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 font-weight-bold">APPROVE & SET PRICES</button>
+                                        <button type="submit" form="reject-form-{{ $addition->id }}" class="btn btn-link btn-sm text-danger">Reject</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <form id="reject-form-{{ $addition->id }}" action="{{ route('additions.reject', $addition->id) }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+            @endif
 
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
                 <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Customer & Event Info</h4>
@@ -99,31 +171,56 @@
                     
                     <div class="mb-4">
                         <label class="text-muted small uppercase mb-2 d-block">Harga Final (Rp)</label>
-                        <input type="number" name="final_price" value="{{ $order->final_price ? intval($order->final_price) : '' }}" 
-                               class="form-control bg-dark border-secondary text-white" 
+                        <input type="number" name="final_price" value="{{ old('final_price', $order->final_price ? intval($order->final_price) : '') }}" 
+                               class="form-control bg-dark border-secondary text-white @error('final_price') is-invalid @enderror {{ !$order->final_price ? 'animate-pulse-crimson' : '' }}" 
                                placeholder="Masukkan harga total...">
+                        @error('final_price')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="mb-4">
                         <label class="text-muted small uppercase mb-2 d-block">Update Status</label>
-                        <select name="status_id" class="form-control bg-dark border-secondary text-white">
+                        <select name="status_id" class="form-control bg-dark border-secondary text-white @error('status_id') is-invalid @enderror">
                             @foreach($statuses as $status)
-                                <option value="{{ $status->status_id }}" {{ $order->status_id == $status->status_id ? 'selected' : '' }}>
+                                <option value="{{ $status->status_id }}" {{ old('status_id', $order->status_id) == $status->status_id ? 'selected' : '' }}>
                                     {{ $status->status_name }}
                                 </option>
                             @endforeach
                         </select>
+                        @error('status_id')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                        @enderror
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill">SIMPAN PERUBAHAN</button>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill font-weight-bold py-3">SIMPAN PERUBAHAN</button>
                 </form>
             </div>
 
             <div class="card aura-card border-0 shadow-lg p-4">
                 <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Order Summary</h4>
+                
+                @php
+                    $additionsTotal = 0;
+                    foreach($order->additions as $addition) {
+                        if($addition->status_id == 2) {
+                            $additionsTotal += $addition->items->sum('final_price');
+                        }
+                    }
+                @endphp
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted extra-small uppercase">Base Order</span>
+                    <span class="text-white font-weight-bold">Rp {{ number_format($order->final_price ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom border-dark pb-2">
+                    <span class="text-muted extra-small uppercase">Additions</span>
+                    <span class="text-white font-weight-bold">+ Rp {{ number_format($additionsTotal, 0, ',', '.') }}</span>
+                </div>
+
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted small uppercase">Final Price</span>
-                    @if($order->final_price)
-                        <h3 class="text-secondary font-weight-bold mb-0">Rp {{ number_format($order->final_price, 0, ',', '.') }}</h3>
+                    <span class="text-muted small uppercase font-weight-bold">Total Payable</span>
+                    @if($order->final_price || $additionsTotal > 0)
+                        <h3 class="text-secondary font-weight-bold mb-0">Rp {{ number_format(($order->final_price ?? 0) + $additionsTotal, 0, ',', '.') }}</h3>
                     @else
                         <h4 class="text-warning font-weight-bold mb-0">MENUNGGU HARGA</h4>
                     @endif

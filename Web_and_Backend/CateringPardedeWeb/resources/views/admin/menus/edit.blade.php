@@ -24,7 +24,10 @@
                             <div class="col-md-6">
                                 <div class="form-group mb-0">
                                     <label>MENU NAME</label>
-                                    <input type="text" name="name" class="form-control" value="{{ old('name', $menu->name) }}" required>
+                                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $menu->name) }}">
+                                    @error('name')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -32,13 +35,16 @@
                             <div class="col-md-6">
                                 <div class="form-group mb-0">
                                     <label>CATEGORY</label>
-                                    <select name="category_id" class="form-select">
+                                    <select name="category_id" class="form-select @error('category_id') is-invalid @enderror">
                                         @foreach($categories as $cat)
-                                            <option value="{{ $cat->category_id }}" {{ $menu->category_id == $cat->category_id ? 'selected' : '' }}>
+                                            <option value="{{ $cat->category_id }}" {{ old('category_id', $menu->category_id) == $cat->category_id ? 'selected' : '' }}>
                                                 {{ $cat->name }}
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('category_id')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -46,7 +52,10 @@
                             <div class="col-12">
                                 <div class="form-group mb-0">
                                     <label>DESCRIPTION</label>
-                                    <textarea name="description" class="form-control" rows="4">{{ old('description', $menu->description) }}</textarea>
+                                    <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="4">{{ old('description', $menu->description) }}</textarea>
+                                    @error('description')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
                                 </div>
                             </div>
 

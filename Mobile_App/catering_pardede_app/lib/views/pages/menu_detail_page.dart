@@ -52,11 +52,11 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(menu.name, style: const TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
+        foregroundColor: AppColors.primary,
       ),
       body: Column(
         children: [
@@ -67,115 +67,130 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 : Container(height: 300, color: Colors.grey[300], child: const Icon(Icons.fastfood, size: 80)),
           ),
           Expanded(
-            child: Padding(
+            child: ListView(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                          child: Text(menu.name,
-                              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.primary))),
-                      const Text('Hubungi Admin',
-                          style: TextStyle(color: Color(0xFFB8860B), fontWeight: FontWeight.w900, fontSize: 16)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(color: const Color(0xFFB8860B), borderRadius: BorderRadius.circular(2))),
-                  const SizedBox(height: 24),
-                  const Text("Deskripsi",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87)),
-                  const SizedBox(height: 8),
-                  Text(
-                    menu.description ??
-                        "Nikmati hidangan spesial dari Catering Pardede yang dibuat dengan bahan berkualitas dan resep tradisional yang otentik.",
-                    style: const TextStyle(fontSize: 15, color: Colors.black54, height: 1.6),
-                  ),
-                  const Spacer(),
-                  if (!(menu.available ?? true))
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text("TIDAK TERSEDIA",
-                          style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-                    )
-                  else
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TapScale(
-                            onTap: () {
-                              CartService().addToCart(menu);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("${menu.name} ditambahkan ke keranjang"),
-                                  backgroundColor: AppColors.primary,
-                                  action: SnackBarAction(
-                                    label: 'LIHAT',
-                                    textColor: Colors.white,
-                                    onPressed: _showCartSheet,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.primary, width: 2),
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text("KERANJANG",
-                                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: TapScale(
-                            onTap: () async {
-                              final token = await LocalStorage.getToken();
-                              if (token == null) {
-                                Navigator.pushNamed(context, '/login');
-                                return;
-                              }
-                              _showOrderBottomSheet(menu);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text("PESAN SEKARANG",
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                ],
-              ),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                        child: Text(menu.name,
+                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.primary))),
+                    const Text('Hubungi Admin',
+                        style: TextStyle(color: Color(0xFFB8860B), fontWeight: FontWeight.w900, fontSize: 16)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(color: const Color(0xFFB8860B), borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 24),
+                const Text("Deskripsi",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87)),
+                const SizedBox(height: 8),
+                Text(
+                  menu.description ??
+                      "Nikmati hidangan spesial dari Catering Pardede yang dibuat dengan bahan berkualitas dan resep tradisional yang otentik.",
+                  style: const TextStyle(fontSize: 15, color: Colors.black54, height: 1.6),
+                ),
+                const SizedBox(height: 40),
+              ],
             ),
           )
         ],
       ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          height: 90,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Colors.grey.shade200)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
+            ],
+          ),
+          child: _buildActionButtons(menu),
+        ),
+      ),
     );
   }
-}
+
+  Widget _buildActionButtons(MenuModel menu) {
+    if (!(menu.available ?? true)) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.center,
+        child: const Text("TIDAK TERSEDIA",
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: TapScale(
+            onTap: () {
+              CartService().addToCart(menu);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("${menu.name} ditambahkan ke keranjang"),
+                  backgroundColor: AppColors.primary,
+                  action: SnackBarAction(
+                    label: 'LIHAT',
+                    textColor: Colors.white,
+                    onPressed: _showCartSheet,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              alignment: Alignment.center,
+              child: const Text("KERANJANG",
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: TapScale(
+            onTap: () async {
+              final token = await LocalStorage.getToken();
+              if (token == null) {
+                Navigator.pushNamed(context, '/login');
+                return;
+              }
+              _showOrderBottomSheet(menu);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: const Text("PESAN SEKARANG",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -31,5 +31,11 @@ class AppServiceProvider extends ServiceProvider
                 $view->with(compact('notifications', 'unreadCount'));
             }
         });
+
+        \Illuminate\Support\Facades\View::composer('layouts.navbars.sidebar', function ($view) {
+            $pendingOrdersCount = \App\Models\Order::where('status_id', 1)->count();
+            $pendingAdditionsCount = \App\Models\OrderAdditionRequest::where('status_id', 1)->count();
+            $view->with(compact('pendingOrdersCount', 'pendingAdditionsCount'));
+        });
     }
 }

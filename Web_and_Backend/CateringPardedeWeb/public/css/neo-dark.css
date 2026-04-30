@@ -324,6 +324,7 @@ a:hover {
 
 /* Responsive Adjustments */
 @media (max-width: 991px) {
+/* Styles added here */
     .sidebar {
         transform: translateX(-100%);
     }

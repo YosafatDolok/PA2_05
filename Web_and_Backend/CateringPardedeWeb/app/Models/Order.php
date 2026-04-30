@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\OrderAdditionRequest;
 
 class Order extends Model
 {
@@ -53,5 +54,15 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id');
+    }
+
+    public function additions()
+    {
+        return $this->hasMany(OrderAdditionRequest::class, 'order_id', 'order_id');
+    }
+
+    public function review()
+    {
+        return $this->hasOne(Review::class, 'order_id');
     }
 }

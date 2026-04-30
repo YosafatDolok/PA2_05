@@ -25,6 +25,20 @@
             <a href="{{ route('orders.index') }}" class="nav-link">
                 <i class="fas fa-box-open"></i>
                 <span>Orders</span>
+                @if($pendingOrdersCount > 0)
+                    <span class="badge-dot animate-pulse-crimson"></span>
+                @endif
+            </a>
+        </li>
+
+        {{-- Order Additions --}}
+        <li class="nav-item {{ request()->routeIs('admin.additions.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.additions.index') }}" class="nav-link">
+                <i class="fas fa-plus-circle"></i>
+                <span>Additions</span>
+                @if($pendingAdditionsCount > 0)
+                    <span class="badge-dot animate-pulse-crimson"></span>
+                @endif
             </a>
         </li>
 
@@ -46,9 +60,15 @@
 
         {{-- Profile --}}
         <li class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-            <a href="{{ route('profile.edit') }}" class="nav-link">
-                <i class="fas fa-user-shield"></i>
+            <a class="nav-link" href="{{ route('profile.edit') }}">
+                <i class="fas fa-user-cog"></i>
                 <span>Profile</span>
+            </a>
+        </li>
+        <li class="nav-item {{ request()->routeIs('admin.reviews.index') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('admin.reviews.index') }}">
+                <i class="fas fa-star"></i>
+                <span>Reviews</span>
             </a>
         </li>
     </ul>

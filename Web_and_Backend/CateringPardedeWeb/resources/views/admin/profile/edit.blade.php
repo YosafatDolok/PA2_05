@@ -62,21 +62,30 @@
                                     <div class="col-12">
                                         <div class="form-group mb-0">
                                             <label>FULL NAME</label>
-                                            <input type="text" name="name" class="form-control form-control-aura" value="{{ old('name', $user->name) }}" required>
+                                            <input type="text" name="name" class="form-control form-control-aura @error('name') is-invalid @enderror" value="{{ old('name', $user->name) }}">
+                                            @error('name')
+                                                <span class="invalid-feedback">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
                                         <div class="form-group mb-0">
                                             <label>EMAIL ADDRESS</label>
-                                            <input type="email" name="email" class="form-control form-control-aura" value="{{ old('email', $user->email) }}" required>
+                                            <input type="email" name="email" class="form-control form-control-aura @error('email') is-invalid @enderror" value="{{ old('email', $user->email) }}">
+                                            @error('email')
+                                                <span class="invalid-feedback">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
                                         <div class="form-group mb-0">
                                             <label>PHONE NUMBER</label>
-                                            <input type="text" name="phone_number" class="form-control form-control-aura" value="{{ old('phone_number', $user->phone_number) }}">
+                                            <input type="tel" name="phone_number" class="form-control form-control-aura @error('phone_number') is-invalid @enderror" value="{{ old('phone_number', $user->phone_number) }}" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                                            @error('phone_number')
+                                                <span class="invalid-feedback">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     </div>
 

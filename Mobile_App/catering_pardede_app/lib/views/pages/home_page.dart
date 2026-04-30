@@ -4,9 +4,12 @@ import '../widgets/shimmer_loading.dart';
 import '../widgets/tap_scale.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/order_service.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../models/menu_model.dart';
 import '../../models/category_model.dart';
+import '../../models/review_model.dart';
+import '../widgets/star_rating.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,6 +21,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<CategoryModel> categories = [];
   List<MenuModel> menus = [];
+  List<ReviewModel> reviews = [];
   bool isLoading = true;
   String? errorMessage;
 
@@ -35,11 +39,13 @@ class _HomePageState extends State<HomePage> {
     try {
       final categoryData = await ApiService.get(ApiEndpoints.categories);
       final menuData = await ApiService.get(ApiEndpoints.menus);
+      final reviewData = await OrderService.getLatestReviews();
 
       if (mounted) {
         setState(() {
           categories = (categoryData as List).map((json) => CategoryModel.fromJson(json)).toList();
           menus = (menuData as List).map((json) => MenuModel.fromJson(json)).toList();
+          reviews = (reviewData as List).map((json) => ReviewModel.fromJson(json)).toList();
           isLoading = false;
         });
       }
@@ -87,6 +93,14 @@ class _HomePageState extends State<HomePage> {
               _SectionHeader(title: 'Menu Terlaris', onSeeAll: () {}),
               const SizedBox(height: 16),
               isLoading ? _buildGridShimmer() : _MenuGrid(menus: menus),
+              
+              const SizedBox(height: 32),
+
+              if (reviews.isNotEmpty) ...[
+                _SectionHeader(title: 'Apa Kata Mereka?', onSeeAll: () {}),
+                const SizedBox(height: 16),
+                _ReviewCarousel(reviews: reviews),
+              ],
               
               const SizedBox(height: 40),
             ],
@@ -321,6 +335,81 @@ class _FeaturedMenu extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewCarousel extends StatelessWidget {
+  final List<ReviewModel> reviews;
+  const _ReviewCarousel({required this.reviews});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 180,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        scrollDirection: Axis.horizontal,
+        itemCount: reviews.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        itemBuilder: (context, index) {
+          final review = reviews[index];
+          return Container(
+            width: 280,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        review.userName ?? 'Customer',
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF420000)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.verified, size: 10, color: Colors.green),
+                          SizedBox(width: 4),
+                          Text('VERIFIED', style: TextStyle(color: Colors.green, fontSize: 8, fontWeight: FontWeight.w900)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                StarRating(rating: review.rating, isInteractive: false, size: 16),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Text(
+                    review.comment ?? "Tidak ada komentar",
+                    style: const TextStyle(color: Colors.black54, fontSize: 13, height: 1.4, fontStyle: FontStyle.italic),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

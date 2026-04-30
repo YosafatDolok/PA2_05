@@ -18,21 +18,29 @@ class AdminAuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->only('email','password');
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'password.required' => 'Password wajib diisi.',
+        ]);
+
+        $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-
             $request->session()->regenerate();
 
             if (Auth::user()->role_id !== 1) {
                 Auth::logout();
-                return back()->with('error','Not authorized');
+                return back()->with('error', 'Akun Anda tidak memiliki akses admin.');
             }
 
             return redirect('/admin/dashboard');
         }
 
-        return back()->with('error','Invalid email or password');
+        return back()->with('error', 'Email atau password yang Anda masukkan salah. Silakan coba lagi.')->withInput();
     }
 
     

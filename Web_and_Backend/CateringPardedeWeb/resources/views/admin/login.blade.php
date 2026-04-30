@@ -17,31 +17,41 @@
         <form class="form" method="POST" action="{{ route('login') }}">
             @csrf
 
+            @if(session('error'))
+                <div class="alert alert-danger mb-4 aura-card border-0 text-center animate-pulse" style="background: rgba(255, 77, 77, 0.1); color: #ff4d4d;">
+                    <small>{{ session('error') }}</small>
+                </div>
+            @endif
+
             <div class="form-group mb-4">
-                <label class="text-muted small font-weight-bold mb-2 d-block">ID ENTITY (EMAIL)</label>
+                <label class="text-muted small font-weight-bold mb-2 d-block">EMAIL</label>
                 <input 
                     type="email" 
                     name="email" 
-                    class="form-control-aura" 
+                    class="form-control-aura @error('email') is-invalid @enderror" 
                     placeholder="Enter entity email..."
                     value="{{ old('email') }}"
-                    required
                     autofocus
                 >
+                @error('email')
+                    <span class="invalid-feedback">{{ $message }}</span>
+                @enderror
             </div>
 
             <div class="form-group mb-5">
-                <label class="text-muted small font-weight-bold mb-2 d-block">SECRET KEY (PASSWORD)</label>
+                <label class="text-muted small font-weight-bold mb-2 d-block">PASSWORD</label>
                 <input 
                     type="password" 
                     name="password" 
-                    class="form-control-aura mb-1" 
+                    class="form-control-aura @error('password') is-invalid @enderror mb-1" 
                     placeholder="••••••••"
-                    required
                 >
+                @error('password')
+                    <span class="invalid-feedback">{{ $message }}</span>
+                @enderror
                 @if (Route::has('password.request'))
                     <div class="text-end">
-                        <a href="{{ route('password.request') }}" class="text-danger small text-decoration-none">Reset Key?</a>
+                        <a href="{{ route('password.request') }}" class="text-danger small text-decoration-none">Reset Password?</a>
                     </div>
                 @endif
             </div>
@@ -51,8 +61,5 @@
             </button>
         </form>
 
-        <div class="mt-5 text-center">
-            <p class="text-muted extra-small mb-0">SYST_VER: 2.1.0 // ACTIVE</p>
-        </div>
     </div>
 @endsection

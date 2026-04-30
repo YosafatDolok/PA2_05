@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\MenuCategoryController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\OrderAdditionController;
+use App\Http\Controllers\Api\ReviewController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -27,8 +29,7 @@ Route::get('/categories', [MenuCategoryController::class, 'apiIndex']);
 Route::get('/galleries', [GalleryController::class, 'apiIndex']);
 Route::get('/galleries/{id}', [GalleryController::class, 'apiShow']);
 
-Route::get('/galleries', [GalleryController::class, 'apiIndex']);
-Route::get('/galleries/{id}', [GalleryController::class, 'apiShow']);
+Route::get('/reviews', [ReviewController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
@@ -40,6 +41,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::post('/orders/{id}/review', [ReviewController::class, 'store']);
+    
+    // Order Additions
+    Route::post('/orders/{id}/additions', [OrderAdditionController::class, 'store']);
+    Route::get('/orders/{id}/additions', [OrderAdditionController::class, 'index']);
+    Route::delete('/orders/additions/{id}', [OrderAdditionController::class, 'destroy']);
     
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);

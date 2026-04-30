@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../widgets/custom_header.dart';
 import '../widgets/tap_scale.dart';
+import 'edit_profile_page.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -179,7 +180,15 @@ class _AccountPageState extends State<AccountPage> {
       child: Column(
         children: [
           _accountTile(Icons.shopping_bag_outlined, "Pesanan Saya", () {}),
-          _accountTile(Icons.person_outline, "Edit Profil", () {}),
+          _accountTile(Icons.person_outline, "Edit Profil", () async {
+            if (user != null) {
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EditProfilePage(user: user!)),
+              );
+              if (updated == true) _fetchAccountData();
+            }
+          }),
           _accountTile(Icons.notifications_none_outlined, "Notifikasi", () {}),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),

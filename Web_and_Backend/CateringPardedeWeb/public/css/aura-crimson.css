@@ -245,7 +245,7 @@ body {
 
 .search-box i {
     position: absolute;
-    left: 15px;
+    left: 20px; /* Moved in from the edge */
     top: 50%;
     transform: translateY(-50%);
     color: var(--aura-text-muted);
@@ -255,7 +255,7 @@ body {
     background: var(--aura-glass);
     border: 1px solid var(--aura-border);
     border-radius: 12px;
-    padding: 10px 15px 10px 45px;
+    padding: 10px 15px 10px 55px; /* Increased padding-left */
     color: var(--aura-white);
     width: 300px;
     transition: border-color 0.3s ease;

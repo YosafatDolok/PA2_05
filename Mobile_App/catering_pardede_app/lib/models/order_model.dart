@@ -1,4 +1,5 @@
 import 'menu_model.dart';
+import 'review_model.dart';
 
 class OrderModel {
   final int id;
@@ -20,6 +21,7 @@ class OrderModel {
   final String? deliveryProofImage;
   final OrderStatusModel? status;
   final List<OrderItemModel>? items;
+  final ReviewModel? review;
 
   OrderModel({
     required this.id,
@@ -41,6 +43,7 @@ class OrderModel {
     this.deliveryProofImage,
     this.status,
     this.items,
+    this.review,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -73,6 +76,9 @@ class OrderModel {
           ? (json['items'] as List)
               .map((i) => OrderItemModel.fromJson(i))
               .toList()
+          : null,
+      review: json['review'] != null
+          ? ReviewModel.fromJson(json['review'])
           : null,
     );
   }
