@@ -65,4 +65,16 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Profile updated successfully');
     }
+
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        $user = auth()->user();
+        $user->update(['fcm_token' => $request->fcm_token]);
+
+        return response()->json(['message' => 'FCM token updated successfully']);
+    }
 }

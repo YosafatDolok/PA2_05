@@ -14,6 +14,10 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $orders = Order::with(['status', 'driver', 'items.menu'])
+            ->withCount(['messages as unread_messages_count' => function ($query) {
+                $query->where('is_read', false)
+                      ->where('sender_id', '!=', auth()->id());
+            }])
             ->where('user_id', $request->user()->user_id)
             ->orderBy('order_date', 'desc')
             ->get();
@@ -93,6 +97,10 @@ class OrderController extends Controller
     public function show($id, Request $request)
     {
         $order = Order::with(['status', 'driver', 'items.menu'])
+            ->withCount(['messages as unread_messages_count' => function ($query) {
+                $query->where('is_read', false)
+                      ->where('sender_id', '!=', auth()->id());
+            }])
             ->where('user_id', $request->user()->user_id)
             ->findOrFail($id);
 

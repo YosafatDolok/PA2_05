@@ -9,6 +9,11 @@ class Order extends Model
 {
     protected $primaryKey = 'order_id';
 
+    public function getRouteKeyName()
+    {
+        return 'order_id';
+    }
+
     protected $fillable = [
         'user_id',
         'driver_id',
@@ -64,5 +69,10 @@ class Order extends Model
     public function review()
     {
         return $this->hasOne(Review::class, 'order_id');
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(OrderMessage::class, 'order_id');
     }
 }

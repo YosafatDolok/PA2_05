@@ -3,7 +3,20 @@ import 'routes/app_routes.dart';
 import '/views/auth/auth_wrapper.dart';
 import '/core/theme/app_theme.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import '/core/services/push_notification_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Note: This will fail until google-services.json is added
+  try {
+    await Firebase.initializeApp();
+    await PushNotificationService.initialize();
+  } catch (e) {
+    debugPrint('Firebase Initialization Error: $e');
+  }
+
   runApp(const MyApp());
 }
 

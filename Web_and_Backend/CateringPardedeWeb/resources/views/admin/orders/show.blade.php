@@ -164,7 +164,12 @@
 
         <div class="col-md-4">
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Action Center</h4>
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-2">
+                    <h4 class="font-weight-bold m-0 text-secondary">Action Center</h4>
+                    <a href="{{ route('orders.chat', $order->order_id) }}" class="btn btn-secondary btn-sm rounded-pill px-3">
+                        <i class="fas fa-comments mr-2"></i> OPEN CHAT
+                    </a>
+                </div>
                 <form action="{{ route('orders.updateStatus', $order->order_id) }}" method="POST">
                     @csrf
                     @method('PATCH')

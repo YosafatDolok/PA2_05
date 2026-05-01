@@ -173,6 +173,18 @@
             text-overflow: ellipsis;
             padding-left: 5px;
         }
+
+        /* Message Badges */
+        .bg-crimson { background: #ff334b !important; color: white !important; }
+        .pulse-mini {
+            animation: pulse-mini 1.5s infinite;
+            box-shadow: 0 0 0 rgba(255, 51, 75, 0.4);
+        }
+        @keyframes pulse-mini {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 51, 75, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(255, 51, 75, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 51, 75, 0); }
+        }
     </style>
 </head>
 

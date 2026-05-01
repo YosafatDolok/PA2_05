@@ -38,7 +38,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/messages', [OrderController::class, 'messages'])->name('admin.messages');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{id}/chat', [OrderController::class, 'chat'])->name('orders.chat');
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
         Route::get('/additions', [OrderAdditionController::class, 'index'])->name('admin.additions.index');

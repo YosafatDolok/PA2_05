@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\OrderAdditionController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\OrderMessageController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -34,6 +35,7 @@ Route::get('/reviews', [ReviewController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/user/update', [ProfileController::class, 'update']); 
+    Route::post('/user/fcm-token', [ProfileController::class, 'updateFcmToken']); 
     
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -42,6 +44,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/orders/{id}/review', [ReviewController::class, 'store']);
+
+    // Order Messaging
+    Route::get('/orders/{order}/messages', [OrderMessageController::class, 'index']);
+    Route::post('/orders/{order}/messages', [OrderMessageController::class, 'store']);
+    Route::post('/orders/{order}/messages/read', [OrderMessageController::class, 'markAsRead']);
+    Route::post('/orders/{order}/messages/{message}/accept', [OrderMessageController::class, 'acceptProposal']);
     
     // Order Additions
     Route::post('/orders/{id}/additions', [OrderAdditionController::class, 'store']);

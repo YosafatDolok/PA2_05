@@ -14,4 +14,5 @@ class ApiEndpoints {
   static const String reviews = '$baseUrl/reviews';
   static String reviewOrder(int id) => '$baseUrl/orders/$id/review';
   static String menuReviews(int id) => '$baseUrl/menus/$id/reviews';
+  static String orderMessages(int id) => '$baseUrl/orders/$id/messages';
 }

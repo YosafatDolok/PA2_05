@@ -32,6 +32,11 @@
                             <tr>
                                 <td>
                                     <span class="font-weight-bold text-white">#ORD-{{ str_pad($order->order_id, 5, '0', STR_PAD_LEFT) }}</span>
+                                    @if($order->unread_messages_count > 0)
+                                        <span class="badge bg-crimson pulse-mini ml-2" title="New messages">
+                                            <i class="fas fa-comment"></i> {{ $order->unread_messages_count }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="mb-0 font-weight-bold text-whitefs-6">{{ $order->user->name }}</div>

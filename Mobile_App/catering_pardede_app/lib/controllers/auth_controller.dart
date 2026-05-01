@@ -1,6 +1,7 @@
 import '/core/services/auth_service.dart';
 import '/core/utils/helpers.dart';
 import 'package:flutter/material.dart';
+import '/core/services/push_notification_service.dart';
 
 class AuthController {
   // Login
@@ -15,6 +16,9 @@ class AuthController {
         final role = user['role']?['name'];
 
         Helpers.showSnackBar(context, 'Login Berhasil');
+
+        // Sync FCM token with backend
+        PushNotificationService.syncToken();
 
         if (role == 'admin') {
           Navigator.pushReplacementNamed(context, '/admin-dashboard');
@@ -47,6 +51,9 @@ class AuthController {
 
       Helpers.showSnackBar(
           context, result['message'] ?? 'Registrasi Berhasil');
+
+      // Sync FCM token with backend
+      PushNotificationService.syncToken();
 
       // 🔀 If token returned → go to dashboard
       if (role == 'admin') {

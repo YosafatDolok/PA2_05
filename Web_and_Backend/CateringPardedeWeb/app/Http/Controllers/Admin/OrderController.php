@@ -12,7 +12,13 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['user', 'status', 'items.menu'])->orderBy('order_date', 'desc')->get();
+        $orders = Order::with(['user', 'status', 'items.menu'])
+            ->withCount(['messages as unread_messages_count' => function ($query) {
+                $query->where('is_read', false)
+                      ->where('sender_id', '!=', auth()->id());
+            }])
+            ->orderBy('order_date', 'desc')
+            ->get();
         return view('admin.orders.index', compact('orders'));
     }
 
@@ -29,6 +35,31 @@ class OrderController extends Controller
         
         $statuses = OrderStatus::all()->unique('status_name');
         return view('admin.orders.show', compact('order', 'statuses'));
+    }
+
+    public function chat($id)
+    {
+        $order = Order::with(['user', 'status', 'items.menu'])->findOrFail($id);
+        return view('admin.orders.chat', compact('order'));
+    }
+
+    public function messages()
+    {
+        $orders = Order::with(['user', 'status'])
+            ->has('messages')
+            ->withCount(['messages as unread_messages_count' => function ($query) {
+                $query->where('is_read', false)
+                      ->where('sender_id', '!=', auth()->id());
+            }])
+            ->with(['messages' => function ($query) {
+                $query->latest()->limit(1);
+            }])
+            ->get()
+            ->sortByDesc(function ($order) {
+                return $order->messages->first()?->created_at;
+            });
+
+        return view('admin.messages.index', compact('orders'));
     }
 
     public function updateStatus(Request $request, $id)

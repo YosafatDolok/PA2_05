@@ -1,0 +1,184 @@
+@extends('layouts.app', [
+    'page' => __('Messages Inbox'),
+    'pageSlug' => 'messages'
+])
+
+@section('content')
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="m-0 font-weight-bold">Live Negotiations</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage customer discussions and proposals</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card aura-card border-0 shadow-lg bg-transparent">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0" style="border-separate: separate; border-spacing: 0 12px;">
+                        <thead>
+                            <tr class="text-muted extra-small uppercase border-0">
+                                <th class="ps-4 border-0">Customer</th>
+                                <th class="border-0">Latest Message</th>
+                                <th class="border-0">Order Info</th>
+                                <th class="border-0">Status</th>
+                                <th class="text-center border-0">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($orders as $order)
+                                @php
+                                    $lastMessage = $order->messages->first();
+                                    $isUnread = $order->unread_messages_count > 0;
+                                @endphp
+                                <tr class="inbox-row {{ $isUnread ? 'unread-thread' : '' }}">
+                                    <td class="ps-4 py-4 rounded-start">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-container position-relative" style="margin-right: 35px;">
+                                                <div class="avatar-premium">
+                                                    {{ substr($order->user->name, 0, 1) }}
+                                                </div>
+                                                @if($isUnread)
+                                                    <span class="status-indicator-pulse"></span>
+                                                @endif
+                                            </div>
+                                            <div class="lh-sm">
+                                                <div class="font-weight-bold text-white fs-6 mb-1">{{ $order->user->name }}</div>
+                                                <div class="text-muted extra-small d-flex align-items-center">
+                                                    <i class="far fa-clock mr-2 opacity-70"></i> {{ $lastMessage->created_at->diffForHumans() }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4">
+                                        <div class="message-preview">
+                                            @if($lastMessage->sender_id == auth()->id())
+                                                <span class="text-secondary-light font-weight-bold">You: </span>
+                                            @endif
+                                            {{ $lastMessage->message }}
+                                        </div>
+                                    </td>
+                                    <td class="py-4">
+                                        <div class="text-white small font-weight-bold">#ORD-{{ str_pad($order->order_id, 5, '0', STR_PAD_LEFT) }}</div>
+                                        <div class="text-muted extra-small">{{ $order->items->count() }} items ordered</div>
+                                    </td>
+                                    <td class="py-4">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge badge-aura-status {{ strtolower(str_replace(' ', '-', $order->status->status_name)) }}">
+                                                {{ strtoupper($order->status->status_name) }}
+                                            </span>
+                                            @if($isUnread)
+                                                <span class="badge bg-crimson pulse-mini ms-2">NEW</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="text-center py-4 rounded-end">
+                                        <a href="{{ route('orders.chat', $order->order_id) }}" class="btn btn-primary btn-sm rounded-pill px-4 shadow-crimson-sm hover-scale">
+                                            <i class="fas fa-comment-dots mr-2"></i> OPEN CHAT
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="empty-state py-5">
+                                            <i class="fas fa-comment-slash mb-4" style="font-size: 4rem; color: rgba(255,255,255,0.05);"></i>
+                                            <h4 class="text-muted">No messages yet</h4>
+                                            <p class="text-muted small">Customer inquiries will appear here.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('js')
+<style>
+    .inbox-row {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        cursor: pointer;
+    }
+
+    .inbox-row:hover {
+        background: rgba(255, 255, 255, 0.07);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .unread-thread {
+        background: rgba(255, 51, 75, 0.04);
+        border-left: 4px solid #ff334b !important;
+    }
+
+    .avatar-premium {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        border: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        font-weight: 800;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .unread-thread .avatar-premium {
+        background: linear-gradient(135deg, #ff334b, #b91d2e);
+        border: none;
+        box-shadow: 0 4px 10px rgba(255, 51, 75, 0.4);
+    }
+
+    .status-indicator-pulse {
+        position: absolute;
+        top: 50%;
+        right: -8px;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        background: #ff334b;
+        border: 2px solid #0f0f14;
+        border-radius: 50%;
+        animation: pulse-mini 1.5s infinite;
+    }
+
+    .message-preview {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+        max-width: 350px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-style: italic;
+    }
+
+    .badge-aura-status {
+        padding: 0.5em 1em;
+        border-radius: 8px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.6);
+    }
+
+    .badge-aura-status.pending { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    .badge-aura-status.confirmed { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
+
+    .hover-scale:hover {
+        transform: scale(1.05);
+    }
+
+    .shadow-crimson-sm {
+        box-shadow: 0 4px 15px rgba(255, 51, 75, 0.2);
+    }
+</style>
+@endpush

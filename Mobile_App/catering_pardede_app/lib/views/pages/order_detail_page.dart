@@ -10,6 +10,7 @@ import '../../core/services/api_service.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../widgets/review_sheet.dart';
 import '../widgets/star_rating.dart';
+import 'order_chat_page.dart';
 import 'dart:ui';
 
 class OrderDetailPage extends StatefulWidget {
@@ -571,6 +572,38 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
                     ),
                   ),
+                const SizedBox(height: 16),
+                TapScale(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder.id)),
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.chat_outlined, color: AppColors.primary, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          "DISKUSI HARGA DENGAN ADMIN",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

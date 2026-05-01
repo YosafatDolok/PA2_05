@@ -226,7 +226,31 @@ class _OrderPageState extends State<OrderPage> {
                   '#ORD-${order.id.toString().padLeft(5, '0')}',
                   style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary),
                 ),
-                _buildStatusBadge(order.status?.name ?? 'Unknown'),
+                Row(
+                  children: [
+                    if (order.unreadMessagesCount > 0)
+                      Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.chat_bubble, color: Colors.white, size: 10),
+                            const SizedBox(width: 4),
+                            Text(
+                              order.unreadMessagesCount.toString(),
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    _buildStatusBadge(order.status?.name ?? 'Unknown'),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 8),

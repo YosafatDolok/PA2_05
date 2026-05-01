@@ -22,6 +22,8 @@ class OrderModel {
   final OrderStatusModel? status;
   final List<OrderItemModel>? items;
   final ReviewModel? review;
+  final int unreadMessagesCount;
+  final int totalMessagesCount;
 
   OrderModel({
     required this.id,
@@ -44,6 +46,8 @@ class OrderModel {
     this.status,
     this.items,
     this.review,
+    this.unreadMessagesCount = 0,
+    this.totalMessagesCount = 0,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -80,6 +84,8 @@ class OrderModel {
       review: json['review'] != null
           ? ReviewModel.fromJson(json['review'])
           : null,
+      unreadMessagesCount: json['unread_messages_count'] ?? 0,
+      totalMessagesCount: json['messages_count'] ?? 0,
     );
   }
 }

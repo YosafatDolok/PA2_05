@@ -31,6 +31,19 @@
             </a>
         </li>
 
+        {{-- Messages --}}
+        <li class="nav-item {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
+            <a href="{{ route('admin.messages') }}" class="nav-link">
+                <i class="fas fa-comments"></i>
+                <span>Messages</span>
+                @if($unreadMessagesTotalCount > 0)
+                    <span class="badge bg-crimson pulse-mini ms-auto" style="font-size: 0.6rem; padding: 0.3em 0.6em;">
+                        {{ $unreadMessagesTotalCount }}
+                    </span>
+                @endif
+            </a>
+        </li>
+
         {{-- Order Additions --}}
         <li class="nav-item {{ request()->routeIs('admin.additions.*') ? 'active' : '' }}">
             <a href="{{ route('admin.additions.index') }}" class="nav-link">
