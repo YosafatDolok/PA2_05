@@ -75,7 +75,7 @@ class _AccountPageState extends State<AccountPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.05),
+                color: AppColors.primary.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.person_outline, size: 80, color: AppColors.primary),
@@ -129,7 +129,7 @@ class _AccountPageState extends State<AccountPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -171,7 +171,7 @@ class _AccountPageState extends State<AccountPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

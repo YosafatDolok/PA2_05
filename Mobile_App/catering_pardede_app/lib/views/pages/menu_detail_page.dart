@@ -8,6 +8,7 @@ import '../widgets/order_form_sheet.dart';
 import '../widgets/tap_scale.dart';
 import '../../core/services/cart_service.dart';
 import '../widgets/cart_sheet.dart';
+import '../../core/services/auth_service.dart';
 
 class MenuDetailPage extends StatefulWidget {
   const MenuDetailPage({super.key});
@@ -17,6 +18,23 @@ class MenuDetailPage extends StatefulWidget {
 }
 
 class _MenuDetailPageState extends State<MenuDetailPage> {
+  bool isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdmin();
+  }
+
+  Future<void> _checkAdmin() async {
+    final adminStatus = await AuthService.isAdmin();
+    if (mounted) {
+      setState(() {
+        isAdmin = adminStatus;
+      });
+    }
+  }
+
   void _showCartSheet() {
     showModalBottomSheet(
       context: context,
@@ -108,10 +126,12 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
             color: Colors.white,
             border: Border(top: BorderSide(color: Colors.grey.shade200)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5)),
             ],
           ),
-          child: _buildActionButtons(menu),
+          child: isAdmin 
+                 ? const Center(child: Text("VIEW MODE (ADMIN)", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 2)))
+                 : _buildActionButtons(menu),
         ),
       ),
     );
@@ -181,7 +201,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
                 ],
               ),
               alignment: Alignment.center,

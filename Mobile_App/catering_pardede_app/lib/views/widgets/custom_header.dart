@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
@@ -55,7 +54,7 @@ class CustomHeader extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             subtitle!,
-                            style: AppTextStyles.subtitle.copyWith(color: Colors.white.withOpacity(0.8)),
+                            style: AppTextStyles.subtitle.copyWith(color: Colors.white.withValues(alpha: 0.8)),
                           ),
                         ],
                       ],
@@ -117,7 +116,7 @@ class CustomHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(27),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

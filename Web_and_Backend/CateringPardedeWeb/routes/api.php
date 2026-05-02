@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\OrderAdditionController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\OrderMessageController;
+use App\Http\Controllers\Api\AdminDashboardController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -51,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{order}/messages/read', [OrderMessageController::class, 'markAsRead']);
     Route::post('/orders/{order}/messages/{message}/accept', [OrderMessageController::class, 'acceptProposal']);
     
+    // Admin Inbox
+    Route::get('/admin/inbox', [\App\Http\Controllers\Api\AdminChatController::class, 'inbox']);
+    
     // Order Additions
     Route::post('/orders/{id}/additions', [OrderAdditionController::class, 'store']);
     Route::get('/orders/{id}/additions', [OrderAdditionController::class, 'index']);
@@ -60,7 +64,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     
-    Route::get('/admin/dashboard', function () {
-        return response()->json(['message' => 'Selamat Datang, Admin']);
-    });
+    Route::get('/admin/stats', [AdminDashboardController::class, 'getStats']);
 });

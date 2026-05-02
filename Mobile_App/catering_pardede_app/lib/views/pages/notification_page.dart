@@ -140,11 +140,11 @@ class _NotificationPageState extends State<NotificationPage> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: unread ? Colors.white : Colors.white.withOpacity(0.6),
+          color: unread ? Colors.white : Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: unread ? AppColors.primary.withOpacity(0.1) : Colors.transparent),
+          border: Border.all(color: unread ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent),
           boxShadow: [
-            if (unread) BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+            if (unread) BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Row(
@@ -153,7 +153,7 @@ class _NotificationPageState extends State<NotificationPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: unread ? AppColors.primary.withOpacity(0.1) : Colors.grey[100],
+                color: unread ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey[100],
                 shape: BoxShape.circle,
               ),
               child: Icon(

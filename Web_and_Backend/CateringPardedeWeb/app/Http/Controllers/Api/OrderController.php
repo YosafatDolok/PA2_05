@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderMessage;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -18,15 +20,52 @@ class OrderController extends Controller
                 $query->where('is_read', false)
                       ->where('sender_id', '!=', auth()->id());
             }])
-            ->where('user_id', $request->user()->user_id)
+            ->when((int)$request->user()->role_id !== 1, function($query) use ($request) {
+                return $query->where('user_id', $request->user()->user_id);
+            })
+            ->when($request->filter === 'pending_proposal', function($query) {
+                return $query->where('final_price', 0)->where('status_id', '!=', 5);
+            })
+            ->when($request->filter === 'unread_chat', function($query) {
+                return $query->whereHas('messages', function($q) {
+                    $q->where('is_read', false)->where('sender_id', '!=', auth()->id());
+                });
+            })
             ->orderBy('order_date', 'desc')
             ->get();
 
         return response()->json($orders);
     }
 
+    public function inbox(Request $request)
+    {
+        // Fetch all unique order IDs that have messages
+        $orderIds = OrderMessage::distinct()->pluck('order_id');
+
+        // Fetch those orders bypassing ALL filters and scopes
+        $inbox = Order::withoutGlobalScopes()
+            ->whereIn('order_id', $orderIds)
+            ->with(['user', 'latestMessage'])
+            ->withCount(['messages as unread_count' => function ($query) {
+                $query->where('is_read', false)
+                      ->where('sender_id', '!=', auth()->id());
+            }])
+            ->get()
+            ->sortByDesc(function ($order) {
+                return $order->latestMessage?->created_at ?? $order->updated_at;
+            })
+            ->values();
+
+        return response()->json($inbox);
+    }
+
     public function store(Request $request)
     {
+        // Security: Prevent Admins from placing orders
+        if ((int)$request->user()->role_id === 1) {
+            return response()->json(['message' => 'Admin tidak diizinkan untuk membuat pesanan.'], 403);
+        }
+
         Log::info('Order Submission:', $request->all());
         $validator = Validator::make($request->all(), [
             'event_address' => 'required|string',
@@ -101,7 +140,9 @@ class OrderController extends Controller
                 $query->where('is_read', false)
                       ->where('sender_id', '!=', auth()->id());
             }])
-            ->where('user_id', $request->user()->user_id)
+            ->when((int)$request->user()->role_id !== 1, function($query) use ($request) {
+                return $query->where('user_id', $request->user()->user_id);
+            })
             ->findOrFail($id);
 
         return response()->json($order);

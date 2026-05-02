@@ -91,7 +91,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                       backgroundImage: widget.user.profilePicture != null
                           ? NetworkImage("http://10.0.2.2:8000/storage/${widget.user.profilePicture}")
                           : null,
@@ -177,7 +177,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
+                color: AppColors.primary.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),

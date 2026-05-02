@@ -73,6 +73,16 @@ class AuthService {
     }
   }
 
+  static Future<bool> isAdmin() async {
+    final user = await getUser();
+    if (user != null) {
+      final role = user['role']?['name'] ?? 
+                   (user['role_id'] == 1 ? 'admin' : 'customer');
+      return role == 'admin';
+    }
+    return false;
+  }
+
   static Future<void> logout() async {
     try {
       await ApiService.post(ApiEndpoints.logout, {});

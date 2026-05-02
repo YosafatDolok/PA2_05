@@ -163,7 +163,7 @@ class _MenuPageState extends State<MenuPage> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade200),
                   boxShadow: isSelected
-                      ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                      ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]
                       : null,
                 ),
                 child: Text(
@@ -222,7 +222,7 @@ class _MenuPageState extends State<MenuPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8)),
           ],
         ),
         child: Column(
@@ -290,7 +290,7 @@ class _MenuPageState extends State<MenuPage> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
@@ -314,7 +314,7 @@ class _MenuPageState extends State<MenuPage> {
           color: AppColors.primary,
           shape: BoxShape.circle,
           boxShadow: [
-            BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+            BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 15, offset: const Offset(0, 8)),
           ],
         ),
         child: Stack(

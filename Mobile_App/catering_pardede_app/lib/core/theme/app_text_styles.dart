@@ -44,4 +44,17 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.textSecondary,
   );
+
+  static const h1 = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w900,
+    color: AppColors.textPrimary,
+    letterSpacing: -1.0,
+  );
+
+  static const h2 = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w800,
+    color: AppColors.textPrimary,
+  );
 }

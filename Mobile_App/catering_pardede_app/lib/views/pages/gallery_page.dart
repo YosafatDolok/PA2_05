@@ -117,7 +117,7 @@ class _GalleryPageState extends State<GalleryPage> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 15, offset: const Offset(0, 8)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 15, offset: const Offset(0, 8)),
             ],
           ),
           child: ClipRRect(
@@ -135,7 +135,7 @@ class _GalleryPageState extends State<GalleryPage> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
                     ),
                   ),
                 ),
@@ -167,7 +167,7 @@ class _GalleryPageState extends State<GalleryPage> {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        barrierColor: Colors.black.withOpacity(0.95),
+        barrierColor: Colors.black.withValues(alpha: 0.95),
         pageBuilder: (context, _, __) => Stack(
           children: [
             InteractiveViewer(
@@ -191,7 +191,7 @@ class _GalleryPageState extends State<GalleryPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white10),
                     ),

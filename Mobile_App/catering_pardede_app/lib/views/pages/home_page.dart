@@ -224,7 +224,7 @@ class _CategoryList extends StatelessWidget {
                     border: Border.all(color: isAll ? const Color(0xFF7A0000) : Colors.white),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       )
@@ -283,7 +283,7 @@ class _FeaturedMenu extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10)),
             ],
           ),
           child: ClipRRect(
@@ -301,7 +301,7 @@ class _FeaturedMenu extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withOpacity(0.85)],
+                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.85)],
                       ),
                     ),
                   ),
@@ -362,7 +362,7 @@ class _ReviewCarousel extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 8)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 8)),
               ],
             ),
             child: Column(
@@ -382,7 +382,7 @@ class _ReviewCarousel extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -455,7 +455,7 @@ class _MenuCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 8)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 8)),
           ],
         ),
         child: Column(

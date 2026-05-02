@@ -12,6 +12,9 @@ import '/views/pages/notification_page.dart';
 import '/views/auth/forgot_password/forgot_password_page.dart';
 import '/views/auth/forgot_password/otp_verification_page.dart';
 import '/views/auth/forgot_password/reset_password_page.dart';
+import '/views/pages/order_page.dart';
+import '/views/pages/menu_page.dart';
+import '/views/pages/chat_inbox_page.dart';
 
 import '/core/guards/role_guard.dart';
 import '/models/menu_model.dart';
@@ -64,6 +67,15 @@ class AppRoutes {
             child: AdminDashboardPage(),
           ),
         );
+
+      case '/orders':
+        return MaterialPageRoute(builder: (_) => const OrderPage());
+
+      case '/menus':
+        return MaterialPageRoute(builder: (_) => const MenuPage());
+
+      case '/messages':
+        return MaterialPageRoute(builder: (_) => const ChatInboxPage());
 
       // ================= Menu Detail =================
       case '/menu-detail':

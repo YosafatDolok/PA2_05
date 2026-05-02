@@ -44,6 +44,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
     final userData = await AuthService.getUser();
     if (userData != null) {
       setState(() {
+        // Use user_id specifically as it matches the sender_id in messages
         _currentUserId = userData['user_id'] ?? userData['id'];
         _userRole = userData['role']?['name'] ?? (userData['role_id'] == 1 ? 'admin' : 'customer');
       });
@@ -101,7 +102,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.textSecondary.withOpacity(0.5)),
+                        Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.5)),
                         const SizedBox(height: 16),
                         const Text('Belum ada pesan.\nMulai diskusi tentang harga di sini.', 
                           textAlign: TextAlign.center,
@@ -117,8 +118,9 @@ class _OrderChatPageState extends State<OrderChatPage> {
                   itemCount: _chatController.messages.length,
                   itemBuilder: (context, index) {
                     final message = _chatController.messages[index];
-                    final isMe = message.sender?.role?.name != 'admin'; 
-
+                    // Strict ID comparison for correct alignment
+                    final isMe = _currentUserId != null && 
+                                 message.senderId.toString() == _currentUserId.toString();
                     if (message.type == 'proposal') {
                       return _buildProposalCard(message, isMe);
                     }
@@ -151,7 +153,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -188,7 +190,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
         color: AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             offset: const Offset(0, -2),
             blurRadius: 10,
           ),
@@ -295,7 +297,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.amber.shade300, width: 2),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5)),
           ],
         ),
         child: Column(
@@ -327,7 +329,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
             else if (message.proposalStatus == 'accepted')
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

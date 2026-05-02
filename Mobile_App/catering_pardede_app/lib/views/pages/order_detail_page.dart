@@ -129,7 +129,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.grey[50],
+                              color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : Colors.grey[50],
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent),
                             ),
@@ -359,7 +359,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           color: AppColors.secondary,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
-                            BoxShadow(color: AppColors.secondary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                            BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
                           ],
                         ),
                         alignment: Alignment.center,
@@ -415,7 +415,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -431,7 +431,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.restaurant, color: AppColors.primary, size: 32),
@@ -512,7 +512,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(24),
                 bottomRight: Radius.circular(24),
@@ -584,7 +584,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     decoration: BoxDecoration(
                       color: AppColors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -693,7 +693,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -718,7 +718,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: req.statusId == 1 ? Colors.orange.withOpacity(0.1) : (req.statusId == 2 ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1)),
+                        color: req.statusId == 1 ? Colors.orange.withValues(alpha: 0.1) : (req.statusId == 2 ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -801,9 +801,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
         ),
         child: const Column(
           children: [
@@ -834,9 +834,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.05),
+        color: Colors.amber.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.amber.withOpacity(0.2)),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [

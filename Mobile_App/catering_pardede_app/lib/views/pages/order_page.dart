@@ -10,6 +10,7 @@ import '../../models/order_model.dart';
 import '../../core/storage/local_storage.dart';
 import '../../models/menu_model.dart';
 import '../widgets/order_form_sheet.dart';
+import '../../core/services/auth_service.dart';
 
 class OrderPage extends StatefulWidget {
   final VoidCallback? onMenuRequested;
@@ -23,6 +24,8 @@ class _OrderPageState extends State<OrderPage> {
   List<OrderModel> orders = [];
   bool isLoading = true;
   bool isLoggedIn = false;
+  bool isAdmin = false;
+  String? activeFilter;
 
   @override
   void initState() {
@@ -47,13 +50,32 @@ class _OrderPageState extends State<OrderPage> {
         isLoggedIn = true;
       });
     }
+
+    final adminStatus = await AuthService.isAdmin();
+    if (mounted) {
+      setState(() {
+        isAdmin = adminStatus;
+      });
+    }
+
+    // 🔥 Check for filters from navigation arguments
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic> && args.containsKey('filter')) {
+      activeFilter = args['filter'];
+    }
+
     _fetchOrders();
   }
 
   Future<void> _fetchOrders() async {
     setState(() => isLoading = true);
     try {
-      final data = await ApiService.get(ApiEndpoints.orders);
+      String url = ApiEndpoints.orders;
+      if (activeFilter != null) {
+        url += '?filter=$activeFilter';
+      }
+      
+      final data = await ApiService.get(url);
       if (mounted) {
         setState(() {
           orders = (data as List)
@@ -89,7 +111,7 @@ class _OrderPageState extends State<OrderPage> {
           )
         ],
       ),
-      floatingActionButton: isLoggedIn && !isLoading ? _buildFAB() : null,
+      floatingActionButton: isLoggedIn && !isLoading && !isAdmin ? _buildFAB() : null,
     );
   }
 
@@ -213,7 +235,7 @@ class _OrderPageState extends State<OrderPage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
@@ -326,9 +348,9 @@ class _OrderPageState extends State<OrderPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         status.toUpperCase(),
