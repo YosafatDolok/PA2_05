@@ -11,6 +11,8 @@ import '../../core/constants/api_endpoints.dart';
 import '../widgets/review_sheet.dart';
 import '../widgets/star_rating.dart';
 import 'dart:ui';
+import 'payment_webview.dart';
+import 'package:catering_pardede_app/views/pages/payment_method_page.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final OrderModel order;
@@ -190,7 +192,55 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       ),
     );
   }
+  //=====================================================
+Future<void> _payOrder(int orderId) async {
+  try {
+    print("STEP 1: create payment");
 
+    final payment = await ApiService.post(
+      ApiEndpoints.payments,
+      {
+        "order_id": orderId,
+        "amount": _currentOrder.finalPrice
+      },
+    );
+
+    print("Payment: $payment");
+
+    final paymentId = payment['id'];
+
+    print("STEP 2: get snap");
+
+    final snap = await ApiService.post(
+      "${ApiEndpoints.basePayment}/payments/$paymentId/midtrans",
+      {},
+    );
+
+    print("Snap: $snap");
+
+    final snapToken = snap['snap_token'];
+
+    print("STEP 3: open UI");
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentWebView(snapToken: snapToken),
+      ),
+    );
+
+  } catch (e) {
+    print("ERROR: $e");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Gagal bayar: $e"),
+      ),
+    );
+  }
+}
+
+//=============================================================================================
   Future<void> _submitAdditions(List<int> menuIds, String notes) async {
     setState(() => _isLoadingAdditions = true);
     try {
@@ -530,6 +580,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         color: AppColors.primary,
                       ),
                     ),
+
+                    
                     Builder(
                       builder: (context) {
                         double totalAdditions = 0;
@@ -559,18 +611,55 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                   color: Colors.orange,
                                 ),
                               );
+                              
                       },
                     ),
                   ],
                 ),
-                if (_currentOrder.finalPrice <= 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      "*Harga final akan ditentukan oleh admin segera.",
-                      style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
-                    ),
-                  ),
+
+
+
+                
+                //========================================================================================================
+                if (_currentOrder.finalPrice > 0 && _currentOrder.statusId == 1) ...[
+  const SizedBox(height: 16),
+  TapScale(
+    onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PaymentMethodPage(order: _currentOrder),
+    ),
+  );
+},
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.green,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        "BAYAR SEKARANG",
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.2,
+        ),
+      ),
+    ),
+  ),
+],
+
+                  //=====================================================================================================
               ],
             ),
           ),

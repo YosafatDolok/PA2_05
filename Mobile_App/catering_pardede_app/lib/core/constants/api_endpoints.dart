@@ -1,5 +1,6 @@
 class ApiEndpoints {
   static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String basePayment = "http://10.0.2.2:8001/api";
 
   static const String register = '$baseUrl/register';
   static const String login = '$baseUrl/login';
@@ -12,6 +13,7 @@ class ApiEndpoints {
   static const String orders = '$baseUrl/orders';
   static const String notifications = '$baseUrl/notifications';
   static const String reviews = '$baseUrl/reviews';
+  static const String payments = '$basePayment/payments';
   static String reviewOrder(int id) => '$baseUrl/orders/$id/review';
   static String menuReviews(int id) => '$baseUrl/menus/$id/reviews';
 }
