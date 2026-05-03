@@ -107,7 +107,7 @@ class OrderController extends Controller
     {
         $order = Order::with(['status', 'driver', 'items.menu'])
             ->where('user_id', $request->user()->user_id)
-            ->findOrFail($id);
+           ->findOrFail($id);
 
         return response()->json($order);
     }
