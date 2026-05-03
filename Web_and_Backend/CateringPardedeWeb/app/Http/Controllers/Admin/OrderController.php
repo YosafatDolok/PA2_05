@@ -61,4 +61,38 @@ class OrderController extends Controller
 
         return redirect()->back()->with('success', 'Detail pesanan berhasil diperbarui');
     }
+
+    public function updateStatusApi(Request $request, $id)
+{
+    $request->validate([
+        'status_id' => 'required|exists:order_statuses,status_id',
+        'final_price' => 'nullable|numeric|min:0',
+    ]);
+
+    $order = Order::findOrFail($id);
+    $order->status_id = $request->status_id;
+
+    if ($request->has('final_price')) {
+        $order->final_price = $request->final_price;
+    }
+
+    $order->save();
+
+    // Notification
+    $statusName = $order->status->status_name;
+    Notification::create([
+        'user_id' => $order->user_id,
+        'type' => 'order_status',
+        'title' => 'Update Pesanan #' . $order->order_id,
+        'message' => 'Pesanan Anda sekarang: ' . $statusName,
+        'related_id' => $order->order_id,
+    ]);
+
+    return response()->json([
+        'message' => 'Status updated',
+        'order' => $order
+    ]);
+}
+
+
 }

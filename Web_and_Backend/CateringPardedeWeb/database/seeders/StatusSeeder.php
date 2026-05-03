@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-
+use Illuminate\Support\Facades\DB;
 class StatusSeeder extends Seeder
 {
     /**
@@ -12,16 +12,32 @@ class StatusSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\OrderStatus::insert([
-            ['status_name' => 'Pending'],
-            ['status_name' => 'Preparing'],
-            ['status_name' => 'Out for Delivery'],
-            ['status_name' => 'Delivered'],
-        ]);
-
-        \App\Models\PaymentStatus::insert([
-            ['pstatus_name' => 'Unpaid'],
-            ['pstatus_name' => 'Paid'],
+        DB::table('order_statuses')->insert([
+            [
+                'status_name' => 'Pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'status_name' => 'Preparing',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'status_name' => 'Out for Delivery',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'status_name' => 'Delivered',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'status_name' => 'Paid',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
         ]);
     }
 }

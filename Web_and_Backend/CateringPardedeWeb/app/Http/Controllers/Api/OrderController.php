@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
@@ -84,6 +87,16 @@ class OrderController extends Controller
             'related_id' => $order->order_id,
         ]);
 
+        // 🔥 KIRIM KE PAYMENT SERVICE
+       try {
+        Http::post('http://127.0.0.1:8001/api/payments', [
+            'order_id' => $order->order_id,
+            'amount' => $order->final_price ?? 0,
+       ]);
+       } catch (\Exception $e) {
+        Log::error('Payment Service Error: ' . $e->getMessage());
+       }
+// ================================================================== 
         return response()->json([
             'message' => 'Order created successfully',
             'order' => $order->load(['status', 'items.menu'])
@@ -129,4 +142,22 @@ class OrderController extends Controller
             'order' => $order->load(['status', 'items.menu'])
         ]);
     }
+// =========================================================================
+public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'status_id' => 'required|exists:order_statuses,status_id',
+    ]);
+
+    $order = Order::findOrFail($id);
+    $order->status_id = $request->status_id;
+    $order->save();
+
+    return response()->json([
+        'message' => 'Status updated',
+        'order' => $order
+    ]);
+}
+
+
 }

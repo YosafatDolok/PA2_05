@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\OrderAdditionController;
 use App\Http\Controllers\Api\ReviewController;
 
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -56,3 +57,8 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => 'Selamat Datang, Admin']);
     });
 });
+
+
+Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatusApi']);
+Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
