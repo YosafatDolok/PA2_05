@@ -5,6 +5,9 @@ import '../../core/services/api_service.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../models/user_model.dart';
 import '../widgets/tap_scale.dart';
+import '../../core/utils/helpers.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class EditProfilePage extends StatefulWidget {
   final UserModel user;
@@ -20,6 +23,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   bool _isLoading = false;
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -37,30 +42,39 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? selected = await _picker.pickImage(source: ImageSource.gallery);
+    if (selected != null) {
+      setState(() {
+        _image = File(selected.path);
+      });
+    }
+  }
+
   Future<void> _updateProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await ApiService.post(ApiEndpoints.updateProfile, {
-        'name': _nameController.text,
-        'email': _emailController.text,
-        'phone_number': _phoneController.text,
-      });
+      await ApiService.postMultipart(
+        ApiEndpoints.updateProfile,
+        {
+          'name': _nameController.text,
+          'email': _emailController.text,
+          'phone_number': _phoneController.text,
+        },
+        filePath: _image?.path,
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profil berhasil diperbarui!"), backgroundColor: Colors.green),
-        );
+        Helpers.showSnackBar(context, 'Profil berhasil diperbarui!');
         Navigator.pop(context, true); // Return true to indicate data changed
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal memperbarui profil: $e"), backgroundColor: Colors.red),
-        );
+        Helpers.showSnackBar(context, 'Gagal memperbarui profil: $e');
       }
     }
   }
@@ -87,28 +101,33 @@ class _EditProfilePageState extends State<EditProfilePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                      backgroundImage: widget.user.profilePicture != null
-                          ? NetworkImage("http://10.0.2.2:8000/storage/${widget.user.profilePicture}")
-                          : null,
-                      child: widget.user.profilePicture == null
-                          ? const Icon(Icons.person, color: AppColors.primary, size: 50)
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                        backgroundImage: _image != null
+                            ? FileImage(_image!)
+                            : (widget.user.profilePicture != null
+                                ? NetworkImage("http://10.0.2.2:8000/storage/${widget.user.profilePicture}")
+                                : null) as ImageProvider?,
+                        child: _image == null && widget.user.profilePicture == null
+                            ? const Icon(Icons.person, color: AppColors.primary, size: 50)
+                            : null,
                       ),
-                    ),
-                  ],
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 40),

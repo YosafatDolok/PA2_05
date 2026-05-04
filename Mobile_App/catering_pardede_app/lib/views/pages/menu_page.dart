@@ -11,6 +11,7 @@ import '/core/storage/local_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/cart_service.dart';
 import '../widgets/cart_sheet.dart';
+import '../../core/utils/helpers.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -86,20 +87,12 @@ class _MenuPageState extends State<MenuPage> {
 
     HapticFeedback.mediumImpact();
     cart.addToCart(menu);
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("${menu.name} ditambahkan ke keranjang"),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        action: SnackBarAction(
-          label: 'LIHAT',
-          textColor: Colors.white,
-          onPressed: _showCart,
-        ),
-        duration: const Duration(seconds: 2),
-      ),
+    
+    Helpers.showSnackBar(
+      context, 
+      '${menu.name} ditambahkan ke keranjang',
+      actionLabel: 'LIHAT',
+      onAction: _showCart,
     );
   }
 

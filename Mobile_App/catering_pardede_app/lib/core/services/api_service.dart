@@ -19,7 +19,7 @@ class ApiService {
       headers: await _headers(),
     );
 
-    return _handleResponse(response);
+    return _handleResponse(response, url);
   }
 
   static Future<dynamic> post(String url, Map<String, dynamic> body) async {
@@ -29,7 +29,7 @@ class ApiService {
       body: jsonEncode(body),
     );
 
-    return _handleResponse(response);
+    return _handleResponse(response, url);
   }
 
   static Future<dynamic> patch(String url, Map<String, dynamic> body) async {
@@ -39,7 +39,7 @@ class ApiService {
       body: jsonEncode(body),
     );
 
-    return _handleResponse(response);
+    return _handleResponse(response, url);
   }
 
   static Future<dynamic> delete(String url) async {
@@ -48,16 +48,38 @@ class ApiService {
       headers: await _headers(),
     );
 
-    return _handleResponse(response);
+    return _handleResponse(response, url);
   }
 
-  static dynamic _handleResponse(http.Response response) {
+  static Future<dynamic> postMultipart(String url, Map<String, String> fields, {String? filePath, String fileField = 'profile_picture'}) async {
+    final request = http.MultipartRequest('POST', Uri.parse(url));
+    request.headers.addAll(await _headers());
+    
+    // Add text fields
+    request.fields.addAll(fields);
+    
+    // Add image if provided
+    if (filePath != null) {
+      request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+    }
+    
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    return _handleResponse(response, url);
+  }
+
+  static dynamic _handleResponse(http.Response response, String url) {
     final data = jsonDecode(response.body);
 
-    // 🔥 Handle expired token
+    // 🔥 Handle 401 errors intelligently
     if (response.statusCode == 401) {
-      LocalStorage.clearToken();
-      throw Exception('Session expired');
+      // If it's NOT a login or register attempt, clear token and expire session
+      if (!url.contains('/login') && !url.contains('/register')) {
+        LocalStorage.clearToken();
+        throw Exception('Session expired');
+      }
+      // If it IS a login/register attempt, let the "Invalid Credentials" message through
     }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {

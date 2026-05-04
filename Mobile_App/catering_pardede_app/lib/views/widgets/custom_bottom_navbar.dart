@@ -17,7 +17,7 @@ class CustomBottomNavBar extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 15,
             offset: const Offset(0, -2),
           ),
@@ -26,7 +26,7 @@ class CustomBottomNavBar extends StatelessWidget {
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         selectedItemColor: const Color(0xFFFFD700), // Yellow/Gold for active
-        unselectedItemColor: Colors.white.withOpacity(0.7),
+        unselectedItemColor: Colors.white.withValues(alpha: 0.7),
         showSelectedLabels: true,
         showUnselectedLabels: true,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),

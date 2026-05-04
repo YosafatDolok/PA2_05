@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -17,7 +21,55 @@ class DashboardController extends Controller
         $averageRating = \App\Models\Review::avg('rating') ?: 0;
         $totalReviews = \App\Models\Review::count();
 
-        return view('admin.dashboard', compact('totalMenus', 'ordersReceived', 'activeMenus', 'averageRating', 'totalReviews'));
+        // --- Chart Data ---
+
+        // 1. Revenue Data (Last 6 Months)
+        $revenueData = Order::select(
+            DB::raw('SUM(final_price) as total'),
+            DB::raw("TO_CHAR(order_date, 'FMMonth') as month"),
+            DB::raw('EXTRACT(MONTH FROM order_date) as month_num')
+        )
+            ->where('order_date', '>=', Carbon::now()->subMonths(6))
+            ->groupBy('month', 'month_num')
+            ->orderBy('month_num')
+            ->get();
+
+        // 2. Order Status Distribution
+        $statusDistribution = Order::select('status_id', DB::raw('count(*) as count'))
+            ->groupBy('status_id')
+            ->with('status')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'label' => $item->status->status_name ?? 'Unknown',
+                    'count' => $item->count
+                ];
+            });
+
+        // 3. Top Selling Menus
+        $topMenus = OrderItem::select('menu_id', DB::raw('count(*) as count'))
+            ->groupBy('menu_id')
+            ->orderBy('count', 'desc')
+            ->take(5)
+            ->with('menu')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'name' => $item->menu->name ?? 'Deleted Menu',
+                    'count' => $item->count
+                ];
+            });
+
+        return view('admin.dashboard', compact(
+            'totalMenus', 
+            'ordersReceived', 
+            'activeMenus', 
+            'averageRating', 
+            'totalReviews',
+            'revenueData',
+            'statusDistribution',
+            'topMenus'
+        ));
     }
 
     public function globalSearch(Request $request)

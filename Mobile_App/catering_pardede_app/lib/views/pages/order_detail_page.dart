@@ -11,6 +11,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../widgets/review_sheet.dart';
 import '../widgets/star_rating.dart';
 import 'order_chat_page.dart';
+import '../../core/utils/helpers.dart';
 import 'dart:ui';
 
 class OrderDetailPage extends StatefulWidget {
@@ -200,90 +201,64 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         'notes': notes,
       });
       _fetchAdditions();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Permintaan tambahan dikirim!"), backgroundColor: Colors.green),
-        );
-      }
+      Helpers.showSnackBar(context, 'Permintaan tambahan dikirim!');
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingAdditions = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal mengirim: $e")));
+        Helpers.showSnackBar(context, 'Gagal mengirim: $e');
       }
     }
   }
 
   Future<void> _cancelAddition(int additionId) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Batalkan Tambahan?"),
-        content: const Text("Apakah Anda yakin ingin membatalkan permintaan menu tambahan ini?"),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("TIDAK")),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("YA, BATALKAN", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    Helpers.showConfirmDialog(
+      context,
+      title: 'Batalkan Tambahan?',
+      message: 'Apakah Anda yakin ingin membatalkan permintaan menu tambahan ini?',
+      confirmText: 'Ya, Batalkan',
+      onConfirm: () async {
+        setState(() => _isLoadingAdditions = true);
+        try {
+          await ApiService.delete("${ApiEndpoints.orders}/additions/$additionId");
+          _fetchAdditions();
+          if (mounted) {
+            Helpers.showSnackBar(context, 'Permintaan tambahan dibatalkan');
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() => _isLoadingAdditions = false);
+            Helpers.showSnackBar(context, 'Gagal membatalkan: $e');
+          }
+        }
+      },
     );
-
-    if (confirm != true) return;
-
-    setState(() => _isLoadingAdditions = true);
-    try {
-      await ApiService.delete("${ApiEndpoints.orders}/additions/$additionId");
-      _fetchAdditions();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Permintaan tambahan dibatalkan"), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoadingAdditions = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal membatalkan: $e")));
-      }
-    }
   }
 
   Future<void> _cancelOrder() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Batalkan Pesanan?"),
-        content: const Text("Apakah Anda yakin ingin membatalkan pesanan ini?"),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("TIDAK")),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("YA, BATALKAN", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    Helpers.showConfirmDialog(
+      context,
+      title: 'Batalkan Pesanan?',
+      message: 'Apakah Anda yakin ingin membatalkan pesanan ini?',
+      confirmText: 'Ya, Batalkan',
+      onConfirm: () async {
+        setState(() => _isCancelling = true);
+        try {
+          final response = await ApiService.post("${ApiEndpoints.orders}/${_currentOrder.id}/cancel", {});
+          if (mounted) {
+            setState(() {
+              _currentOrder = OrderModel.fromJson(response['order']);
+              _isCancelling = false;
+            });
+            Helpers.showSnackBar(context, 'Pesanan berhasil dibatalkan');
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() => _isCancelling = false);
+            Helpers.showSnackBar(context, 'Gagal membatalkan: $e');
+          }
+        }
+      },
     );
-
-    if (confirm != true) return;
-
-    setState(() => _isCancelling = true);
-    try {
-      final response = await ApiService.post("${ApiEndpoints.orders}/${_currentOrder.id}/cancel", {});
-      if (mounted) {
-        setState(() {
-          _currentOrder = OrderModel.fromJson(response['order']);
-          _isCancelling = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Pesanan berhasil dibatalkan"), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isCancelling = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal membatalkan: $e")));
-      }
-    }
   }
 
   Future<void> _fetchOrderDetails() async {

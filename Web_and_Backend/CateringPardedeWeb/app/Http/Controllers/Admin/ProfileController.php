@@ -53,6 +53,7 @@ class ProfileController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone_number' => $request->phone_number,
+            'profile_picture' => $user->profile_picture, // Ensure the path set above is persisted
         ]);
 
         // API response (for mobile reuse)

@@ -30,7 +30,8 @@ class AuthController {
             context, result['message'] ?? 'Login gagal');
       }
     } catch (e) {
-      Helpers.showSnackBar(context, 'Error: $e');
+      final msg = e.toString().replaceAll('Exception: ', '');
+      Helpers.showSnackBar(context, 'Gagal: $msg');
     }
   }
 

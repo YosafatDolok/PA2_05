@@ -5,6 +5,7 @@ import '../../core/services/api_service.dart';
 import '../../core/constants/api_endpoints.dart';
 import 'tap_scale.dart';
 import '../../core/services/cart_service.dart';
+import '../../core/utils/helpers.dart';
 
 class OrderFormSheet extends StatefulWidget {
   final MenuModel? menu;
@@ -134,7 +135,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
                   ],
                 ),
                 alignment: Alignment.center,
@@ -178,7 +179,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
 
   Future<void> _submitOrder() async {
     if (_addressController.text.isEmpty || _selectedDate == null || _peopleController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Mohon lengkapi data pesanan")));
+      Helpers.showSnackBar(context, 'Mohon lengkapi data pesanan');
       return;
     }
 
@@ -207,17 +208,23 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
 
       if (mounted) {
         Navigator.pop(context); // Close sheet
-        if (widget.onOrderSuccess != null) {
-          widget.onOrderSuccess!();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Pesanan berhasil dibuat!"), backgroundColor: Colors.green),
-          );
-        }
+        
+        Helpers.showSuccessDialog(
+          context, 
+          'Pesanan Terkirim!', 
+          'Pesanan Anda telah diterima. Tim kami akan segera meninjau dan menghubungi Anda.',
+          onConfirm: () {
+            if (widget.onOrderSuccess != null) {
+              widget.onOrderSuccess!();
+            } else {
+              Navigator.pushNamed(context, '/order');
+            }
+          }
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: ${e.toString()}")));
+        Helpers.showSnackBar(context, 'Gagal membuat pesanan: $e');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

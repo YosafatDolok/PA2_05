@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/utils/helpers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/tap_scale.dart';
 import '../../../core/services/api_service.dart';
@@ -32,7 +32,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   Future<void> _verifyOtp() async {
     String otp = _controllers.map((c) => c.text).join();
     if (otp.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Lengkapi 6 digit kode OTP")));
+      Helpers.showSnackBar(context, 'Lengkapi 6 digit kode OTP');
       return;
     }
 
@@ -53,9 +53,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Kode OTP salah: $e"), backgroundColor: Colors.red),
-        );
+        Helpers.showSnackBar(context, 'Gagal memverifikasi OTP: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

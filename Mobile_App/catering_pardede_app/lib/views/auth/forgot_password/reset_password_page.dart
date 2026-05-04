@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/helpers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/tap_scale.dart';
 import '../../../core/services/api_service.dart';
@@ -17,15 +18,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _isLoading = false;
-  bool _isObscured = true;
 
   Future<void> _resetPassword() async {
     if (_passwordController.text.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Password minimal 8 karakter")));
+      Helpers.showSnackBar(context, 'Password minimal 8 karakter');
       return;
     }
     if (_passwordController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Konfirmasi password tidak cocok")));
+      Helpers.showSnackBar(context, 'Konfirmasi password tidak cocok');
       return;
     }
 
@@ -33,48 +33,28 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
     try {
       final response = await ApiService.post(
-        "${ApiEndpoints.baseUrl}/password/reset",
+        ApiEndpoints.resetPassword,
         {
           'email': widget.email,
-          'otp': widget.otp,
+          'token': widget.otp, // Backend usually expects 'token' or 'otp'
           'password': _passwordController.text,
           'password_confirmation': _confirmController.text,
         },
       );
 
       if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 80),
-                const SizedBox(height: 20),
-                const Text("Berhasil!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                const Text("Kata sandi Anda telah diperbarui. Silakan login kembali.", textAlign: TextAlign.center),
-                const SizedBox(height: 24),
-                TapScale(
-                  onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
-                    child: const Text("LOGIN SEKARANG", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        Helpers.showSuccessDialog(
+          context, 
+          'Berhasil!', 
+          'Kata sandi Anda telah diperbarui. Silakan login kembali.',
+          onConfirm: () {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          },
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal: $e"), backgroundColor: Colors.red),
-        );
+        Helpers.showSnackBar(context, 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -85,44 +65,63 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const BackButton(color: Colors.black)),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Password Baru",
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.primary),
+              "BUAT PASSWORD BARU",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primary,
+                letterSpacing: 1,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
-              "Hampir selesai! Silakan buat kata sandi baru yang kuat untuk akun Anda.",
-              style: TextStyle(fontSize: 15, color: Colors.grey[600], height: 1.5),
+              "Masukkan password baru untuk akun ${widget.email}",
+              style: const TextStyle(color: Colors.grey, fontSize: 16),
             ),
-            const SizedBox(height: 40),
-            
-            _inputField(_passwordController, "Password Baru", Icons.lock_outline),
+            const SizedBox(height: 50),
+            _buildTextField(
+              controller: _passwordController,
+              hint: "Password Baru",
+              icon: Icons.lock_outline,
+              isObscure: true,
+            ),
             const SizedBox(height: 20),
-            _inputField(_confirmController, "Konfirmasi Password Baru", Icons.lock_reset),
-            
-            const SizedBox(height: 40),
-            
-            TapScale(
-              onTap: _isLoading ? () {} : _resetPassword,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(16),
+            _buildTextField(
+              controller: _confirmController,
+              hint: "Konfirmasi Password",
+              icon: Icons.lock_reset_outlined,
+              isObscure: true,
+            ),
+            const SizedBox(height: 50),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _resetPassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
                 ),
-                alignment: Alignment.center,
                 child: _isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
-                        "PERBARUI PASSWORD",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                        "RESET PASSWORD",
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
             ),
@@ -132,21 +131,26 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     );
   }
 
-  Widget _inputField(TextEditingController controller, String hint, IconData icon) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isObscure = false,
+  }) {
     return Container(
-      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       child: TextField(
         controller: controller,
-        obscureText: _isObscured,
+        obscureText: isObscure,
         decoration: InputDecoration(
-          icon: Icon(icon, color: AppColors.primary),
-          hintText: hint,
           border: InputBorder.none,
-          suffixIcon: IconButton(
-            icon: Icon(_isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: Colors.grey),
-            onPressed: () => setState(() => _isObscured = !_isObscured),
-          ),
+          hintText: hint,
+          icon: Icon(icon, color: AppColors.primary),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/helpers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/tap_scale.dart';
 import '../../../core/services/api_service.dart';
@@ -17,35 +18,30 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> _sendOtp() async {
     if (_emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Silakan masukkan email Anda")),
-      );
+      Helpers.showSnackBar(context, 'Mohon isi email Anda');
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      final response = await ApiService.post(
-        "${ApiEndpoints.baseUrl}/password/forgot",
-        {'email': _emailController.text},
-      );
+      final response = await ApiService.post(ApiEndpoints.forgotPassword, {
+        'email': _emailController.text,
+      });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? "Kode OTP telah dikirim")),
-        );
-        Navigator.pushNamed(
-          context, 
-          '/otp-verify', 
-          arguments: _emailController.text,
-        );
+      if (response['success']) {
+        if (mounted) {
+          Helpers.showSnackBar(context, response['message'] ?? 'Kode OTP telah dikirim');
+          Navigator.pushNamed(context, '/otp-verify', arguments: _emailController.text);
+        }
+      } else {
+        if (mounted) {
+          Helpers.showSnackBar(context, response['message'] ?? 'Gagal mengirim OTP');
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal: $e"), backgroundColor: Colors.red),
-        );
+        Helpers.showSnackBar(context, 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -109,7 +105,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
+                      color: AppColors.primary.withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),

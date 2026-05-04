@@ -139,7 +139,7 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           CircleAvatar(
             radius: 35,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             backgroundImage: user?.profilePicture != null
                 ? NetworkImage("http://10.0.2.2:8000/storage/${user!.profilePicture}")
                 : null,
@@ -235,7 +235,7 @@ class _AccountPageState extends State<AccountPage> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.secondary.withOpacity(0.3),
+                color: AppColors.secondary.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

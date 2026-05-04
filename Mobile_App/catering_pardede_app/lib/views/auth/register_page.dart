@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/controllers/auth_controller.dart';
+import '/core/utils/helpers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
@@ -18,9 +19,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void handleRegister() async {
     if (nameController.text.isEmpty || emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon isi semua bidang')),
-      );
+      Helpers.showSnackBar(context, 'Mohon isi semua data');
       return;
     }
 

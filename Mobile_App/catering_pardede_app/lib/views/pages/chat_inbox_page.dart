@@ -6,6 +6,7 @@ import '/models/chat_inbox_model.dart';
 import '/models/order_model.dart';
 import '/views/widgets/tap_scale.dart';
 import 'package:intl/intl.dart';
+import '../../core/utils/helpers.dart';
 
 class ChatInboxPage extends StatefulWidget {
   const ChatInboxPage({super.key});
@@ -118,9 +119,9 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
             Navigator.pushNamed(context, '/order-detail', arguments: order);
           }
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal membuka pesanan')),
-          );
+          if (mounted) {
+            Helpers.showSnackBar(context, 'Gagal membuka pesanan: $e');
+          }
         }
       },
       child: Container(

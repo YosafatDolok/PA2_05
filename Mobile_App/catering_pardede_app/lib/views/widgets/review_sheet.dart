@@ -70,7 +70,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -103,8 +103,8 @@ class _ReviewSheetState extends State<ReviewSheet> {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'Tulis ulasan Anda di sini...',
-              hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5)),
-              fillColor: Colors.white.withOpacity(0.05),
+              hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.5)),
+              fillColor: Colors.white.withValues(alpha: 0.05),
               filled: true,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -124,7 +124,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),

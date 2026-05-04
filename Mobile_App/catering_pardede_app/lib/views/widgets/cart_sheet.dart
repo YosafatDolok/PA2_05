@@ -3,6 +3,7 @@ import '../../core/services/cart_service.dart';
 import '../../core/theme/app_colors.dart';
 import 'order_form_sheet.dart';
 import 'tap_scale.dart';
+import '../../core/utils/helpers.dart';
 
 class CartSheet extends StatefulWidget {
   const CartSheet({super.key});
@@ -96,7 +97,7 @@ class _CartSheetState extends State<CartSheet> {
           decoration: BoxDecoration(
             border: Border.all(color: isAvailable ? Colors.grey.shade200 : Colors.red.shade200),
             borderRadius: BorderRadius.circular(16),
-            color: isAvailable ? Colors.white : Colors.red.withOpacity(0.02),
+            color: isAvailable ? Colors.white : Colors.red.withValues(alpha: 0.02),
           ),
           child: Row(
             children: [
@@ -142,7 +143,7 @@ class _CartSheetState extends State<CartSheet> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -5)),
         ],
       ),
       child: SafeArea(
@@ -178,9 +179,7 @@ class _CartSheetState extends State<CartSheet> {
         items: cart.items,
         onOrderSuccess: () {
           cart.clearCart();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Pesanan berhasil dibuat!"), backgroundColor: Colors.green),
-          );
+          // The Success Dialog is already handled inside OrderFormSheet
         },
       ),
     );

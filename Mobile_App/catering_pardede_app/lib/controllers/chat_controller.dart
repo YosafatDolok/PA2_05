@@ -5,6 +5,7 @@ import 'package:dart_pusher_channels/dart_pusher_channels.dart';
 import '/core/storage/local_storage.dart';
 import '/core/constants/api_endpoints.dart';
 import 'dart:convert';
+import '../core/utils/helpers.dart';
 
 class ChatController extends ChangeNotifier {
   List<OrderMessageModel> messages = [];
@@ -95,9 +96,7 @@ class ChatController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Gagal mengirim pesan")),
-      );
+      Helpers.showSnackBar(context, 'Gagal mengirim pesan');
     }
   }
 
@@ -132,13 +131,9 @@ class ChatController extends ChangeNotifier {
         );
         notifyListeners();
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Penawaran diterima! Total harga diperbarui.")),
-      );
+      Helpers.showSnackBar(context, 'Penawaran diterima! Total harga diperbarui.');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Gagal menerima penawaran")),
-      );
+      Helpers.showSnackBar(context, 'Gagal menerima penawaran');
     }
   }
   Future<void> markAsRead(int orderId) async {

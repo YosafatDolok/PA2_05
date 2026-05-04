@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/controllers/auth_controller.dart';
+import '/core/utils/helpers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 
@@ -17,9 +18,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void handleLogin() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mohon isi email dan password')),
-      );
+      Helpers.showSnackBar(context, 'Mohon isi semua data');
       return;
     }
 

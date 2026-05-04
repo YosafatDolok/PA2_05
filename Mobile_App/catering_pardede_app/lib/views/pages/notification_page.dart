@@ -7,6 +7,7 @@ import '../../core/services/api_service.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../models/notification_model.dart';
 import '../../models/order_model.dart';
+import '../../core/utils/helpers.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -78,7 +79,7 @@ class _NotificationPageState extends State<NotificationPage> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal memuat detail pesanan: $e")));
+          Helpers.showSnackBar(context, 'Gagal memuat detail pesanan: $e');
         }
       }
     }

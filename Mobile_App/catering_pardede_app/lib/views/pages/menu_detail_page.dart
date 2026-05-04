@@ -9,6 +9,7 @@ import '../widgets/tap_scale.dart';
 import '../../core/services/cart_service.dart';
 import '../widgets/cart_sheet.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/utils/helpers.dart';
 
 class MenuDetailPage extends StatefulWidget {
   const MenuDetailPage({super.key});
@@ -52,8 +53,9 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
       builder: (context) => OrderFormSheet(
         menu: menu,
         onOrderSuccess: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Pesanan berhasil dibuat! Silakan cek di menu Pesanan."), backgroundColor: Colors.green),
+          Helpers.showSnackBar(
+            context, 
+            'Pesanan berhasil dibuat! Silakan cek di menu Pesanan.'
           );
           Navigator.pop(context); // Go back to List
         },
@@ -158,16 +160,11 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
           child: TapScale(
             onTap: () {
               CartService().addToCart(menu);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("${menu.name} ditambahkan ke keranjang"),
-                  backgroundColor: AppColors.primary,
-                  action: SnackBarAction(
-                    label: 'LIHAT',
-                    textColor: Colors.white,
-                    onPressed: _showCartSheet,
-                  ),
-                ),
+              Helpers.showSnackBar(
+                context, 
+                '${menu.name} ditambahkan ke keranjang',
+                actionLabel: 'LIHAT',
+                onAction: _showCartSheet,
               );
             },
             child: Container(

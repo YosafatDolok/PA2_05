@@ -17,4 +17,6 @@ class ApiEndpoints {
   static String orderMessages(int id) => '$baseUrl/orders/$id/messages';
   static const String adminStats = '$baseUrl/admin/stats';
   static const String adminInbox = '$baseUrl/admin/inbox';
+  static const String forgotPassword = '$baseUrl/password/forgot';
+  static const String resetPassword = '$baseUrl/password/reset';
 }

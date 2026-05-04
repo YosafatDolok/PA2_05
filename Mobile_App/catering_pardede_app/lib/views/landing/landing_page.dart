@@ -56,9 +56,9 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.7),
-                  const Color(0xFF1A0000).withOpacity(0.95), // Deep Crimson/Black
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.7),
+                  const Color(0xFF1A0000).withValues(alpha: 0.95), // Deep Crimson/Black
                 ],
               ),
             ),
@@ -100,7 +100,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                               letterSpacing: 6,
                             ),
                           ),
@@ -108,7 +108,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                           Container(
                             width: 40,
                             height: 2,
-                            color: const Color(0xFFFFD700).withOpacity(0.5),
+                            color: const Color(0xFFFFD700).withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 32),
                           const Text(
@@ -144,7 +144,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                               borderRadius: BorderRadius.circular(40),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF7A0000).withOpacity(0.3),
+                                  color: const Color(0xFF7A0000).withValues(alpha: 0.3),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
                                 ),
@@ -169,7 +169,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.05),
+                              color: Colors.white.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(40),
                               border: Border.all(color: Colors.white24),
                             ),
@@ -195,7 +195,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                   Text(
                     "v1.2.0 | Pardede Excellence",
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
