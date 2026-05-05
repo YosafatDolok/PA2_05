@@ -55,6 +55,14 @@
             </a>
         </li>
 
+        {{-- Payments --}}
+        <li class="nav-item {{ request()->routeIs('admin.payments.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.payments.index') }}" class="nav-link">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Payments</span>
+            </a>
+        </li>
+
         {{-- Categories --}}
         <li class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
             <a href="{{ route('categories.index') }}" class="nav-link">

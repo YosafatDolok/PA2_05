@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -21,18 +22,20 @@ class DashboardController extends Controller
         $averageRating = \App\Models\Review::avg('rating') ?: 0;
         $totalReviews = \App\Models\Review::count();
 
-        // --- Chart Data ---
+        // --- Chart Data & Real Stats from Payment Service ---
+        $paymentUrl = env('PAYMENT_SERVICE_URL', 'http://localhost:8001') . '/api/stats/summary';
+        $paymentResponse = Http::withHeaders([
+            'X-Internal-Secret' => config('services.internal_key')
+        ])->get($paymentUrl);
 
-        // 1. Revenue Data (Last 6 Months)
-        $revenueData = Order::select(
-            DB::raw('SUM(final_price) as total'),
-            DB::raw("TO_CHAR(order_date, 'FMMonth') as month"),
-            DB::raw('EXTRACT(MONTH FROM order_date) as month_num')
-        )
-            ->where('order_date', '>=', Carbon::now()->subMonths(6))
-            ->groupBy('month', 'month_num')
-            ->orderBy('month_num')
-            ->get();
+        $stats = $paymentResponse->successful() ? $paymentResponse->json() : [
+            'total_revenue' => 0,
+            'growth_percent' => 0,
+            'monthly_chart' => []
+        ];
+
+        $revenueData = collect($stats['monthly_chart']);
+        $revenueGrowth = $stats['growth_percent'];
 
         // 2. Order Status Distribution
         $statusDistribution = Order::select('status_id', DB::raw('count(*) as count'))
@@ -67,6 +70,7 @@ class DashboardController extends Controller
             'averageRating', 
             'totalReviews',
             'revenueData',
+            'revenueGrowth',
             'statusDistribution',
             'topMenus'
         ));

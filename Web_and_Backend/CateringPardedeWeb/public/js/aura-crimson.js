@@ -41,5 +41,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Premium SweetAlert2 Delete Handler
+    document.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('.btn-delete');
+        if (deleteBtn) {
+            e.preventDefault();
+            const itemName = deleteBtn.getAttribute('data-name') || 'this item';
+            const form = deleteBtn.closest('form');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete "${itemName}". This action cannot be undone!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff334b',
+                cancelButtonColor: 'rgba(255,255,255,0.1)',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                background: 'rgba(15, 15, 20, 0.98)',
+                color: '#fff',
+                backdrop: `rgba(0,0,0,0.4) blur(4px)`
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    });
+
     console.log('Aura-Crimson Logic Engaged');
 });

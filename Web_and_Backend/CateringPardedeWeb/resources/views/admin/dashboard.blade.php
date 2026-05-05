@@ -56,7 +56,9 @@
                     </div>
                     <div>
                         <p class="stat-label">Revenue Growth</p>
-                        <h3 class="stat-value">+24%</h3>
+                        <h3 class="stat-value {{ $revenueGrowth >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ $revenueGrowth >= 0 ? '+' : '' }}{{ $revenueGrowth }}%
+                        </h3>
                     </div>
                 </div>
             </div>

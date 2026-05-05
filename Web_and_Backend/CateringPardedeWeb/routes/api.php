@@ -71,4 +71,6 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
-Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+Route::middleware('internal.service')->group(function () {
+    Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+});

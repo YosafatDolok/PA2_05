@@ -42,16 +42,5 @@ class StatusSeeder extends Seeder
         ['status_id' => 9],
         ['status_name' => 'Cancelled']
     );
-
-    // Payment Status
-    \App\Models\PaymentStatus::updateOrInsert(
-        ['pstatus_name' => 'Unpaid'],
-        []
-    );
-
-    \App\Models\PaymentStatus::updateOrInsert(
-        ['pstatus_name' => 'Paid'],
-        []
-    );
-}
+    }
 }

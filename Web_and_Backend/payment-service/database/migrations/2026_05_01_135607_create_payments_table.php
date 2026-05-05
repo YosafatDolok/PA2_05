@@ -12,14 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('payments', function (Blueprint $table) {
-    $table->id();
-    $table->unsignedBigInteger('order_id'); // dari order service
-    $table->decimal('amount', 15, 2);
-    $table->string('payment_method'); // e-wallet
-    $table->string('status'); // pending, paid, failed
-    $table->string('external_id')->nullable(); // simulasi transaksi
-    $table->timestamps();
-    });
+            $table->id();
+            $table->unsignedBigInteger('order_id'); // From Order Service
+            $table->string('midtrans_id')->nullable()->unique();
+            $table->string('snap_token')->nullable();
+            $table->decimal('amount', 15, 2);
+            $table->string('payment_method')->nullable(); // midtrans, bank_transfer, etc.
+            $table->string('payment_type')->nullable(); // gopay, credit_card, etc.
+            $table->string('status')->default('pending'); // pending, settlement, expire, cancel, deny
+            $table->string('external_id')->nullable(); // our internal unique reference
+            $table->timestamp('transaction_time')->nullable();
+            $table->timestamps();
+        });
     }
 
     /**

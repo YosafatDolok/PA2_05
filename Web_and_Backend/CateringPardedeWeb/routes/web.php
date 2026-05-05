@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\GalleryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\AdminPaymentController;
 
 use App\Http\Controllers\Admin\PasswordResetController as AdminPasswordResetController;
 
@@ -44,6 +45,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/{id}/chat', [OrderController::class, 'chat'])->name('orders.chat');
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+        Route::get('/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
 
         Route::get('/additions', [OrderAdditionController::class, 'index'])->name('admin.additions.index');
         Route::patch('/additions/{id}', [OrderAdditionController::class, 'update'])->name('admin.additions.update');
