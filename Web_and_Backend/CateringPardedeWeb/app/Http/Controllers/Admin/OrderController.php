@@ -62,6 +62,45 @@ class OrderController extends Controller
         return view('admin.messages.index', compact('orders'));
     }
 
+    public function export()
+    {
+        $fileName = 'Catering_Pardede_Orders_' . date('Y-m-d_His') . '.csv';
+        $orders = Order::with(['user', 'status', 'items.menu'])->orderBy('order_date', 'desc')->get();
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['Order ID', 'Customer', 'Email', 'Menus', 'Event Date', 'People', 'Price', 'Status', 'Order Created'];
+
+        $callback = function() use($orders, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($orders as $order) {
+                $row['Order ID']      = 'ORD-' . str_pad($order->order_id, 5, '0', STR_PAD_LEFT);
+                $row['Customer']      = $order->user->name;
+                $row['Email']         = $order->user->email;
+                $row['Menus']         = $order->items->pluck('menu.name')->implode(', ');
+                $row['Event Date']    = $order->event_date->format('d M Y');
+                $row['People']        = $order->people;
+                $row['Price']         = $order->final_price ? 'Rp ' . number_format($order->final_price, 0, ',', '.') : 'TBD';
+                $row['Status']        = $order->status->status_name;
+                $row['Order Created'] = $order->created_at->format('d M Y H:i');
+
+                fputcsv($file, array_values($row));
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function updateStatus(Request $request, $id)
     {
         $request->validate([

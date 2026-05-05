@@ -38,6 +38,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        // Custom route for Excel export
+        Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
         Route::get('/messages', [OrderController::class, 'messages'])->name('admin.messages');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/{id}/chat', [OrderController::class, 'chat'])->name('orders.chat');

@@ -9,6 +9,9 @@
             <h2 class="m-0 font-weight-bold">Order Management</h2>
             <p class="text-muted small uppercase letter-spacing-1 mb-0">Track and manage customer catering requests</p>
         </div>
+        <a href="{{ route('orders.export') }}" class="btn btn-outline-success border-2 font-weight-bold">
+            <i class="fas fa-file-excel mr-2"></i> EXPORT EXCEL
+        </a>
     </div>
 
     <div class="row">

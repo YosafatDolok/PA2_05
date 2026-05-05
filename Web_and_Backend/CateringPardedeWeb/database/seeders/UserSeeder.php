@@ -12,21 +12,43 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // ✅ ambil role admin dulu
+        // 1. Admin
         $adminRole = Role::where('name', 'admin')->first();
+        User::firstOrCreate(
+            ['email' => 'admin@pardede.com'],
+            [
+                'name' => 'Admin Pardede',
+                'password' => Hash::make('password123'),
+                'role_id' => $adminRole->id,
+            ]
+        );
 
-        // ❗ cek kalau role tidak ada
-        if (!$adminRole) {
-            echo "Role admin tidak ditemukan\n";
-            return;
+        // 2. Drivers
+        $driverRole = Role::where('name', 'driver')->first();
+        if ($driverRole) {
+            User::firstOrCreate(
+                ['email' => 'driver1@example.com'],
+                [
+                    'name' => 'Driver Budi',
+                    'password' => Hash::make('password123'),
+                    'role_id' => $driverRole->id,
+                    'phone_number' => '081234567890'
+                ]
+            );
         }
 
-        // ✅ buat user admin
-        User::create([
-            'name' => 'CateringPardede',
-            'email' => 'admin2@example.com',
-            'password' => Hash::make('password123'),
-            'role_id' => $adminRole->id,
-        ]);
+        // 3. Customers (Users)
+        $userRole = Role::where('name', 'user')->first();
+        if ($userRole) {
+            User::firstOrCreate(
+                ['email' => 'customer@example.com'],
+                [
+                    'name' => 'Customer Yanto',
+                    'password' => Hash::make('password123'),
+                    'role_id' => $userRole->id,
+                    'phone_number' => '089876543210'
+                ]
+            );
+        }
     }
 }

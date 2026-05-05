@@ -16,12 +16,13 @@ class RoleSeeder extends Seeder
             $roles = [
                 ['name' => 'admin'],
                 ['name' => 'user'],
+                ['name' => 'driver'],
             ];
 
             foreach ($roles as $roleData) {
                 $role = Role::firstOrCreate($roleData);
 
-                Log::info("Role sudah ada: {$role->name}");
+                Log::info("Role handled: {$role->name}");
             }
         });
     }
