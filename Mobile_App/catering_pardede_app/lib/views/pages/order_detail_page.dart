@@ -13,6 +13,7 @@ import '../widgets/star_rating.dart';
 import 'order_chat_page.dart';
 import '../../core/utils/helpers.dart';
 import 'dart:ui';
+import '../pages/payment_method_page.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final OrderModel order;
@@ -579,6 +580,36 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     ),
                   ),
                 ),
+                 // 🔥 TOMBOL BAYAR
+    if (_currentOrder.finalPrice > 0 && _currentOrder.statusId == 1)
+      TapScale(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PaymentMethodPage(order: _currentOrder),
+            ),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF8B0000),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            "BAYAR SEKARANG",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+                    ),
+          ),
+        ),
+      ),
+            
               ],
             ),
           ),

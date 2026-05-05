@@ -1,5 +1,6 @@
 class ApiEndpoints {
   static const String baseUrl = 'http://10.0.2.2:8000/api';
+   static const String basePayment = "http://10.0.2.2:8001/api";
 
   static const String register = '$baseUrl/register';
   static const String login = '$baseUrl/login';
@@ -19,4 +20,5 @@ class ApiEndpoints {
   static const String adminInbox = '$baseUrl/admin/inbox';
   static const String forgotPassword = '$baseUrl/password/forgot';
   static const String resetPassword = '$baseUrl/password/reset';
+  static const String payments = "$basePayment/payments";
 }
