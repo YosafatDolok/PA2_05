@@ -11,17 +11,47 @@ class StatusSeeder extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-    {
-        \App\Models\OrderStatus::insert([
-            ['status_name' => 'Pending'],
-            ['status_name' => 'Preparing'],
-            ['status_name' => 'Out for Delivery'],
-            ['status_name' => 'Delivered'],
-        ]);
+{
+    // Order Status
+    \App\Models\OrderStatus::updateOrInsert(
+        ['status_id' => 1],
+        ['status_name' => 'Pending']
+    );
 
-        \App\Models\PaymentStatus::insert([
-            ['pstatus_name' => 'Unpaid'],
-            ['pstatus_name' => 'Paid'],
-        ]);
-    }
+    \App\Models\OrderStatus::updateOrInsert(
+        ['status_id' => 2],
+        ['status_name' => 'Preparing']
+    );
+
+    \App\Models\OrderStatus::updateOrInsert(
+        ['status_id' => 3],
+        ['status_name' => 'Out for Delivery']
+    );
+
+    \App\Models\OrderStatus::updateOrInsert(
+        ['status_id' => 4],
+        ['status_name' => 'Delivered']
+    );
+
+    \App\Models\OrderStatus::updateOrInsert(
+        ['status_id' => 5],
+        ['status_name' => 'Paid']
+    );
+
+    \App\Models\OrderStatus::updateOrInsert(
+        ['status_id' => 9],
+        ['status_name' => 'Cancelled']
+    );
+
+    // Payment Status
+    \App\Models\PaymentStatus::updateOrInsert(
+        ['pstatus_name' => 'Unpaid'],
+        []
+    );
+
+    \App\Models\PaymentStatus::updateOrInsert(
+        ['pstatus_name' => 'Paid'],
+        []
+    );
+}
 }

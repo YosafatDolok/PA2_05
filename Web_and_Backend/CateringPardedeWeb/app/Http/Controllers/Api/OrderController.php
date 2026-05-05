@@ -178,4 +178,23 @@ class OrderController extends Controller
             'order' => $order->load(['status', 'items.menu'])
         ]);
     }
+
+    public function updateStatus(Request $request, $id)
+{
+    Log::info('Update Status from Payment Service', $request->all());
+
+    $request->validate([
+        'status_id' => 'required|integer'
+    ]);
+
+    $order = Order::findOrFail($id);
+
+    $order->status_id = $request->status_id;
+    $order->save();
+
+    return response()->json([
+        'message' => 'Status updated successfully',
+        'order' => $order
+    ]);
+}
 }
