@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\OrderMessageController;
 use App\Http\Controllers\Api\AdminDashboardController;
 
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -65,4 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     
     Route::get('/admin/stats', [AdminDashboardController::class, 'getStats']);
+
+
 });
+
+
+Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
