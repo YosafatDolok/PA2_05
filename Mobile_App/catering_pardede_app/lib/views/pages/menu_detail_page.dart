@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../../models/menu_model.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/services/api_service.dart';
@@ -25,6 +26,14 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   void initState() {
     super.initState();
     _checkAdmin();
+    _recordVisit();
+  }
+
+  Future<void> _recordVisit() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final menu = ModalRoute.of(context)!.settings.arguments as MenuModel;
+      await LocalStorage.addRecentlyViewed(jsonEncode(menu.toJson()));
+    });
   }
 
   Future<void> _checkAdmin() async {
@@ -67,147 +76,253 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   Widget build(BuildContext context) {
     final menu = ModalRoute.of(context)!.settings.arguments as MenuModel;
     final String imageUrl = menu.image != null
-        ? (menu.image!.startsWith('http') ? menu.image! : 'http://10.0.2.2:8000/storage/${menu.image}')
+        ? (menu.image!.startsWith('http') ? menu.image! : '${ApiEndpoints.baseStorage}/${menu.image}')
         : '';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(menu.name, style: const TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: AppColors.primary,
-      ),
-      body: Column(
-        children: [
-          Hero(
-            tag: 'menu_hero_${menu.id}',
-            child: imageUrl.isNotEmpty
-                ? Image.network(imageUrl, width: double.infinity, height: 300, fit: BoxFit.cover)
-                : Container(height: 300, color: Colors.grey[300], child: const Icon(Icons.fastfood, size: 80)),
-          ),
-          Expanded(
-            child: ListView(
+      backgroundColor: Colors.white,
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(menu, imageUrl),
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(24),
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                        child: Text(menu.name,
-                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.primary))),
-                    const Text('Hubungi Admin',
-                        style: TextStyle(color: Color(0xFFB8860B), fontWeight: FontWeight.w900, fontSize: 16)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(color: const Color(0xFFB8860B), borderRadius: BorderRadius.circular(2))),
-                const SizedBox(height: 24),
-                const Text("Deskripsi",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87)),
-                const SizedBox(height: 8),
-                Text(
-                  menu.description ??
-                      "Nikmati hidangan spesial dari Catering Pardede yang dibuat dengan bahan berkualitas dan resep tradisional yang otentik.",
-                  style: const TextStyle(fontSize: 15, color: Colors.black54, height: 1.6),
-                ),
-                const SizedBox(height: 40),
-              ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTitleSection(menu),
+                  const SizedBox(height: 32),
+                  _buildQuickInfoBar(menu),
+                  const SizedBox(height: 32),
+                  _buildDescriptionSection(menu),
+                  const SizedBox(height: 32), // Reduced space as it's not overlapping now
+                ],
+              ),
             ),
-          )
+          ),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        child: Container(
-          height: 90,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Colors.grey.shade200)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5)),
-            ],
+      bottomNavigationBar: SafeArea(child: _buildBottomAction(menu)),
+    );
+  }
+
+  Widget _buildSliverAppBar(MenuModel menu, String imageUrl) {
+    return SliverAppBar(
+      expandedHeight: 400,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: AppColors.primary, // Maroon when collapsed
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: CircleAvatar(
+          backgroundColor: Colors.black26,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+            onPressed: () => Navigator.pop(context),
           ),
-          child: isAdmin 
-                 ? const Center(child: Text("VIEW MODE (ADMIN)", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 2)))
-                 : _buildActionButtons(menu),
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            backgroundColor: Colors.black26,
+            child: IconButton(
+              icon: const Icon(Icons.favorite_border, color: Colors.white, size: 20),
+              onPressed: () {},
+            ),
+          ),
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Hero(
+              tag: 'menu_hero_${menu.id}',
+              child: imageUrl.isNotEmpty
+                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                  : Container(color: Colors.grey[300], child: const Icon(Icons.fastfood, size: 80)),
+            ),
+            // Gradient Overlay
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButtons(MenuModel menu) {
-    if (!(menu.available ?? true)) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        alignment: Alignment.center,
-        child: const Text("TIDAK TERSEDIA",
-            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-      );
-    }
-
-    return Row(
+  Widget _buildTitleSection(MenuModel menu) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TapScale(
-            onTap: () {
-              CartService().addToCart(menu);
-              Helpers.showSnackBar(
-                context, 
-                '${menu.name} ditambahkan ke keranjang',
-                actionLabel: 'LIHAT',
-                onAction: _showCartSheet,
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              alignment: Alignment.center,
-              child: const Text("KERANJANG",
-                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-            ),
+        Text(
+          menu.name,
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            color: AppColors.primary,
+            height: 1.1,
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: TapScale(
-            onTap: () async {
-              final token = await LocalStorage.getToken();
-              if (token == null) {
-                Navigator.pushNamed(context, '/login');
-                return;
-              }
-              _showOrderBottomSheet(menu);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: const Text("PESAN SEKARANG",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-            ),
+        const SizedBox(height: 12),
+        Container(
+          width: 60,
+          height: 4,
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildQuickInfoBar(MenuModel menu) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.background.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _infoItem(Icons.category_outlined, menu.category?.name ?? "Menu", "Kategori"),
+          _infoItem(
+            menu.available == true ? Icons.check_circle_outline : Icons.highlight_off, 
+            menu.available == true ? "Tersedia" : "Habis", 
+            "Status"
+          ),
+          _infoItem(Icons.star_outline, "0", "Ulasan"), // Will be synced with real count
+        ],
+      ),
+    );
+  }
+
+  Widget _infoItem(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: AppColors.secondary, size: 24),
+        const SizedBox(height: 8),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.primary)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildDescriptionSection(MenuModel menu) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "TENTANG MENU",
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          menu.description ?? "Nikmati hidangan spesial dari Catering Pardede yang dibuat dengan bahan berkualitas dan resep tradisional yang otentik. Cocok untuk acara pernikahan, lamaran, dan syukuran keluarga.",
+          style: TextStyle(
+            fontSize: 16,
+            color: AppColors.textPrimary.withValues(alpha: 0.8),
+            height: 1.8,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomAction(MenuModel menu) {
+    if (isAdmin) {
+      return Container(
+        width: double.infinity,
+        height: 80,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: const BoxDecoration(color: Colors.white),
+        child: const Text(
+          "VIEW MODE (ADMIN)",
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 2),
+        ),
+      );
+    }
+
+    return Container(
+      height: 100, // Fixed height to prevent stretching
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -10)),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch, // Allow buttons to fill the 100px height
+        children: [
+          Expanded(
+            child: TapScale(
+              onTap: () {
+                CartService().addToCart(menu);
+                Helpers.showSnackBar(
+                  context,
+                  '${menu.name} ditambahkan',
+                  actionLabel: 'LIHAT',
+                  onAction: _showCartSheet,
+                );
+              },
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.primary, width: 2),
+                ),
+                child: const Text("KERANJANG", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 2,
+            child: TapScale(
+              onTap: () async {
+                final token = await LocalStorage.getToken();
+                if (token == null) {
+                  Navigator.pushNamed(context, '/login');
+                  return;
+                }
+                _showOrderBottomSheet(menu);
+              },
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
+                  ],
+                ),
+                child: const Text("PESAN SEKARANG", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -17,10 +17,10 @@ class OrderPage extends StatefulWidget {
   const OrderPage({super.key, this.onMenuRequested});
 
   @override
-  State<OrderPage> createState() => _OrderPageState();
+  State<OrderPage> createState() => OrderPageState();
 }
 
-class _OrderPageState extends State<OrderPage> {
+class OrderPageState extends State<OrderPage> {
   List<OrderModel> orders = [];
   bool isLoading = true;
   bool isLoggedIn = false;
@@ -67,6 +67,15 @@ class _OrderPageState extends State<OrderPage> {
     _fetchOrders();
   }
 
+  void clearFilter() {
+    if (mounted) {
+      setState(() {
+        activeFilter = null;
+      });
+      _fetchOrders();
+    }
+  }
+
   Future<void> _fetchOrders() async {
     setState(() => isLoading = true);
     try {
@@ -107,11 +116,38 @@ class _OrderPageState extends State<OrderPage> {
                     ? _buildShimmerList()
                     : orders.isEmpty
                         ? _buildEmptyState()
-                        : _buildOrderList(),
+                        : Column(
+                            children: [
+                              if (activeFilter != null) _buildFilterBar(),
+                              Expanded(child: _buildOrderList()),
+                            ],
+                          ),
           )
         ],
       ),
       floatingActionButton: isLoggedIn && !isLoading && !isAdmin ? _buildFAB() : null,
+    );
+  }
+
+  Widget _buildFilterBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      color: AppColors.primary.withValues(alpha: 0.05),
+      child: Row(
+        children: [
+          Icon(Icons.filter_list, size: 16, color: AppColors.primary),
+          const SizedBox(width: 8),
+          const Text(
+            "Filter aktif: Menunggu Harga",
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: clearFilter,
+            child: const Text("HAPUS FILTER", style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -227,7 +263,10 @@ class _OrderPageState extends State<OrderPage> {
 
   Widget _buildOrderCard(OrderModel order) {
     return TapScale(
-      onTap: () => Navigator.pushNamed(context, '/order-detail', arguments: order),
+      onTap: () async {
+        await Navigator.pushNamed(context, '/order-detail', arguments: order);
+        _fetchOrders(); // Refresh list when returning from detail
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),

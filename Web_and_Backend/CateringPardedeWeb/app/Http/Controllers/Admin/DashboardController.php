@@ -23,16 +23,25 @@ class DashboardController extends Controller
         $totalReviews = \App\Models\Review::count();
 
         // --- Chart Data & Real Stats from Payment Service ---
-        $paymentUrl = env('PAYMENT_SERVICE_URL', 'http://localhost:8001') . '/api/stats/summary';
-        $paymentResponse = Http::withHeaders([
-            'X-Internal-Secret' => config('services.internal_key')
-        ])->get($paymentUrl);
-
-        $stats = $paymentResponse->successful() ? $paymentResponse->json() : [
+        $stats = [
             'total_revenue' => 0,
             'growth_percent' => 0,
             'monthly_chart' => []
         ];
+
+        try {
+            $paymentUrl = env('PAYMENT_SERVICE_URL', 'http://localhost:8001') . '/api/stats/summary';
+            $paymentResponse = Http::withHeaders([
+                'X-Internal-Secret' => config('services.internal_key')
+            ])->timeout(2)->connectTimeout(1)->get($paymentUrl);
+
+            if ($paymentResponse->successful()) {
+                $stats = $paymentResponse->json();
+            }
+        } catch (\Exception $e) {
+            // Log error but don't crash the app
+            \Illuminate\Support\Facades\Log::warning("Payment Microservice unavailable: " . $e->getMessage());
+        }
 
         $revenueData = collect($stats['monthly_chart']);
         $revenueGrowth = $stats['growth_percent'];

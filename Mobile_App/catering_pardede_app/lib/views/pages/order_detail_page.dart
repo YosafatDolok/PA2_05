@@ -11,14 +11,19 @@ import '../../core/constants/api_endpoints.dart';
 import '../widgets/review_sheet.dart';
 import '../widgets/star_rating.dart';
 import 'order_chat_page.dart';
+import '/controllers/admin_controller.dart';
+import '/core/services/auth_service.dart';
 import '../../core/utils/helpers.dart';
 import 'dart:ui';
 import '../pages/payment_method_page.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class OrderDetailPage extends StatefulWidget {
-  final OrderModel order;
+  final OrderModel? order;
+  final int? orderId;
 
-  const OrderDetailPage({super.key, required this.order});
+  const OrderDetailPage({super.key, this.order, this.orderId});
 
   @override
   State<OrderDetailPage> createState() => _OrderDetailPageState();
@@ -26,21 +31,58 @@ class OrderDetailPage extends StatefulWidget {
 
 class _OrderDetailPageState extends State<OrderDetailPage> {
   bool _isCancelling = false;
-  late OrderModel _currentOrder;
+  OrderModel? _currentOrder;
   List<OrderAdditionRequest> _additions = [];
+  bool _isLoading = true;
   bool _isLoadingAdditions = false;
+  bool _isAdmin = false;
+  final AdminController _adminController = AdminController();
 
   @override
   void initState() {
     super.initState();
-    _currentOrder = widget.order;
-    _fetchAdditions();
+    if (widget.orderId != null) {
+      _fetchInitialOrder();
+    } else if (widget.order != null) {
+      // Even if order is passed, fetch latest to avoid stale data from list
+      _currentOrder = widget.order;
+      _isLoading = false;
+      _checkAdminStatus();
+      _fetchAdditions();
+      _fetchOrderDetails(); // Background refresh
+    }
+  }
+
+  Future<void> _fetchInitialOrder() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await ApiService.get("${ApiEndpoints.orders}/${widget.orderId}");
+      if (mounted) {
+        setState(() {
+          _currentOrder = OrderModel.fromJson(response);
+          _isLoading = false;
+        });
+        _checkAdminStatus();
+        _fetchAdditions();
+      }
+    } catch (e) {
+      debugPrint("Error fetching initial order: $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Helpers.showSnackBar(context, "Gagal memuat detail pesanan");
+      }
+    }
+  }
+
+  Future<void> _checkAdminStatus() async {
+    final status = await AuthService.isAdmin();
+    if (mounted) setState(() => _isAdmin = status);
   }
 
   Future<void> _fetchAdditions() async {
     setState(() => _isLoadingAdditions = true);
     try {
-      final response = await ApiService.get("${ApiEndpoints.orders}/${_currentOrder.id}/additions");
+      final response = await ApiService.get("${ApiEndpoints.orders}/${_currentOrder!.id}/additions");
       if (mounted) {
         setState(() {
           _additions = (response as List).map((e) => OrderAdditionRequest.fromJson(e)).toList();
@@ -69,8 +111,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             ApiService.get(ApiEndpoints.menus).then((res) {
               // 1. Identify all menu IDs already in the order or additions
               final Set<int> existingIds = {};
-              if (_currentOrder.items != null) {
-                for (var item in _currentOrder.items!) {
+              if (_currentOrder!.items != null) {
+                for (var item in _currentOrder!.items!) {
                   existingIds.add(item.menuId);
                 }
               }
@@ -197,7 +239,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Future<void> _submitAdditions(List<int> menuIds, String notes) async {
     setState(() => _isLoadingAdditions = true);
     try {
-      await ApiService.post("${ApiEndpoints.orders}/${_currentOrder.id}/additions", {
+      await ApiService.post("${ApiEndpoints.orders}/${_currentOrder!.id}/additions", {
         'menu_ids': menuIds,
         'notes': notes,
       });
@@ -244,7 +286,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       onConfirm: () async {
         setState(() => _isCancelling = true);
         try {
-          final response = await ApiService.post("${ApiEndpoints.orders}/${_currentOrder.id}/cancel", {});
+          final response = await ApiService.post("${ApiEndpoints.orders}/${_currentOrder!.id}/cancel", {});
           if (mounted) {
             setState(() {
               _currentOrder = OrderModel.fromJson(response['order']);
@@ -264,7 +306,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   Future<void> _fetchOrderDetails() async {
     try {
-      final response = await ApiService.get("${ApiEndpoints.orders}/${_currentOrder.id}");
+      final response = await ApiService.get("${ApiEndpoints.orders}/${_currentOrder!.id}");
       if (mounted) {
         setState(() {
           _currentOrder = OrderModel.fromJson(response);
@@ -280,7 +322,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ReviewSheet(orderId: _currentOrder.id),
+      builder: (context) => ReviewSheet(orderId: _currentOrder!.id),
     ).then((value) {
       if (value == true) {
         _fetchOrderDetails();
@@ -290,9 +332,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    bool isCompleted = _currentOrder.status?.name.toLowerCase() == 'selesai' || 
-                       _currentOrder.status?.name.toLowerCase() == 'delivered';
-    bool hasReview = _currentOrder.review != null;
+    if (_isLoading || _currentOrder == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Memuat Pesanan...")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    bool isCompleted = _currentOrder!.status?.name.toLowerCase() == 'selesai' || 
+                       _currentOrder!.status?.name.toLowerCase() == 'delivered';
+    bool hasReview = _currentOrder!.review != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -303,10 +352,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             showIcons: true,
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await _fetchOrderDetails();
+                await _fetchAdditions();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
                   _buildReceipt(context),
                   
                   if (isCompleted) ...[
@@ -317,6 +372,11 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       _buildReviewButton(),
                   ],
 
+                  if (_isAdmin) ...[
+                    const SizedBox(height: 16),
+                    _buildAdminActions(),
+                  ],
+
                   // The "Addition Stack"
                   if (_additions.isNotEmpty) ...[
                     const SizedBox(height: 16),
@@ -324,7 +384,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   ],
                   // ... rest of the build logic
 
-                  if (_currentOrder.statusId == 1 || _currentOrder.statusId == 2) ...[
+                  if (!_isAdmin && (_currentOrder!.statusId == 1 || _currentOrder!.statusId == 2)) ...[
                     const SizedBox(height: 24),
                     TapScale(
                       onTap: () => _showAddMenuSheet(),
@@ -353,7 +413,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       ),
                     ),
                   ],
-                  if (_currentOrder.statusId == 1) ...[
+                  if (!_isAdmin && _currentOrder!.statusId == 1) ...[
                     const SizedBox(height: 24),
                     TapScale(
                       onTap: _isCancelling ? () {} : () => _cancelOrder(),
@@ -375,7 +435,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                       ),
                     ),
                   ],
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -430,10 +491,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildInfoRow("Order ID", "#ORD-${_currentOrder.id.toString().padLeft(5, '0')}"),
+                _buildInfoRow("Order ID", "#ORD-${_currentOrder!.id.toString().padLeft(5, '0')}"),
                 _buildInfoRow("Tanggal Pesan",
-                    "${_currentOrder.orderDate.day}/${_currentOrder.orderDate.month}/${_currentOrder.orderDate.year}"),
-                _buildInfoRow("Status", _currentOrder.status?.name.toUpperCase() ?? "PENDING", isStatus: true),
+                    "${_currentOrder!.orderDate.day}/${_currentOrder!.orderDate.month}/${_currentOrder!.orderDate.year}"),
+                _buildInfoRow("Status", _currentOrder!.status?.name.toUpperCase() ?? "PENDING", isStatus: true),
               ],
             ),
           ),
@@ -456,7 +517,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                ...?_currentOrder.items?.map((item) => _buildItemRow(
+                ...?_currentOrder!.items?.map((item) => _buildItemRow(
                       item.menu?.name ?? "Menu Item",
                       "Catering Menu",
                       item.finalPrice ?? 0,
@@ -473,12 +534,47 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             child: Column(
               children: [
                 _buildDetailRow(Icons.calendar_today_outlined, "Tanggal Acara",
-                    "${_currentOrder.eventDate.day}/${_currentOrder.eventDate.month}/${_currentOrder.eventDate.year}"),
+                    "${_currentOrder!.eventDate.day}/${_currentOrder!.eventDate.month}/${_currentOrder!.eventDate.year}"),
                 const SizedBox(height: 16),
-                _buildDetailRow(Icons.location_on_outlined, "Alamat", _currentOrder.eventAddress),
-                if (_currentOrder.notes != null && _currentOrder.notes!.isNotEmpty) ...[
+                _buildDetailRow(Icons.location_on_outlined, "Alamat", _currentOrder!.eventAddress),
+                if (_currentOrder!.eventLatitude != null && _currentOrder!.eventLongitude != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 150,
+                    width: double.infinity,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(_currentOrder!.eventLatitude!, _currentOrder!.eventLongitude!),
+                        initialZoom: 15.0,
+                        interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.catering.pardede.app',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(_currentOrder!.eventLatitude!, _currentOrder!.eventLongitude!),
+                              width: 40,
+                              height: 40,
+                              child: const Icon(Icons.location_on, color: AppColors.primary, size: 30),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_currentOrder!.notes != null && _currentOrder!.notes!.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.note_alt_outlined, "Catatan", _currentOrder.notes!),
+                  _buildDetailRow(Icons.note_alt_outlined, "Catatan", _currentOrder!.notes!),
                 ],
               ],
             ),
@@ -517,7 +613,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                             }
                           }
                         }
-                        double finalTotal = _currentOrder.finalPrice + totalAdditions;
+                        double finalTotal = _currentOrder!.finalPrice + totalAdditions;
 
                         return finalTotal > 0
                             ? Text(
@@ -540,54 +636,54 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     ),
                   ],
                 ),
-                if (_currentOrder.finalPrice <= 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      "*Harga final akan ditentukan oleh admin segera.",
-                      style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                  if (_currentOrder!.finalPrice <= 0 && !_isAdmin)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        "*Harga final akan ditentukan oleh admin segera.",
+                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                      ),
                     ),
-                  ),
-                const SizedBox(height: 16),
-                TapScale(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder.id)),
-                  ),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
+                  const SizedBox(height: 16),
+                  TapScale(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder!.id)),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.chat_outlined, color: AppColors.primary, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          "DISKUSI HARGA DENGAN ADMIN",
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                            letterSpacing: 0.5,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.chat_outlined, color: AppColors.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isAdmin ? "DISKUSI DENGAN PELANGGAN" : "DISKUSI HARGA DENGAN ADMIN",
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
                  // 🔥 TOMBOL BAYAR
-    if (_currentOrder.finalPrice > 0 && _currentOrder.statusId == 1)
+    if (_currentOrder!.finalPrice > 0 && _currentOrder!.statusId == 1 && !_isAdmin)
       TapScale(
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => PaymentMethodPage(order: _currentOrder),
+              builder: (_) => PaymentMethodPage(order: _currentOrder!),
             ),
           );
         },
@@ -618,6 +714,177 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
   }
 
+  Widget _buildAdminActions() {
+    bool needsProposal = _currentOrder!.statusId == 1 && _currentOrder!.finalPrice <= 0;
+    bool needsDriver = _currentOrder!.statusId == 2 && _currentOrder!.driverId == null;
+
+    if (!needsProposal && !needsDriver) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "MANAJEMEN ADMIN",
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2),
+        ),
+        const SizedBox(height: 16),
+        if (needsProposal)
+          _buildActionButton(
+            "TETAPKAN HARGA FINAL",
+            Icons.payments_outlined,
+            AppColors.primary,
+            () => _showProposePriceSheet(),
+          ),
+        if (needsDriver)
+          _buildActionButton(
+            "TUNJUK DRIVER",
+            Icons.local_shipping_outlined,
+            AppColors.secondary,
+            () => _showAssignDriverSheet(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TapScale(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.1),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showProposePriceSheet() {
+    final TextEditingController priceController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.all(30),
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Tetapkan Harga Final", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary)),
+              const SizedBox(height: 8),
+              const Text("Berikan harga total untuk pesanan ini setelah menimbang detail acara.", style: TextStyle(fontSize: 14, color: Colors.grey)),
+              const SizedBox(height: 24),
+              TextField(
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Harga Total (Rp)",
+                  prefixText: "Rp ",
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final price = double.tryParse(priceController.text);
+                    if (price == null || price <= 0) {
+                      Helpers.showSnackBar(context, "Masukkan harga yang valid");
+                      return;
+                    }
+                    Navigator.pop(context);
+                    final success = await _adminController.proposePrice(_currentOrder!.id, price);
+                    if (success) {
+                      _fetchOrderDetails();
+                      Helpers.showSnackBar(context, "Harga berhasil ditetapkan!");
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text("KIRIM PENAWARAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAssignDriverSheet() async {
+    final drivers = await _adminController.getAvailableDrivers();
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        padding: const EdgeInsets.all(30),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Pilih Driver", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary)),
+            const SizedBox(height: 24),
+            Expanded(
+              child: drivers.isEmpty
+                  ? const Center(child: Text("Tidak ada driver tersedia"))
+                  : ListView.builder(
+                      itemCount: drivers.length,
+                      itemBuilder: (context, index) {
+                        final driver = drivers[index];
+                        return ListTile(
+                          leading: const CircleAvatar(backgroundColor: AppColors.secondary, child: Icon(Icons.person, color: Colors.white)),
+                          title: Text(driver['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: const Text("Status: Tersedia"),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final success = await _adminController.assignDriver(_currentOrder!.id, driver['id']);
+                            if (success) {
+                              _fetchOrderDetails();
+                              Helpers.showSnackBar(context, "Driver berhasil ditunjuk!");
+                            }
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildInfoRow(String label, String value, {bool isStatus = false}) {
     Color statusColor = Colors.orange;
     if (value == "CANCELLED") statusColor = Colors.red;
@@ -643,6 +910,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   Widget _buildItemRow(String name, String qty, double price) {
+    bool isOrderPriced = (_currentOrder?.finalPrice ?? 0) > 0;
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -658,8 +927,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             ),
           ),
           Text(
-            price > 0 ? "Rp ${price.toStringAsFixed(0)}" : "-",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            price > 0 
+              ? "Rp ${price.toStringAsFixed(0)}" 
+              : (isOrderPriced ? "Included" : "Pending"),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: price > 0 ? Colors.black87 : (isOrderPriced ? Colors.green : Colors.orange),
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -835,7 +1110,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   Widget _buildReviewCard() {
-    final review = _currentOrder.review!;
+    final review = _currentOrder!.review!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),

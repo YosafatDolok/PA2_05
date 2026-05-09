@@ -164,7 +164,7 @@
             height: 350,
         },
         labels: {!! json_encode($statusDistribution->pluck('label')) !!},
-        colors: ['#ff334b', '#4cd137', '#00a8ff', '#fbc531', '#9c88ff'],
+        colors: ['#ff334b', '#4cd137', '#00a8ff', '#fbc531', '#9c88ff', '#ffa502'],
         stroke: {
             show: false,
         },

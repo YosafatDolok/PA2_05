@@ -8,6 +8,7 @@ use App\Models\OrderAdditionRequest;
 class Order extends Model
 {
     protected $primaryKey = 'order_id';
+    protected $appends = ['total_payable', 'base_latitude', 'base_longitude'];
 
     public function getRouteKeyName()
     {
@@ -48,7 +49,7 @@ class Order extends Model
 
     public function driver()
     {
-        return $this->belongsTo(User::class, 'driver_id');
+        return $this->belongsTo(User::class, 'driver_id')->withTrashed();
     }
 
     public function status()
@@ -79,5 +80,39 @@ class Order extends Model
     public function latestMessage()
     {
         return $this->hasOne(OrderMessage::class, 'order_id')->latestOfMany('message_id');
+    }
+
+    /**
+     * Calculate total amount payable including additions.
+     */
+    public function getTotalPayableAttribute()
+    {
+        $basePrice = (float) $this->final_price;
+        
+        $additionsTotal = $this->additions()
+            ->where('status_id', 2) // Approved
+            ->with('items')
+            ->get()
+            ->sum(function($request) {
+                return $request->items->sum('final_price');
+            });
+
+        return $basePrice + $additionsTotal;
+    }
+
+    /**
+     * Get the fixed shop base latitude for pickup.
+     */
+    public function getBaseLatitudeAttribute()
+    {
+        return 2.437190;
+    }
+
+    /**
+     * Get the fixed shop base longitude for pickup.
+     */
+    public function getBaseLongitudeAttribute()
+    {
+        return 99.157618;
     }
 }

@@ -13,4 +13,11 @@ class CategoryModel {
       name: json['name'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'category_id': id,
+      'name': name,
+    };
+  }
 }

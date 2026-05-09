@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\AdminPaymentController;
+use App\Http\Controllers\Admin\DriverController;
 
 use App\Http\Controllers\Admin\PasswordResetController as AdminPasswordResetController;
 
@@ -24,6 +25,12 @@ Route::get('/password/reset', [AdminPasswordResetController::class, 'showLinkReq
 Route::post('/password/email', [AdminPasswordResetController::class, 'sendResetOtp'])->name('admin.password.email');
 Route::get('/password/reset/verify', [AdminPasswordResetController::class, 'showResetForm'])->name('admin.password.reset');
 Route::post('/password/reset', [AdminPasswordResetController::class, 'reset'])->name('admin.password.update');
+
+// Driver Invitation Routes
+use App\Http\Controllers\Auth\DriverInviteController;
+Route::get('/driver/invite/{token}', [DriverInviteController::class, 'showSetPasswordForm'])->name('driver.invite.set-password');
+Route::get('/driver/invite-success', [DriverInviteController::class, 'success'])->name('driver.invite.success');
+Route::post('/driver/invite/{token}', [DriverInviteController::class, 'setPassword'])->name('driver.invite.setPassword');
 
 use App\Http\Controllers\Admin\ReviewController;
 
@@ -58,5 +65,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
         Route::get('/global-search', [DashboardController::class, 'globalSearch'])->name('admin.global-search');
+
+        // Logistics Dashboard
+        Route::get('/logistics', [\App\Http\Controllers\Admin\LogisticsController::class, 'index'])->name('admin.logistics.index');
+        Route::get('/logistics/updates', [\App\Http\Controllers\Admin\LogisticsController::class, 'getLiveUpdates'])->name('admin.logistics.updates');
+        Route::resource('drivers', DriverController::class);
+        Route::post('drivers/{driver}/resend', [DriverController::class, 'resendInvitation'])->name('drivers.resend');
+        Route::post('drivers/{driver}/reset-link', [DriverController::class, 'sendResetLink'])->name('drivers.reset-link');
     });
 });

@@ -7,11 +7,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasUuids;
+
+    /**
+     * Get the column name for the UUID.
+     *
+     * @return string
+     */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    /**
+     * Get the route key for the model.
+     *
+     * @return string
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -59,6 +81,11 @@ class User extends Authenticatable
     public function menus()
     {
         return $this->hasMany(Menu::class, 'category_id');
+    }
+
+    public function location()
+    {
+        return $this->hasOne(DriverLocation::class, 'user_id', 'user_id');
     }
 
     protected $primaryKey = 'user_id';

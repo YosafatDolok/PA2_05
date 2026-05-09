@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import '/core/storage/local_storage.dart';
+import '/models/user_model.dart';
 import '../widgets/custom_header.dart';
 import '../widgets/shimmer_loading.dart';
 import '../widgets/tap_scale.dart';
@@ -22,6 +25,8 @@ class _HomePageState extends State<HomePage> {
   List<CategoryModel> categories = [];
   List<MenuModel> menus = [];
   List<ReviewModel> reviews = [];
+  List<MenuModel> recentlyViewed = [];
+  UserModel? user;
   bool isLoading = true;
   String? errorMessage;
 
@@ -40,12 +45,24 @@ class _HomePageState extends State<HomePage> {
       final categoryData = await ApiService.get(ApiEndpoints.categories);
       final menuData = await ApiService.get(ApiEndpoints.menus);
       final reviewData = await OrderService.getLatestReviews();
+      
+      // Fetch User & Recently Viewed
+      UserModel? fetchedUser;
+      try {
+        final userData = await ApiService.get(ApiEndpoints.user);
+        fetchedUser = UserModel.fromJson(userData);
+      } catch (_) {}
+
+      final historyData = await LocalStorage.getRecentlyViewed();
+      final history = historyData.map((json) => MenuModel.fromJson(jsonDecode(json))).toList();
 
       if (mounted) {
         setState(() {
           categories = (categoryData as List).map((json) => CategoryModel.fromJson(json)).toList();
           menus = (menuData as List).map((json) => MenuModel.fromJson(json)).toList();
           reviews = (reviewData as List).map((json) => ReviewModel.fromJson(json)).toList();
+          recentlyViewed = history;
+          user = fetchedUser;
           isLoading = false;
         });
       }
@@ -73,12 +90,36 @@ class _HomePageState extends State<HomePage> {
             children: [
               const CustomHeader(
                 showIcons: true,
-                showSearch: true,
               ),
               const SizedBox(height: 24),
-              
-              // Category Selection
-              isLoading ? _buildCategoryShimmer() : _CategoryList(categories: categories),
+
+              // Personalized Greeting
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user != null ? "Halo, ${user!.name.split(' ')[0]}! 👋" : "Halo, Selamat Datang! 👋",
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF420000),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Mau makan apa hari ini?",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               
               const SizedBox(height: 32),
               
@@ -102,6 +143,13 @@ class _HomePageState extends State<HomePage> {
                 _ReviewCarousel(reviews: reviews),
               ],
               
+              if (recentlyViewed.isNotEmpty) ...[
+                const SizedBox(height: 32),
+                _SectionHeader(title: 'Terakhir Anda Lihat', onSeeAll: () {}),
+                const SizedBox(height: 16),
+                _RecentlyViewedList(items: recentlyViewed),
+              ],
+              
               const SizedBox(height: 40),
             ],
           ),
@@ -110,18 +158,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCategoryShimmer() {
-    return SizedBox(
-      height: 100,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        scrollDirection: Axis.horizontal,
-        itemCount: 4,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
-        itemBuilder: (_, __) => ShimmerLoading.rounded(width: 80, height: 100, borderRadius: 20),
-      ),
-    );
-  }
+
 
   Widget _buildFeaturedShimmer() {
     return Padding(
@@ -139,6 +176,50 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(width: 16),
           Expanded(child: ShimmerLoading.rounded(width: double.infinity, height: 180, borderRadius: 24)),
         ],
+      ),
+    );
+  }
+}
+
+class _RecentlyViewedList extends StatelessWidget {
+  final List<MenuModel> items;
+  const _RecentlyViewedList({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 110,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final menu = items[index];
+          final String? imageUrl = menu.image != null
+              ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
+              : null;
+
+          return TapScale(
+            onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
+            child: Container(
+              width: 100,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: imageUrl != null
+                    ? Image.network(imageUrl, fit: BoxFit.cover)
+                    : Container(color: Colors.grey[100]),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -194,74 +275,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _CategoryList extends StatelessWidget {
-  final List<CategoryModel> categories;
-  const _CategoryList({required this.categories});
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 105,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length + 1,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
-        itemBuilder: (context, index) {
-          final isAll = index == 0;
-          final name = isAll ? "Semua" : categories[index - 1].name;
-          
-          return TapScale(
-            onTap: () {},
-            child: Column(
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: isAll ? const Color(0xFF7A0000) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isAll ? const Color(0xFF7A0000) : Colors.white),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: Icon(
-                    isAll ? Icons.grid_view_rounded : _getIconForCategory(name),
-                    color: isAll ? Colors.white : const Color(0xFFB8860B),
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: const Color(0xFF7A0000),
-                    fontWeight: isAll ? FontWeight.w900 : FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  IconData _getIconForCategory(String name) {
-    final lowerName = name.toLowerCase();
-    if (lowerName.contains('nasi')) return Icons.restaurant_rounded;
-    if (lowerName.contains('tumpeng')) return Icons.rice_bowl_rounded;
-    if (lowerName.contains('prasmanan')) return Icons.room_service_rounded;
-    if (lowerName.contains('snack')) return Icons.bakery_dining_rounded;
-    return Icons.category_rounded;
-  }
-}
 
 class _FeaturedMenu extends StatelessWidget {
   final List<MenuModel> menus;
@@ -272,7 +286,7 @@ class _FeaturedMenu extends StatelessWidget {
     if (menus.isEmpty) return const SizedBox();
     final menu = menus.first;
     final String? imageUrl = menu.image != null
-        ? (menu.image!.startsWith('http') ? menu.image : 'http://10.0.2.2:8000/storage/${menu.image}')
+        ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
         : null;
 
     return Padding(
@@ -445,7 +459,7 @@ class _MenuCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String? imageUrl = menu.image != null
-        ? (menu.image!.startsWith('http') ? menu.image : 'http://10.0.2.2:8000/storage/${menu.image}')
+        ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
         : null;
 
     return TapScale(

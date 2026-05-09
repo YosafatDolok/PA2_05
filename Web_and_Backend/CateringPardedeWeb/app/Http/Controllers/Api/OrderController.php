@@ -69,6 +69,8 @@ class OrderController extends Controller
         Log::info('Order Submission:', $request->all());
         $validator = Validator::make($request->all(), [
             'event_address' => 'required|string',
+            'event_latitude' => 'required|numeric',
+            'event_longitude' => 'required|numeric',
             'event_date' => 'required|date|after_or_equal:today',
             'people' => 'required|integer|min:1',
             'notes' => 'nullable|string',
@@ -180,21 +182,69 @@ class OrderController extends Controller
     }
 
     public function updateStatus(Request $request, $id)
-{
-    Log::info('Update Status from Payment Service', $request->all());
+    {
+        Log::info('Update Status from Payment Service', $request->all());
 
-    $request->validate([
-        'status_id' => 'required|integer'
-    ]);
+        $request->validate([
+            'status_id' => 'required|integer',
+            'amount' => 'nullable|numeric',
+            'external_id' => 'nullable|string'
+        ]);
 
-    $order = Order::findOrFail($id);
+        $order = Order::findOrFail($id);
 
-    $order->status_id = $request->status_id;
-    $order->save();
+        // 🛡️ Idempotency Check: Prevent double-counting the same transaction
+        if ($request->external_id && \App\Models\ProcessedPayment::where('external_id', $request->external_id)->exists()) {
+            Log::info("Duplicate payment signal received for External ID: {$request->external_id}. Ignoring.");
+            return response()->json([
+                'message' => 'Payment already processed',
+                'order' => $order
+            ]);
+        }
 
-    return response()->json([
-        'message' => 'Status updated successfully',
-        'order' => $order
-    ]);
-}
+        // Accumulate payment amount if provided and status is Paid (5)
+        if ($request->status_id == 5 && $request->amount > 0) {
+            $order->total_paid = (float)$order->total_paid + (float)$request->amount;
+            
+            // Record this transaction ID
+            if ($request->external_id) {
+                \App\Models\ProcessedPayment::create([
+                    'order_id' => $id,
+                    'external_id' => $request->external_id,
+                    'amount' => $request->amount
+                ]);
+            }
+            
+            Log::info("Payment of {$request->amount} accumulated for Order #{$id}. Total now: {$order->total_paid}");
+        }
+
+        // 🛡️ Logic Shield: Never allow a payment to "downgrade" a status
+        // If it's already In Delivery (3), Delivered (4), or Cancelled (9), don't set it back to Paid (5)
+        if (in_array((int)$order->status_id, [3, 4, 9]) && $request->status_id == 5) {
+            $order->save(); // Save the total_paid increment
+            Log::info("Payment received for Order #{$id}, but status is already advanced ({$order->status_id}). Status was NOT reset.");
+            return response()->json([
+                'message' => 'Payment acknowledged, but status was not reset as order is already processed.',
+                'order' => $order
+            ]);
+        }
+
+        // If order is already paid, we don't need to change status to paid again
+        if ($order->status_id == 5 && $request->status_id == 5) {
+            $order->save(); // Save the total_paid increment
+            Log::info("Additional payment received for Order #{$id}. Status remains PAID.");
+            return response()->json([
+                'message' => 'Additional payment acknowledged',
+                'order' => $order
+            ]);
+        }
+
+        $order->status_id = $request->status_id;
+        $order->save();
+
+        return response()->json([
+            'message' => 'Status updated successfully',
+            'order' => $order
+        ]);
+    }
 }

@@ -8,6 +8,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../widgets/custom_header.dart';
 import '../widgets/tap_scale.dart';
 import 'edit_profile_page.dart';
+import '../../controllers/auth_controller.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -141,7 +142,7 @@ class _AccountPageState extends State<AccountPage> {
             radius: 35,
             backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             backgroundImage: user?.profilePicture != null
-                ? NetworkImage("http://10.0.2.2:8000/storage/${user!.profilePicture}")
+                ? NetworkImage("${ApiEndpoints.baseStorage}/${user!.profilePicture}")
                 : null,
             child: user?.profilePicture == null
                 ? const Icon(Icons.person, color: AppColors.primary, size: 35)
@@ -194,12 +195,7 @@ class _AccountPageState extends State<AccountPage> {
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Divider(),
           ),
-          _accountTile(Icons.logout, "Keluar", () async {
-            await AuthService.logout();
-            if (mounted) {
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-            }
-          }, color: Colors.red),
+          _accountTile(Icons.logout, "Keluar", () => AuthController.logout(context), color: Colors.red),
         ],
       ),
     );

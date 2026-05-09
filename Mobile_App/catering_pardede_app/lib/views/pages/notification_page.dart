@@ -8,6 +8,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../../models/notification_model.dart';
 import '../../models/order_model.dart';
 import '../../core/utils/helpers.dart';
+import '../../core/services/push_notification_service.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -44,6 +45,7 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _markAsRead(int id) async {
     try {
       await ApiService.patch("${ApiEndpoints.notifications}/$id/read", {});
+      PushNotificationService.updateUnreadCount(); // Sync global count
     } catch (e) {
       debugPrint("Error marking as read: $e");
     }

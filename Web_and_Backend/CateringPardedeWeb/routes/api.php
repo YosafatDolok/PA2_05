@@ -67,7 +67,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('/admin/stats', [AdminDashboardController::class, 'getStats']);
 
-
+    // Driver Logistics
+    Route::prefix('driver')->group(function () {
+        Route::get('/orders', [\App\Http\Controllers\Api\DriverController::class, 'myOrders']);
+        Route::post('/location', [\App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
+        Route::post('/orders/{id}/status', [\App\Http\Controllers\Api\DriverController::class, 'updateStatus']);
+    });
 });
 
 

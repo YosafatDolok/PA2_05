@@ -10,8 +10,8 @@
             <div class="auth-logo-glow mb-4">
                 <i class="fas fa-shield-halved text-danger fs-1"></i>
             </div>
-            <h2 class="text-white font-weight-bold mb-1">Access Protocol</h2>
-            <p class="text-muted small uppercase letter-spacing-1">Admin Authorization Required</p>
+            <h2 class="text-white font-weight-bold mb-1">Login</h2>
+            <p class="text-muted small uppercase letter-spacing-1">Welcome</p>
         </div>
 
         <form class="form" method="POST" action="{{ route('login') }}">

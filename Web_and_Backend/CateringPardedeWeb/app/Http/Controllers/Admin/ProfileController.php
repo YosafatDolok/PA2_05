@@ -74,6 +74,11 @@ class ProfileController extends Controller
         ]);
 
         $user = auth()->user();
+        \Log::info('FCM Token Update Request', [
+            'user_id' => $user->user_id, 
+            'token' => $request->fcm_token
+        ]);
+        
         $user->update(['fcm_token' => $request->fcm_token]);
 
         return response()->json(['message' => 'FCM token updated successfully']);

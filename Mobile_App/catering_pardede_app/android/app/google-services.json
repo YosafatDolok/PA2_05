@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "505343538576",
+    "project_id": "pardede-catering-app",
+    "storage_bucket": "pardede-catering-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:505343538576:android:082782effaad7074c6af15",
+        "android_client_info": {
+          "package_name": "com.catering.pardede.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_5sPP7O6VsipvzPVLDzDOQUyKEDqxMbE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

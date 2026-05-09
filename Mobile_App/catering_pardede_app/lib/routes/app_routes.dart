@@ -15,6 +15,9 @@ import '/views/auth/forgot_password/reset_password_page.dart';
 import '/views/pages/order_page.dart';
 import '/views/pages/menu_page.dart';
 import '/views/pages/chat_inbox_page.dart';
+import '/views/driver/driver_home_page.dart';
+import '/views/driver/driver_order_detail_page.dart';
+import '/views/pages/map_picker_page.dart';
 
 import '/core/guards/role_guard.dart';
 import '/models/menu_model.dart';
@@ -77,6 +80,21 @@ class AppRoutes {
       case '/messages':
         return MaterialPageRoute(builder: (_) => const ChatInboxPage());
 
+      // ================= Driver =================
+      case '/driver-dashboard':
+        return MaterialPageRoute(
+          builder: (_) => const RoleGuard(
+            role: 'driver',
+            child: DriverHomePage(),
+          ),
+        );
+
+      case '/driver-order-detail':
+        final order = settings.arguments;
+        return MaterialPageRoute(
+          builder: (_) => DriverOrderDetailPage(order: order),
+        );
+
       // ================= Menu Detail =================
       case '/menu-detail':
         final args = settings.arguments;
@@ -97,6 +115,10 @@ class AppRoutes {
           return MaterialPageRoute(
             builder: (_) => OrderDetailPage(order: args),
           );
+        } else if (args is int) {
+          return MaterialPageRoute(
+            builder: (_) => OrderDetailPage(orderId: args),
+          );
         }
         return _errorRoute("Order data not found");
 
@@ -112,6 +134,9 @@ class AppRoutes {
         }
 
         return _errorRoute("Gallery data not found");
+
+      case '/map-picker':
+        return MaterialPageRoute(builder: (_) => const MapPickerPage());
 
       // ================= Fallback =================
       default:

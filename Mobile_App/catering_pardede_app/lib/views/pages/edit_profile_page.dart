@@ -111,7 +111,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         backgroundImage: _image != null
                             ? FileImage(_image!)
                             : (widget.user.profilePicture != null
-                                ? NetworkImage("http://10.0.2.2:8000/storage/${widget.user.profilePicture}")
+                                ? NetworkImage("${ApiEndpoints.baseStorage}/${widget.user.profilePicture}")
                                 : null) as ImageProvider?,
                         child: _image == null && widget.user.profilePicture == null
                             ? const Icon(Icons.person, color: AppColors.primary, size: 50)

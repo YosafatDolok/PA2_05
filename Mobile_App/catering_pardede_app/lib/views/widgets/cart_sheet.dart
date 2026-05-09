@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import 'order_form_sheet.dart';
 import 'tap_scale.dart';
 import '../../core/utils/helpers.dart';
+import '../../core/constants/api_endpoints.dart';
 
 class CartSheet extends StatefulWidget {
   const CartSheet({super.key});
@@ -88,7 +89,7 @@ class _CartSheetState extends State<CartSheet> {
         final menu = cart.items[index];
         final bool isAvailable = menu.available ?? true;
         final String imageUrl = menu.image != null
-            ? (menu.image!.startsWith('http') ? menu.image! : 'http://10.0.2.2:8000/storage/${menu.image}')
+            ? (menu.image!.startsWith('http') ? menu.image! : '${ApiEndpoints.baseStorage}/${menu.image}')
             : '';
 
         return Container(

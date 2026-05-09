@@ -194,7 +194,7 @@ class _MenuPageState extends State<MenuPage> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.58,
+        childAspectRatio: 0.52,
       ),
       itemCount: filteredMenus.length,
       itemBuilder: (context, index) => _menuCard(filteredMenus[index]),
@@ -203,7 +203,7 @@ class _MenuPageState extends State<MenuPage> {
 
   Widget _menuCard(MenuModel menu) {
     final String? imageUrl = menu.image != null
-        ? (menu.image!.startsWith('http') ? menu.image : 'http://10.0.2.2:8000/storage/${menu.image}')
+        ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
         : null;
 
     return TapScale(
@@ -348,7 +348,7 @@ class _MenuPageState extends State<MenuPage> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.58,
+        childAspectRatio: 0.52,
       ),
       itemCount: 6,
       itemBuilder: (_, __) => Container(

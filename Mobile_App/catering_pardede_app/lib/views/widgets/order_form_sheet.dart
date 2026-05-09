@@ -23,7 +23,20 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   final _peopleController = TextEditingController();
   final _notesController = TextEditingController();
   DateTime? _selectedDate;
+  double? _latitude;
+  double? _longitude;
   bool _isSubmitting = false;
+
+  Future<void> _pickOnMap() async {
+    final result = await Navigator.pushNamed(context, '/map-picker');
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        _addressController.text = result['address'];
+        _latitude = result['latitude'];
+        _longitude = result['longitude'];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +78,23 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
               ],
             ),
             const SizedBox(height: 20),
-            _buildLabel("Alamat Acara"),
-            _buildTextField(_addressController, "Masukkan alamat lengkap...", maxLines: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildLabel("Alamat Acara"),
+                TextButton.icon(
+                  onPressed: _pickOnMap,
+                  icon: const Icon(Icons.map_outlined, size: 16),
+                  label: const Text("Pilih di Peta", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            ),
+            _buildTextField(_addressController, "Masukkan atau pilih alamat...", maxLines: 2),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -178,8 +206,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   }
 
   Future<void> _submitOrder() async {
-    if (_addressController.text.isEmpty || _selectedDate == null || _peopleController.text.isEmpty) {
-      Helpers.showSnackBar(context, 'Mohon lengkapi data pesanan');
+    if (_addressController.text.isEmpty || _selectedDate == null || _peopleController.text.isEmpty || _latitude == null) {
+      Helpers.showSnackBar(context, 'Mohon pilih lokasi di peta');
       return;
     }
 
@@ -200,6 +228,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
     try {
       await ApiService.post(ApiEndpoints.orders, {
         'event_address': _addressController.text,
+        'event_latitude': _latitude,
+        'event_longitude': _longitude,
         'event_date': _selectedDate!.toIso8601String().split('T')[0],
         'people': int.parse(_peopleController.text),
         'notes': _notesController.text,

@@ -11,7 +11,14 @@ void main() async {
   
   // Note: This will fail until google-services.json is added
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyA_5sPP7O6VsipvzPVLDzDOQUyKEDqxMbE',
+        appId: '1:505343538576:android:082782effaad7074c6af15',
+        messagingSenderId: '505343538576',
+        projectId: 'pardede-catering-app',
+      ),
+    );
     await PushNotificationService.initialize();
   } catch (e) {
     debugPrint('Firebase Initialization Error: $e');
@@ -28,6 +35,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Catering Pardede App',
       debugShowCheckedModeBanner: false,
+      navigatorKey: PushNotificationService.navigatorKey,
 
       theme: AppTheme.lightTheme,
 

@@ -63,6 +63,22 @@
             </a>
         </li>
 
+        {{-- Logistics --}}
+        <li class="nav-item {{ request()->routeIs('admin.logistics.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.logistics.index') }}" class="nav-link">
+                <i class="fas fa-map-location-dot"></i>
+                <span>Logistics</span>
+            </a>
+        </li>
+
+        {{-- Drivers --}}
+        <li class="nav-item {{ request()->routeIs('drivers.*') ? 'active' : '' }}">
+            <a href="{{ route('drivers.index') }}" class="nav-link">
+                <i class="fas fa-id-card"></i>
+                <span>Drivers</span>
+            </a>
+        </li>
+
         {{-- Categories --}}
         <li class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
             <a href="{{ route('categories.index') }}" class="nav-link">
@@ -79,13 +95,6 @@
             </a>
         </li>
 
-        {{-- Profile --}}
-        <li class="nav-item {{ request()->routeIs('profile.edit') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('profile.edit') }}">
-                <i class="fas fa-user-cog"></i>
-                <span>Profile</span>
-            </a>
-        </li>
         <li class="nav-item {{ request()->routeIs('admin.reviews.index') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.reviews.index') }}">
                 <i class="fas fa-star"></i>

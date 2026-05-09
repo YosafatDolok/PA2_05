@@ -86,6 +86,31 @@ body {
 .sidebar-nav {
     padding: 20px;
     flex: 1;
+    overflow-y: auto;
+    direction: rtl; /* Move scrollbar to left */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 51, 75, 0.3) transparent;
+}
+
+.sidebar-nav > * {
+    direction: ltr; /* Reset text direction to normal */
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 51, 75, 0.2);
+    border-radius: 10px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: var(--aura-crimson);
 }
 
 .sidebar-nav .nav-item {

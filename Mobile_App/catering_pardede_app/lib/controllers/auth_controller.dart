@@ -2,6 +2,7 @@ import '/core/services/auth_service.dart';
 import '/core/utils/helpers.dart';
 import 'package:flutter/material.dart';
 import '/core/services/push_notification_service.dart';
+import '/core/services/location_service.dart';
 
 class AuthController {
   // Login
@@ -22,6 +23,8 @@ class AuthController {
 
         if (role == 'admin') {
           Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        } else if (role == 'driver') {
+          Navigator.pushReplacementNamed(context, '/driver-dashboard');
         } else {
           Navigator.pushReplacementNamed(context, '/user-dashboard');
         }
@@ -59,6 +62,8 @@ class AuthController {
       // 🔀 If token returned → go to dashboard
       if (role == 'admin') {
         Navigator.pushReplacementNamed(context, '/admin-dashboard');
+      } else if (role == 'driver') {
+        Navigator.pushReplacementNamed(context, '/driver-dashboard');
       } else {
         Navigator.pushReplacementNamed(context, '/user-dashboard');
       }
@@ -70,7 +75,18 @@ class AuthController {
 
   // Logout
   static Future<void> logout(BuildContext context) async {
-    await AuthService.logout();
-    Navigator.pushReplacementNamed(context, '/login');
+    Helpers.showConfirmDialog(
+      context,
+      title: 'Keluar Akun?',
+      message: 'Apakah Anda yakin ingin keluar dari akun Anda?',
+      confirmText: 'Ya, Keluar',
+      onConfirm: () async {
+        LocationService.stopTracking();
+        await AuthService.logout();
+        if (context.mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        }
+      },
+    );
   }
 }

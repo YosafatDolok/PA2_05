@@ -1,6 +1,7 @@
 class ApiEndpoints {
   static const String baseUrl = 'http://10.0.2.2:8000/api';
-   static const String basePayment = "http://10.0.2.2:8001/api";
+  static const String baseStorage = 'http://10.0.2.2:8000/storage';
+  static const String basePayment = "http://10.0.2.2:8001/api";
 
   static const String register = '$baseUrl/register';
   static const String login = '$baseUrl/login';
@@ -21,4 +22,9 @@ class ApiEndpoints {
   static const String forgotPassword = '$baseUrl/password/forgot';
   static const String resetPassword = '$baseUrl/password/reset';
   static const String payments = "$basePayment/payments";
+  
+  // Driver Endpoints
+  static const String driverOrders = '$baseUrl/driver/orders';
+  static const String driverLocation = '$baseUrl/driver/location';
+  static String driverUpdateStatus(int id) => '$baseUrl/driver/orders/$id/status';
 }

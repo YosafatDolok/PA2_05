@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/services/api_service.dart';
+import '../../core/constants/api_endpoints.dart';
+import '../../core/storage/local_storage.dart';
+import '../../core/services/push_notification_service.dart';
 
-class CustomHeader extends StatelessWidget {
+class CustomHeader extends StatefulWidget {
   final String? title;
   final String? subtitle;
   final bool showIcons;
@@ -19,6 +23,21 @@ class CustomHeader extends StatelessWidget {
     this.onSearchChanged,
     this.searchHint,
   });
+
+  @override
+  State<CustomHeader> createState() => _CustomHeaderState();
+}
+
+class _CustomHeaderState extends State<CustomHeader> {
+
+  @override
+  void initState() {
+    super.initState();
+    // No need to manage local state anymore
+    PushNotificationService.updateUnreadCount();
+  }
+
+  // Removed local _fetchUnreadCount method as it's now in the service
 
   @override
   Widget build(BuildContext context) {
@@ -42,18 +61,18 @@ class CustomHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Logo or Title
-              title != null
+              widget.title != null
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title!,
+                          widget.title!,
                           style: AppTextStyles.title.copyWith(color: Colors.white, fontSize: 24),
                         ),
-                        if (subtitle != null) ...[
+                        if (widget.subtitle != null) ...[
                           const SizedBox(height: 4),
                           Text(
-                            subtitle!,
+                            widget.subtitle!,
                             style: AppTextStyles.subtitle.copyWith(color: Colors.white.withValues(alpha: 0.8)),
                           ),
                         ],
@@ -92,22 +111,59 @@ class CustomHeader extends StatelessWidget {
                         ),
                       ],
                     ),
-              if (showIcons)
+              if (widget.showIcons)
                 Row(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.group_rounded, color: Colors.white, size: 28),
                       onPressed: () {},
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.notifications_rounded, color: Colors.white, size: 28),
-                      onPressed: () => Navigator.pushNamed(context, '/notifications'),
+                    ValueListenableBuilder<int>(
+                      valueListenable: PushNotificationService.unreadCount,
+                      builder: (context, count, child) {
+                        return Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications_rounded, color: Colors.white, size: 28),
+                              onPressed: () async {
+                                await Navigator.pushNamed(context, '/notifications');
+                                PushNotificationService.updateUnreadCount(); // Refresh when coming back
+                              },
+                            ),
+                            if (count > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    count > 9 ? '9+' : '$count',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
             ],
           ),
-          if (showSearch) ...[
+          if (widget.showSearch) ...[
             const SizedBox(height: 20),
             Container(
               height: 54,
@@ -124,10 +180,10 @@ class CustomHeader extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: TextField(
-                onChanged: onSearchChanged,
+                onChanged: widget.onSearchChanged,
                 decoration: InputDecoration(
                   icon: Icon(Icons.search_rounded, color: Colors.grey[400], size: 26),
-                  hintText: searchHint ?? 'Cari Paket atau Menu...',
+                  hintText: widget.searchHint ?? 'Cari Paket atau Menu...',
                   hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
                   border: InputBorder.none,
                 ),

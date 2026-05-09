@@ -25,6 +25,19 @@ class OrderAdditionController extends Controller
         }
 
         $order = Order::findOrFail($orderId);
+        
+        // 🛡️ Security Lock: Only the owner of the order can add items
+        if ((int)$order->user_id !== (int)auth()->id()) {
+            return response()->json(['message' => 'Akses ditolak. Anda hanya dapat menambah menu pada pesanan Anda sendiri.'], 403);
+        }
+
+        // 🛡️ Guardrail: Block additions on orders that are finished or in transit
+        // 3: Out for Delivery, 4: Delivered, 9: Cancelled
+        if (in_array((int)$order->status_id, [3, 4, 9])) {
+            return response()->json([
+                'message' => 'Tidak dapat menambah menu karena pesanan sedang dikirim, sudah sampai, atau telah dibatalkan.'
+            ], 422);
+        }
 
         // Create the request
         $additionRequest = OrderAdditionRequest::create([

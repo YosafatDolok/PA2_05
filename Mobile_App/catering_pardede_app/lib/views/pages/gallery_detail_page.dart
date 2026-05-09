@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/models/gallery_model.dart';
+import '/core/constants/api_endpoints.dart';
 import '../../core/theme/app_colors.dart';
 
 class GalleryDetailPage extends StatelessWidget {
@@ -10,7 +11,7 @@ class GalleryDetailPage extends StatelessWidget {
     final gallery = ModalRoute.of(context)!.settings.arguments as GalleryModel;
     final String imageUrl = gallery.image.startsWith('http')
         ? gallery.image
-        : "http://10.0.2.2:8000/storage/${gallery.image}";
+        : "${ApiEndpoints.baseStorage}/${gallery.image}";
 
     return Scaffold(
       backgroundColor: AppColors.background,

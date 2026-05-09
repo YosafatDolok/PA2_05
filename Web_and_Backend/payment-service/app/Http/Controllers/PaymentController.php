@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
@@ -26,7 +27,7 @@ class PaymentController extends Controller
             'amount' => $request->amount,
             'payment_method' => 'midtrans',
             'status' => 'pending',
-            'external_id' => 'ORD-' . $request->order_id . '-' . time(),
+            'external_id' => 'ORD-' . $request->order_id . '-' . strtoupper(Str::random(5)) . '-' . time(),
         ]);
 
         return response()->json($payment, 201);
@@ -154,8 +155,12 @@ class PaymentController extends Controller
             $response = Http::withHeaders([
                 'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key')
             ])->patch(
-                env('MAIN_APP_URL', 'http://localhost:8000') . "/api/orders/" . $orderId . "/status",
-                ['status_id' => $statusId]
+                env('MAIN_APP_URL', 'http://localhost:8000') . "/api/orders/" . $payment->order_id . "/status",
+                [
+                    'status_id' => $statusId,
+                    'amount' => $payment->amount,
+                    'external_id' => $payment->external_id
+                ]
             );
 
             Log::info('ORDER SERVICE NOTIFIED', [

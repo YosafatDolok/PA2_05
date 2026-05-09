@@ -197,6 +197,21 @@
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
                     </div>
+
+                    <div class="mb-4">
+                        <label class="text-muted small uppercase mb-2 d-block">Assign Driver</label>
+                        <select name="driver_id" class="form-control bg-dark border-secondary text-white @error('driver_id') is-invalid @enderror">
+                            <option value="">-- No Driver Assigned --</option>
+                            @foreach($drivers as $driver)
+                                <option value="{{ $driver->user_id }}" {{ old('driver_id', $order->driver_id) == $driver->user_id ? 'selected' : '' }}>
+                                    {{ $driver->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('driver_id')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                        @enderror
+                    </div>
                     <button type="submit" class="btn btn-primary w-100 rounded-pill font-weight-bold py-3">SIMPAN PERUBAHAN</button>
                 </form>
             </div>
@@ -225,9 +240,29 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="text-muted small uppercase font-weight-bold">Total Payable</span>
                     @if($order->final_price || $additionsTotal > 0)
-                        <h3 class="text-secondary font-weight-bold mb-0">Rp {{ number_format(($order->final_price ?? 0) + $additionsTotal, 0, ',', '.') }}</h3>
+                        <h3 class="text-secondary font-weight-bold mb-0">Rp {{ number_format($order->total_payable, 0, ',', '.') }}</h3>
                     @else
                         <h4 class="text-warning font-weight-bold mb-0">MENUNGGU HARGA</h4>
+                    @endif
+                </div>
+
+                {{-- BALANCE CHECK --}}
+                <div class="mt-4 pt-3 border-top border-dark">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted extra-small uppercase">Total Paid</span>
+                        <span class="text-success font-weight-bold">Rp {{ number_format($order->total_paid, 0, ',', '.') }}</span>
+                    </div>
+                    
+                    @if($order->total_payable > $order->total_paid)
+                        <div class="alert alert-warning border-0 p-2 text-center mt-2 mb-0" style="background: rgba(255, 152, 0, 0.1); color: #ff9800;">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <span class="extra-small font-weight-bold">UNPAID BALANCE: Rp {{ number_format($order->total_payable - $order->total_paid, 0, ',', '.') }}</span>
+                        </div>
+                    @elseif($order->total_paid > 0 && $order->total_paid >= $order->total_payable)
+                        <div class="alert alert-success border-0 p-2 text-center mt-2 mb-0" style="background: rgba(76, 175, 80, 0.1); color: #4caf50;">
+                            <i class="fas fa-check-double mr-2"></i>
+                            <span class="extra-small font-weight-bold">FULLY PAID</span>
+                        </div>
                     @endif
                 </div>
             </div>

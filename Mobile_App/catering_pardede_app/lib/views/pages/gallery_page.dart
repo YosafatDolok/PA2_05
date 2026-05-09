@@ -106,7 +106,7 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   Widget _galleryCard(GalleryModel gallery, int index) {
-    final String imageUrl = gallery.image.startsWith('http') ? gallery.image : "http://10.0.2.2:8000/storage/${gallery.image}";
+    final String imageUrl = gallery.image.startsWith('http') ? gallery.image : "${ApiEndpoints.baseStorage}/${gallery.image}";
 
     return TapScale(
       onTap: () => _openLightbox(context, imageUrl, gallery.description, gallery.id),

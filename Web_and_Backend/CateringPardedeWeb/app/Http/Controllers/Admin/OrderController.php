@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use App\Models\Notification;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -34,7 +35,8 @@ class OrderController extends Controller
         ])->findOrFail($id);
         
         $statuses = OrderStatus::all()->unique('status_name');
-        return view('admin.orders.show', compact('order', 'statuses'));
+        $drivers = \App\Models\User::where('role_id', 3)->get();
+        return view('admin.orders.show', compact('order', 'statuses', 'drivers'));
     }
 
     public function chat($id)
@@ -106,6 +108,16 @@ class OrderController extends Controller
         $request->validate([
             'status_id' => 'required|exists:order_statuses,status_id',
             'final_price' => 'nullable|numeric|min:0',
+            'driver_id' => [
+                'nullable',
+                'exists:users,user_id',
+                function ($attribute, $value, $fail) {
+                    $user = \App\Models\User::find($value);
+                    if ($user && $user->role_id != 3) {
+                        $fail('The selected user must have the Driver role.');
+                    }
+                },
+            ],
         ], [
             'status_id.required' => 'Status pesanan wajib dipilih.',
             'final_price.numeric' => 'Harga final harus berupa angka.',
@@ -113,22 +125,76 @@ class OrderController extends Controller
         ]);
 
         $order = Order::findOrFail($id);
+        $oldPrice = $order->final_price;
+        $oldStatusId = $order->status_id;
+
         $order->status_id = $request->status_id;
         if ($request->has('final_price')) {
             $order->final_price = $request->final_price;
         }
+        $order->driver_id = $request->driver_id;
         $order->save();
 
-        // Create Notification for User
-        $statusName = $order->status->name;
-        Notification::create([
-            'user_id' => $order->user_id,
-            'type' => 'order_status',
-            'title' => 'Update Pesanan #' . $order->order_id,
-            'message' => 'Pesanan Anda sekarang: ' . $statusName,
-            'related_id' => $order->order_id,
-        ]);
+        // 1. Handle Status Change Notification
+        if ($oldStatusId != $order->status_id) {
+            $statusName = $order->status->status_name; // Fixed: status_name instead of name
+            $notification = Notification::create([
+                'user_id' => $order->user_id,
+                'type' => 'order_status',
+                'title' => 'Update Status Pesanan #' . $order->order_id,
+                'message' => 'Pesanan Anda sekarang: ' . $statusName,
+                'related_id' => $order->order_id,
+            ]);
+
+            $this->sendPush($order, $notification);
+        }
+
+        // 2. Handle Price Update Notification
+        if ($request->has('final_price') && $oldPrice != $order->final_price) {
+            $notification = Notification::create([
+                'user_id' => $order->user_id,
+                'type' => 'order_price',
+                'title' => 'Update Harga Pesanan #' . $order->order_id,
+                'message' => 'Admin telah menetapkan harga final untuk pesanan Anda: Rp ' . number_format($order->final_price, 0, ',', '.'),
+                'related_id' => $order->order_id,
+            ]);
+
+            $this->sendPush($order, $notification);
+        }
 
         return redirect()->back()->with('success', 'Detail pesanan berhasil diperbarui');
+    }
+
+    /**
+     * Helper to send push notification safely
+     */
+    private function sendPush($order, $notification)
+    {
+        \Log::info('Attempting Push Notification', [
+            'order_id' => $order->order_id,
+            'user_id' => $order->user_id,
+            'fcm_token' => $order->user->fcm_token ? 'Exists' : 'Missing'
+        ]);
+
+        if ($order->user->fcm_token) {
+            try {
+                $firebase = new FirebaseService();
+                $result = $firebase->sendNotification(
+                    $order->user->fcm_token,
+                    $notification->title,
+                    $notification->message,
+                    [
+                        'type' => (string) $notification->type,
+                        'order_id' => (string) $order->order_id,
+                    ]
+                );
+                
+                \Log::info('Push Notification Result', ['success' => $result]);
+            } catch (\Exception $e) {
+                \Log::error('Firebase Push Failed: ' . $e->getMessage());
+            }
+        } else {
+            \Log::warning('Push skipped: No FCM token for user ' . $order->user_id);
+        }
     }
 }

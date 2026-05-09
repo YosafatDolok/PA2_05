@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/core/services/auth_service.dart';
+import '/core/services/push_notification_service.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -23,10 +24,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
       // Ensure user is not null, not empty, and has a valid ID
       if (user != null && user.isNotEmpty && (user['user_id'] != null || user['id'] != null)) {
+        // Sync notification token
+        PushNotificationService.syncToken();
+        
         final role = user['role']?['name'];
 
         if (role == 'admin') {
           Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        } else if (role == 'driver') {
+          Navigator.pushReplacementNamed(context, '/driver-dashboard');
         } else {
           Navigator.pushReplacementNamed(context, '/user-dashboard');
         }
