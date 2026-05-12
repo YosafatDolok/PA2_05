@@ -15,6 +15,7 @@
     </div>
 
     @include('alerts.success')
+    @include('alerts.error')
 
     <div class="row">
         <div class="col-12">
@@ -65,13 +66,11 @@
                                             <i class="fas fa-user-edit"></i>
                                         </a>
 
-                                        <form action="{{ route('drivers.destroy', $driver) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-icon btn-outline-danger shadow-sm rounded-circle" onclick="return confirm('Apakah Anda yakin ingin menghapus driver ini?')">
-                                                <i class="fas fa-trash-can"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-icon btn-outline-danger shadow-sm rounded-circle"
+                                                onclick="confirmSecureDelete('{{ $driver->name }}', '{{ route('drivers.destroy', $driver) }}')">
+                                            <i class="fas fa-trash-can"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -82,4 +81,67 @@
             </div>
         </div>
     </div>
+
+    <!-- Secure Delete Modal -->
+    <div class="modal fade" id="secureDeleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content aura-card border-0">
+                <div class="modal-header border-0 pb-0">
+                    <h4 class="modal-title font-weight-bold text-white">Konfirmasi Hapus</h4>
+                    <button type="button" class="btn-close btn-close-white opacity-50" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="text-center mb-4">
+                        <div class="bg-danger-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="fas fa-exclamation-triangle text-danger fs-3"></i>
+                        </div>
+                        <p class="text-white mb-1">Apakah Anda yakin ingin menghapus driver ini?</p>
+                        <p class="text-muted small">Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait driver ini.</p>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="text-muted small uppercase mb-2">Ketik <span class="text-white font-weight-bold" id="targetNameDisplay"></span> untuk mengonfirmasi</label>
+                        <input type="text" id="confirmNameInput" class="form-control bg-dark border-secondary text-white" placeholder="Ketik nama driver di sini..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <form id="secureDeleteForm" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">BATAL</button>
+                        <button type="submit" id="confirmDeleteBtn" class="btn btn-danger rounded-pill px-4" disabled>HAPUS PERMANEN</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetName = '';
+
+        function confirmSecureDelete(name, actionUrl) {
+            targetName = name;
+            document.getElementById('targetNameDisplay').innerText = name;
+            document.getElementById('secureDeleteForm').action = actionUrl;
+            document.getElementById('confirmNameInput').value = '';
+            document.getElementById('confirmDeleteBtn').disabled = true;
+            
+            // Use Bootstrap 5 way to show modal
+            var myModal = new bootstrap.Modal(document.getElementById('secureDeleteModal'));
+            myModal.show();
+        }
+
+        document.getElementById('confirmNameInput').addEventListener('input', function(e) {
+            const inputName = e.target.value.trim();
+            const deleteBtn = document.getElementById('confirmDeleteBtn');
+            
+            if (inputName === targetName) {
+                deleteBtn.disabled = false;
+                deleteBtn.classList.remove('btn-secondary');
+                deleteBtn.classList.add('btn-danger');
+            } else {
+                deleteBtn.disabled = true;
+            }
+        });
+    </script>
 @endsection

@@ -135,9 +135,22 @@ class OrderController extends Controller
         $order->driver_id = $request->driver_id;
         $order->save();
 
-        // 1. Handle Status Change Notification
+        // 1. Handle Driver Assignment Notification
+        if ($order->wasChanged('driver_id') && $order->driver_id) {
+            $driverNotification = Notification::create([
+                'user_id' => $order->driver_id,
+                'type' => 'driver_assignment',
+                'title' => 'Tugas Baru: Pesanan #' . $order->order_id,
+                'message' => 'Anda telah ditugaskan untuk mengantar pesanan ini.',
+                'related_id' => $order->order_id,
+            ]);
+
+            $this->sendPush($order->driver, $driverNotification, $order->order_id);
+        }
+
+        // 2. Handle Status Change Notification
         if ($oldStatusId != $order->status_id) {
-            $statusName = $order->status->status_name; // Fixed: status_name instead of name
+            $statusName = $order->status->status_name;
             $notification = Notification::create([
                 'user_id' => $order->user_id,
                 'type' => 'order_status',
@@ -146,10 +159,10 @@ class OrderController extends Controller
                 'related_id' => $order->order_id,
             ]);
 
-            $this->sendPush($order, $notification);
+            $this->sendPush($order->user, $notification, $order->order_id);
         }
 
-        // 2. Handle Price Update Notification
+        // 3. Handle Price Update Notification
         if ($request->has('final_price') && $oldPrice != $order->final_price) {
             $notification = Notification::create([
                 'user_id' => $order->user_id,
@@ -159,33 +172,33 @@ class OrderController extends Controller
                 'related_id' => $order->order_id,
             ]);
 
-            $this->sendPush($order, $notification);
+            $this->sendPush($order->user, $notification, $order->order_id);
         }
 
         return redirect()->back()->with('success', 'Detail pesanan berhasil diperbarui');
     }
 
     /**
-     * Helper to send push notification safely
+     * Helper to send push notification safely to a specific user
      */
-    private function sendPush($order, $notification)
+    private function sendPush($recipient, $notification, $orderId)
     {
         \Log::info('Attempting Push Notification', [
-            'order_id' => $order->order_id,
-            'user_id' => $order->user_id,
-            'fcm_token' => $order->user->fcm_token ? 'Exists' : 'Missing'
+            'order_id' => $orderId,
+            'recipient_id' => $recipient->user_id,
+            'fcm_token' => $recipient->fcm_token ? 'Exists' : 'Missing'
         ]);
 
-        if ($order->user->fcm_token) {
+        if ($recipient->fcm_token) {
             try {
                 $firebase = new FirebaseService();
                 $result = $firebase->sendNotification(
-                    $order->user->fcm_token,
+                    $recipient->fcm_token,
                     $notification->title,
                     $notification->message,
                     [
                         'type' => (string) $notification->type,
-                        'order_id' => (string) $order->order_id,
+                        'order_id' => (string) $orderId,
                     ]
                 );
                 
@@ -194,7 +207,7 @@ class OrderController extends Controller
                 \Log::error('Firebase Push Failed: ' . $e->getMessage());
             }
         } else {
-            \Log::warning('Push skipped: No FCM token for user ' . $order->user_id);
+            \Log::warning('Push skipped: No FCM token for user ' . $recipient->user_id);
         }
     }
 }

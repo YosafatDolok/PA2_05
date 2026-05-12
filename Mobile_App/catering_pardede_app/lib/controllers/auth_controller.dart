@@ -22,11 +22,11 @@ class AuthController {
         PushNotificationService.syncToken();
 
         if (role == 'admin') {
-          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
         } else if (role == 'driver') {
-          Navigator.pushReplacementNamed(context, '/driver-dashboard');
+          Navigator.pushNamedAndRemoveUntil(context, '/driver-dashboard', (route) => false);
         } else {
-          Navigator.pushReplacementNamed(context, '/user-dashboard');
+          Navigator.pushNamedAndRemoveUntil(context, '/user-dashboard', (route) => false);
         }
       } else {
         Helpers.showSnackBar(
@@ -61,11 +61,11 @@ class AuthController {
 
       // 🔀 If token returned → go to dashboard
       if (role == 'admin') {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
       } else if (role == 'driver') {
-        Navigator.pushReplacementNamed(context, '/driver-dashboard');
+        Navigator.pushNamedAndRemoveUntil(context, '/driver-dashboard', (route) => false);
       } else {
-        Navigator.pushReplacementNamed(context, '/user-dashboard');
+        Navigator.pushNamedAndRemoveUntil(context, '/user-dashboard', (route) => false);
       }
     } else {
       Helpers.showSnackBar(
@@ -84,7 +84,7 @@ class AuthController {
         LocationService.stopTracking();
         await AuthService.logout();
         if (context.mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          Navigator.pushNamedAndRemoveUntil(context, '/landing', (route) => false);
         }
       },
     );

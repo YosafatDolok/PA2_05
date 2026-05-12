@@ -62,9 +62,16 @@ class PushNotificationService {
               content: InkWell(
                 onTap: () {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  if (message.data['type'] == 'order_status' || message.data['type'] == 'order_price') {
-                    final orderId = message.data['order_id'];
-                    if (orderId != null) {
+                  final type = message.data['type'];
+                  final orderId = message.data['order_id'];
+                  
+                  if (orderId != null) {
+                    if (type == 'driver_assignment') {
+                      navigatorKey.currentState?.pushNamed(
+                        '/driver-order-detail',
+                        arguments: int.parse(orderId.toString()),
+                      );
+                    } else if (type == 'order_status' || type == 'order_price') {
                       navigatorKey.currentState?.pushNamed(
                         '/order-detail',
                         arguments: int.parse(orderId.toString()),
@@ -113,9 +120,16 @@ class PushNotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('Notification clicked: ${message.data}');
       
-      if (message.data['type'] == 'order_status') {
-        final orderId = message.data['order_id'];
-        if (orderId != null) {
+      final type = message.data['type'];
+      final orderId = message.data['order_id'];
+
+      if (orderId != null) {
+        if (type == 'driver_assignment') {
+          navigatorKey.currentState?.pushNamed(
+            '/driver-order-detail',
+            arguments: int.parse(orderId.toString()),
+          );
+        } else if (type == 'order_status') {
           navigatorKey.currentState?.pushNamed(
             '/order-detail',
             arguments: int.parse(orderId.toString()),

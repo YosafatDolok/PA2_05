@@ -9,7 +9,8 @@ import 'package:intl/intl.dart';
 
 class DriverOrderDetailPage extends StatefulWidget {
   final dynamic order;
-  const DriverOrderDetailPage({super.key, required this.order});
+  final int? orderId;
+  const DriverOrderDetailPage({super.key, this.order, this.orderId});
 
   @override
   State<DriverOrderDetailPage> createState() => _DriverOrderDetailPageState();
@@ -17,10 +18,45 @@ class DriverOrderDetailPage extends StatefulWidget {
 
 class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
   bool isUpdating = false;
+  bool isLoading = true;
+  dynamic _currentOrder;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.order != null) {
+      _currentOrder = widget.order;
+      isLoading = false;
+    } else if (widget.orderId != null) {
+      _fetchOrderDetails();
+    }
+  }
+
+  Future<void> _fetchOrderDetails() async {
+    setState(() => isLoading = true);
+    try {
+      final response = await DriverOrderController.getMyOrders(); // Reuse controller or use API directly
+      // Find the specific order in the list (or we could add a getOrderById to the controller)
+      final order = response.firstWhere((o) => o['order_id'] == widget.orderId);
+      if (mounted) {
+        setState(() {
+          _currentOrder = order;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat pesanan: $e')),
+        );
+      }
+    }
+  }
 
   Future<void> _launchNavigation() async {
-    final lat = widget.order['event_latitude'];
-    final lng = widget.order['event_longitude'];
+    final lat = _currentOrder['event_latitude'];
+    final lng = _currentOrder['event_longitude'];
     
     if (lat == null || lng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,7 +72,7 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
   }
 
   Future<void> _callCustomer() async {
-    final phone = widget.order['user']['phone'];
+    final phone = _currentOrder['user']['phone'];
     if (phone == null || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nomor telepon tidak tersedia')),
@@ -53,7 +89,7 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
     setState(() => isUpdating = true);
     try {
       await DriverOrderController.updateOrderStatus(
-        orderId: widget.order['order_id'],
+        orderId: _currentOrder['order_id'],
         statusId: 3, // Out for Delivery
       );
       LocationService.startTracking();
@@ -80,7 +116,7 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
     setState(() => isUpdating = true);
     try {
       await DriverOrderController.updateOrderStatus(
-        orderId: widget.order['order_id'],
+        orderId: _currentOrder['order_id'],
         statusId: 4, // Delivered
         proofImagePath: image.path,
       );
@@ -101,7 +137,20 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final order = widget.order;
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+
+    if (_currentOrder == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Error")),
+        body: const Center(child: Text("Pesanan tidak ditemukan")),
+      );
+    }
+
+    final order = _currentOrder;
     final int statusId = order['status_id'];
 
     return Scaffold(

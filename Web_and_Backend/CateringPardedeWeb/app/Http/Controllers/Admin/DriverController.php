@@ -87,6 +87,15 @@ class DriverController extends Controller
     public function destroy(User $driver)
     {
         if ($driver->role_id !== 3) abort(403);
+
+        // Check for active orders (Status: 1-Pending, 2-Preparing, 3-Out for Delivery)
+        $activeOrdersCount = \App\Models\Order::where('driver_id', $driver->user_id)
+            ->whereIn('status_id', [1, 2, 3])
+            ->count();
+
+        if ($activeOrdersCount > 0) {
+            return redirect()->route('drivers.index')->with('error', 'Tidak dapat menghapus driver yang memiliki pesanan aktif (' . $activeOrdersCount . ' pesanan).');
+        }
         
         $driver->delete();
 

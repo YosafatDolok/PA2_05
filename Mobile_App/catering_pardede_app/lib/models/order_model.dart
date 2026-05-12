@@ -12,6 +12,9 @@ class OrderModel {
   final DateTime eventDate;
   final int statusId;
   final double finalPrice;
+  final double totalPayable;
+  final double totalPaid;
+  final double remainingBalance;
   final DateTime orderDate;
   final int people;
   final String? notes;
@@ -36,6 +39,9 @@ class OrderModel {
     required this.eventDate,
     required this.statusId,
     required this.finalPrice,
+    required this.totalPayable,
+    required this.totalPaid,
+    required this.remainingBalance,
     required this.orderDate,
     required this.people,
     this.notes,
@@ -62,6 +68,9 @@ class OrderModel {
       eventDate: DateTime.parse(json['event_date']),
       statusId: json['status_id'],
       finalPrice: double.tryParse(json['final_price']?.toString() ?? '0') ?? 0.0,
+      totalPayable: double.tryParse(json['total_payable']?.toString() ?? '0') ?? 0.0,
+      totalPaid: double.tryParse(json['total_paid']?.toString() ?? '0') ?? 0.0,
+      remainingBalance: double.tryParse(json['remaining_balance']?.toString() ?? '0') ?? 0.0,
       orderDate: DateTime.parse(json['order_date']),
       people: json['people'],
       notes: json['notes'],

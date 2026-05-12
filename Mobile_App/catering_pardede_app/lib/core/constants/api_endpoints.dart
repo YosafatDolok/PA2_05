@@ -1,7 +1,7 @@
 class ApiEndpoints {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
-  static const String baseStorage = 'http://10.0.2.2:8000/storage';
-  static const String basePayment = "http://10.0.2.2:8001/api";
+  static const String baseUrl = 'https://iguana-smugly-phosphate.ngrok-free.dev/api';
+  static const String baseStorage = 'https://iguana-smugly-phosphate.ngrok-free.dev/storage';
+  static const String basePayment = "https://tucking-grope-angelic.ngrok-free.dev/api";
 
   static const String register = '$baseUrl/register';
   static const String login = '$baseUrl/login';

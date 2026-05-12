@@ -87,62 +87,85 @@ class _EditProfilePageState extends State<EditProfilePage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text("Edit Profil", style: AppTextStyles.titleSmall),
+        title: const Text(
+          "Edit Profil", 
+          style: TextStyle(color: Color(0xFF2D0A0A), fontWeight: FontWeight.w900, fontSize: 18)
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                        backgroundImage: _image != null
-                            ? FileImage(_image!)
-                            : (widget.user.profilePicture != null
-                                ? NetworkImage("${ApiEndpoints.baseStorage}/${widget.user.profilePicture}")
-                                : null) as ImageProvider?,
-                        child: _image == null && widget.user.profilePicture == null
-                            ? const Icon(Icons.person, color: AppColors.primary, size: 50)
-                            : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              _buildLabel("Nama Lengkap"),
-              _buildTextField(_nameController, "Masukkan nama lengkap", Icons.person_outline),
-              const SizedBox(height: 20),
-              _buildLabel("Email"),
-              _buildTextField(_emailController, "Masukkan email", Icons.email_outlined, keyboardType: TextInputType.emailAddress),
-              const SizedBox(height: 20),
-              _buildLabel("Nomor Telepon"),
-              _buildTextField(_phoneController, "Masukkan nomor telepon", Icons.phone_android_outlined, keyboardType: TextInputType.phone),
+              _EntranceAnimation(delay: 0, child: _buildAvatarSection()),
+              const SizedBox(height: 48),
+              _EntranceAnimation(delay: 1, child: _buildLabel("NAMA LENGKAP")),
+              _EntranceAnimation(delay: 2, child: _buildBoutiqueField(_nameController, "Contoh: Budi Santoso", Icons.person_rounded)),
+              const SizedBox(height: 24),
+              _EntranceAnimation(delay: 3, child: _buildLabel("ALAMAT EMAIL")),
+              _EntranceAnimation(delay: 4, child: _buildBoutiqueField(_emailController, "budi@example.com", Icons.email_rounded, keyboardType: TextInputType.emailAddress, isVerified: true)),
+              const SizedBox(height: 24),
+              _EntranceAnimation(delay: 5, child: _buildLabel("NOMOR TELEPON")),
+              _EntranceAnimation(delay: 6, child: _buildBoutiqueField(_phoneController, "08123456789", Icons.phone_android_rounded, keyboardType: TextInputType.phone)),
               const SizedBox(height: 60),
-              _buildSaveButton(),
+              _EntranceAnimation(delay: 7, child: _buildSaveButton()),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarSection() {
+    return Center(
+      child: TapScale(
+        onTap: _pickImage,
+        child: Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.05),
+                  backgroundImage: _image != null
+                      ? FileImage(_image!)
+                      : (widget.user.profilePicture != null
+                          ? NetworkImage("${ApiEndpoints.baseStorage}/${widget.user.profilePicture}")
+                          : null) as ImageProvider?,
+                  child: _image == null && widget.user.profilePicture == null
+                      ? const Icon(Icons.person_rounded, color: AppColors.primary, size: 60)
+                      : null,
+                ),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 4, right: 4),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+            ),
+          ],
         ),
       ),
     );
@@ -150,63 +173,91 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(text, style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700)),
+      padding: const EdgeInsets.only(left: 8, bottom: 10),
+      child: Text(
+        text, 
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5)
+      ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {TextInputType? keyboardType}) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: AppTextStyles.body,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  Widget _buildBoutiqueField(TextEditingController controller, String hint, IconData icon, {TextInputType? keyboardType, bool isVerified = false}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 6)),
+        ],
       ),
-      validator: (value) => value == null || value.isEmpty ? "Bidang ini wajib diisi" : null,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF2D0A0A)),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey[300], fontSize: 14, fontWeight: FontWeight.w500),
+          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+          suffixIcon: isVerified ? const Icon(Icons.verified_rounded, color: Colors.green, size: 18) : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: const BorderSide(color: AppColors.secondary, width: 1.5)
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        ),
+        validator: (value) => value == null || value.isEmpty ? "Bidang ini tidak boleh kosong" : null,
+      ),
     );
   }
 
   Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: TapScale(
-        onTap: _isLoading ? null : _updateProfile,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: _isLoading
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Text("SIMPAN PERUBAHAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+    return TapScale(
+      onTap: _isLoading ? null : _updateProfile,
+      child: Container(
+        width: double.infinity,
+        height: 60,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
+          ],
         ),
+        child: _isLoading
+            ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+            : const Text(
+                "SIMPAN PERUBAHAN", 
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1)
+              ),
       ),
+    );
+  }
+}
+
+class _EntranceAnimation extends StatelessWidget {
+  final Widget child;
+  final int delay;
+  const _EntranceAnimation({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + (delay * 80)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

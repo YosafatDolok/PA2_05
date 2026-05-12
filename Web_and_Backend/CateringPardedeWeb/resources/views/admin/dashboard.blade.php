@@ -72,7 +72,6 @@
             <div class="aura-card h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="m-0 text-white font-weight-bold">Revenue Growth</h5>
-                    <span class="badge bg-crimson pulse-mini">Real-time</span>
                 </div>
                 <div id="revenueChart" style="min-height: 350px;"></div>
             </div>

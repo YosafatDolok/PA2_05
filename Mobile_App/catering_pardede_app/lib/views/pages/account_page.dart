@@ -9,6 +9,7 @@ import '../widgets/custom_header.dart';
 import '../widgets/tap_scale.dart';
 import 'edit_profile_page.dart';
 import '../../controllers/auth_controller.dart';
+import '../../core/services/push_notification_service.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -52,12 +53,10 @@ class _AccountPageState extends State<AccountPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : Column(
               children: [
-                const CustomHeader(
-                  showIcons: true,
-                ),
+                const CustomHeader(showIcons: true),
                 Expanded(
                   child: user == null ? _buildGuestView() : _buildUserView(),
                 ),
@@ -67,38 +66,53 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildGuestView() {
-    return Center(
+    return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 80),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
+            _EntranceAnimation(
+              delay: 0,
+              child: Container(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 30)],
+                ),
+                child: const Icon(Icons.person_outline_rounded, size: 80, color: AppColors.primary),
               ),
-              child: const Icon(Icons.person_outline, size: 80, color: AppColors.primary),
-            ),
-            const SizedBox(height: 24),
-            const Text("Belum Masuk Akun", style: AppTextStyles.titleSmall),
-            const SizedBox(height: 8),
-            Text(
-              "Masuk untuk mengakses pesanan dan riwayat kuliner Anda.",
-              textAlign: TextAlign.center,
-              style: AppTextStyles.subtitle.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 40),
-            _buildGoldButton("MASUK SEKARANG", () => Navigator.pushNamed(context, '/login')),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/register'),
+            const _EntranceAnimation(
+              delay: 1,
               child: Text(
-                "Daftar Akun Baru",
-                style: AppTextStyles.subtitle.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w800,
+                "Selamat Datang",
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF2D0A0A)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _EntranceAnimation(
+              delay: 2,
+              child: Text(
+                "Masuk untuk menikmati pengalaman kuliner boutique terbaik bersama kami.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.brown[200], fontSize: 14, height: 1.6),
+              ),
+            ),
+            const SizedBox(height: 60),
+            _EntranceAnimation(
+              delay: 3,
+              child: _buildGoldButton("MASUK KE AKUN", () => Navigator.pushNamed(context, '/login')),
+            ),
+            const SizedBox(height: 16),
+            _EntranceAnimation(
+              delay: 4,
+              child: TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/register'),
+                child: const Text(
+                  "Daftar Akun Baru",
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 14),
                 ),
               ),
             ),
@@ -109,140 +123,255 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildUserView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          _buildProfileHeader(),
-          const SizedBox(height: 30),
-          _buildMenuSection(),
-        ],
+    return RefreshIndicator(
+      onRefresh: _fetchAccountData,
+      color: AppColors.primary,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _EntranceAnimation(delay: 0, child: _buildProfileHeader()),
+            const SizedBox(height: 40),
+            const _EntranceAnimation(
+              delay: 1,
+              child: Text(
+                "AKTIVITAS SAYA",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildMenuSection([
+              if (user?.role?.id != 3)
+                _accountTile(Icons.receipt_long_rounded, "Pesanan Saya", () => Navigator.pushNamed(context, '/orders'), delay: 2),
+              ValueListenableBuilder<int>(
+                valueListenable: PushNotificationService.unreadCount,
+                builder: (context, count, child) {
+                  return _accountTile(
+                    Icons.notifications_active_rounded, 
+                    "Notifikasi", 
+                    () async {
+                      await Navigator.pushNamed(context, '/notifications');
+                      PushNotificationService.updateUnreadCount();
+                    }, 
+                    delay: 3,
+                    badgeCount: count,
+                  );
+                }
+              ),
+            ]),
+            const SizedBox(height: 32),
+            const _EntranceAnimation(
+              delay: 4,
+              child: Text(
+                "PENGATURAN",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildMenuSection([
+              _accountTile(Icons.person_rounded, "Edit Profil", () async {
+                final updated = await Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfilePage(user: user!)));
+                if (updated == true) _fetchAccountData();
+              }, delay: 5),
+              _accountTile(Icons.help_center_rounded, "Pusat Bantuan", () {}, delay: 6),
+            ]),
+            const SizedBox(height: 32),
+            _EntranceAnimation(
+              delay: 7,
+              child: _buildLogoutButton(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProfileHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 8)),
         ],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 35,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            backgroundImage: user?.profilePicture != null
-                ? NetworkImage("${ApiEndpoints.baseStorage}/${user!.profilePicture}")
-                : null,
-            child: user?.profilePicture == null
-                ? const Icon(Icons.person, color: AppColors.primary, size: 35)
-                : null,
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
+            ),
+            child: CircleAvatar(
+              radius: 40,
+              backgroundColor: Colors.white,
+              backgroundImage: user?.profilePicture != null
+                  ? NetworkImage("${ApiEndpoints.baseStorage}/${user!.profilePicture}")
+                  : null,
+              child: user?.profilePicture == null
+                  ? const Icon(Icons.person_rounded, color: AppColors.primary, size: 40)
+                  : null,
+            ),
           ),
           const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(user?.name ?? "User", style: AppTextStyles.bodyBold),
-              Text(
-                user?.email ?? "",
-                style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user?.name ?? "User",
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF2D0A0A)),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      user?.role?.id == 3 ? "MITRA DRIVER" : "PELANGGAN SETIA",
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.secondary, letterSpacing: 1),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuSection() {
+  Widget _buildMenuSection(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 4)),
         ],
       ),
-      child: Column(
-        children: [
-          _accountTile(Icons.shopping_bag_outlined, "Pesanan Saya", () {}),
-          _accountTile(Icons.person_outline, "Edit Profil", () async {
-            if (user != null) {
-              final updated = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EditProfilePage(user: user!)),
-              );
-              if (updated == true) _fetchAccountData();
-            }
-          }),
-          _accountTile(Icons.notifications_none_outlined, "Notifikasi", () {}),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Divider(),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _accountTile(IconData icon, String title, VoidCallback onTap, {required int delay, int badgeCount = 0}) {
+    return _EntranceAnimation(
+      delay: delay,
+      child: TapScale(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF2D0A0A)),
+                ),
+              ),
+              if (badgeCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    badgeCount > 9 ? "9+" : "$badgeCount",
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: Colors.grey[300], size: 24),
+            ],
           ),
-          _accountTile(Icons.logout, "Keluar", () => AuthController.logout(context), color: Colors.red),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _accountTile(IconData icon, String title, VoidCallback onTap, {Color? color}) {
+  Widget _buildLogoutButton() {
     return TapScale(
-      onTap: onTap,
-      child: ListTile(
-        leading: Icon(icon, color: color ?? AppColors.primary, size: 22),
-        title: Text(
-          title,
-          style: AppTextStyles.subtitle.copyWith(
-            color: color ?? AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+      onTap: () => AuthController.logout(context),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
         ),
-        trailing: const Icon(Icons.chevron_right, size: 18),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              "KELUAR DARI AKUN",
+              style: TextStyle(color: Colors.red.withValues(alpha: 0.8), fontWeight: FontWeight.w900, letterSpacing: 1),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildGoldButton(String text, VoidCallback onTap) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: TapScale(
-        onTap: onTap,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.secondary,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.secondary.withValues(alpha: 0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Text(
-            text,
-            style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 16),
-          ),
+    return TapScale(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: 60,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [AppColors.secondary, AppColors.accent]),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
+          ],
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 15, letterSpacing: 1),
         ),
       ),
+    );
+  }
+}
+
+class _EntranceAnimation extends StatelessWidget {
+  final Widget child;
+  final int delay;
+  const _EntranceAnimation({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + (delay * 80)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

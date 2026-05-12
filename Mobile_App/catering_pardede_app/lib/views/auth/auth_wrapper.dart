@@ -18,7 +18,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   void _checkLogin() async {
     try {
-      final user = await AuthService.getUser().timeout(const Duration(seconds: 5));
+      final user = await AuthService.getUser().timeout(const Duration(seconds: 10));
 
       if (!mounted) return;
 

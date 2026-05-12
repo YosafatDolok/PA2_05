@@ -587,58 +587,122 @@ label {
 
 /* Notification Styles */
 .aura-dropdown-dark {
-    background: rgba(22, 22, 30, 0.98) !important;
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--aura-border) !important;
+    background: #121216 !important; /* Solid dark for better contrast */
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+    overflow: hidden;
 }
 
 .bg-aura-crimson { background-color: var(--aura-crimson) !important; }
 .text-aura-crimson { color: var(--aura-crimson) !important; }
-.bg-aura-crimson-soft { background: rgba(255, 51, 75, 0.15) !important; }
-.bg-aura-crimson-transparent { background: rgba(255, 51, 75, 0.1) !important; }
+.bg-aura-crimson-soft { background: rgba(255, 51, 75, 0.2) !important; }
+.bg-aura-crimson-transparent { background: rgba(255, 51, 75, 0.12) !important; }
+.bg-warning-transparent { background: rgba(255, 171, 0, 0.12) !important; }
+.bg-aura-dark-footer { 
+    background: rgba(0, 0, 0, 0.4) !important; 
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.aura-notification-list {
+    overflow-x: hidden !important; /* Fix the horizontal red line/arrow bug */
+}
 
 .notification-item {
-    transition: all 0.3s ease;
-    border-color: rgba(255, 255, 255, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: none !important;
+    margin: 6px 12px;
+    border-radius: 14px !important;
+    background: transparent;
 }
 
 .notification-item:hover {
-    background: rgba(255, 255, 255, 0.03) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    transform: translateX(4px);
 }
 
 .unread-item {
-    background: rgba(255, 51, 75, 0.03) !important;
-    border-left: 3px solid var(--aura-crimson) !important;
+    background: rgba(255, 51, 75, 0.04) !important;
+    position: relative;
+}
+
+.unread-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 25%;
+    bottom: 25%;
+    width: 3px;
+    background: var(--aura-crimson);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 2px 0 10px var(--aura-crimson-glow);
 }
 
 .aura-icon-circle-sm {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    line-height: 0; /* Fix vertical centering for icons */
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.aura-icon-circle-sm i {
+    margin: 0;
+    line-height: 1;
+}
+
+.notification-item:hover .aura-icon-circle-sm {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 51, 75, 0.3);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--aura-crimson);
 }
 
 .btn-aura-crimson-outline {
-    border: 1px solid rgba(255, 51, 75, 0.3);
-    color: var(--aura-crimson);
+    border: 1px solid rgba(255, 51, 75, 0.4) !important;
+    color: #ff4d61 !important; /* Brighter crimson for visibility */
     background: transparent;
     transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-aura-crimson-outline:hover {
-    background: var(--aura-crimson);
-    color: white;
-}
-
-.border-white-5 {
-    border-color: rgba(255, 255, 255, 0.05) !important;
+    background: var(--aura-crimson) !important;
+    color: white !important;
+    box-shadow: 0 5px 15px rgba(255, 51, 75, 0.3);
 }
 
 .smaller {
-    font-size: 0.75rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.2px;
 }
 
 @keyframes pulse-red {

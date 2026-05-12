@@ -8,7 +8,7 @@ use App\Models\OrderAdditionRequest;
 class Order extends Model
 {
     protected $primaryKey = 'order_id';
-    protected $appends = ['total_payable', 'base_latitude', 'base_longitude'];
+    protected $appends = ['total_payable', 'remaining_balance', 'base_latitude', 'base_longitude'];
 
     public function getRouteKeyName()
     {
@@ -87,7 +87,7 @@ class Order extends Model
      */
     public function getTotalPayableAttribute()
     {
-        $basePrice = (float) $this->final_price;
+        $basePrice = (float) ($this->final_price ?? 0);
         
         $additionsTotal = $this->additions()
             ->where('status_id', 2) // Approved
@@ -97,7 +97,15 @@ class Order extends Model
                 return $request->items->sum('final_price');
             });
 
-        return $basePrice + $additionsTotal;
+        return (float) ($basePrice + $additionsTotal);
+    }
+
+    /**
+     * Calculate the remaining balance to be paid.
+     */
+    public function getRemainingBalanceAttribute()
+    {
+        return max(0, $this->total_payable - (float) $this->total_paid);
     }
 
     /**

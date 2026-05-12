@@ -152,10 +152,15 @@ class PaymentController extends Controller
     private function notifyOrderService($orderId, $statusId)
     {
         try {
+            // Find the last payment for this order to get the amount
+            $payment = Payment::where('order_id', $orderId)->latest()->first();
+            
+            if (!$payment) return;
+
             $response = Http::withHeaders([
                 'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key')
             ])->patch(
-                env('MAIN_APP_URL', 'http://localhost:8000') . "/api/orders/" . $payment->order_id . "/status",
+                env('MAIN_APP_URL', 'http://localhost:8000') . "/api/orders/" . $orderId . "/status",
                 [
                     'status_id' => $statusId,
                     'amount' => $payment->amount,
@@ -165,6 +170,7 @@ class PaymentController extends Controller
 
             Log::info('ORDER SERVICE NOTIFIED', [
                 'status' => $response->status(),
+                'response' => $response->body(),
                 'order_id' => $orderId,
                 'new_status' => $statusId
             ]);

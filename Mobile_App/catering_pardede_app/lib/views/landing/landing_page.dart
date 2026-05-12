@@ -49,6 +49,9 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
           Image.network(
             'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2070&auto=format&fit=crop',
             fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: const Color(0xFF1A0000),
+            ),
           ),
           Container(
             decoration: BoxDecoration(
@@ -80,7 +83,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                       child: Column(
                         children: [
                           const Icon(
-                            Icons.local_fire_department_rounded,
+                            Icons.restaurant_menu_rounded,
                             size: 100,
                             color: Color(0xFFFFD700), // Gold
                           ),
@@ -152,7 +155,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                             ),
                             alignment: Alignment.center,
                             child: const Text(
-                              "MASUK KE DAPUR",
+                              "MASUK KE AKUN",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -164,7 +167,11 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                         ),
                         const SizedBox(height: 20),
                         TapScale(
-                          onTap: () => Navigator.pushNamed(context, '/user-dashboard'),
+                          onTap: () => Navigator.pushNamedAndRemoveUntil(
+                            context, 
+                            '/user-dashboard',
+                            (route) => false,
+                          ),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 20),

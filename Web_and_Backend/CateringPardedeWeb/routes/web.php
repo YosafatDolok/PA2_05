@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Admin\DriverController;
+use App\Http\Controllers\Admin\NotificationController;
 
 use App\Http\Controllers\Admin\PasswordResetController as AdminPasswordResetController;
 
@@ -65,6 +66,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
         Route::get('/global-search', [DashboardController::class, 'globalSearch'])->name('admin.global-search');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notifications.index');
+        Route::post('/notifications/mark-read', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.markAllRead');
 
         // Logistics Dashboard
         Route::get('/logistics', [\App\Http\Controllers\Admin\LogisticsController::class, 'index'])->name('admin.logistics.index');

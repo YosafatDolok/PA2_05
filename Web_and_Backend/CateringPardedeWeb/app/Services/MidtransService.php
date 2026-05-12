@@ -19,24 +19,26 @@ class MidtransService
 
     public function getSnapToken(Order $order)
     {
+        $balance = (int) $order->remaining_balance;
+
         $params = [
             'transaction_details' => [
                 'order_id' => $order->order_id . '-' . time(),
-                'gross_amount' => (int) $order->final_price,
+                'gross_amount' => $balance,
             ],
             'customer_details' => [
                 'first_name' => $order->user->name,
                 'email' => $order->user->email,
                 'phone' => $order->user->phone_number,
             ],
-            'item_details' => $order->items->map(function ($item) {
-                return [
-                    'id' => $item->menu_id,
-                    'price' => (int) $item->price,
-                    'quantity' => $item->quantity,
-                    'name' => $item->menu->name,
-                ];
-            })->toArray(),
+            'item_details' => [
+                [
+                    'id' => 'BALANCE-' . $order->order_id,
+                    'price' => $balance,
+                    'quantity' => 1,
+                    'name' => 'Pembayaran Saldo Pesanan #' . $order->order_id,
+                ]
+            ],
         ];
 
         try {

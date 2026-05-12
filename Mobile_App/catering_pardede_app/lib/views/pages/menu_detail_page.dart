@@ -122,18 +122,6 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
           ),
         ),
       ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.black26,
-            child: IconButton(
-              icon: const Icon(Icons.favorite_border, color: Colors.white, size: 20),
-              onPressed: () {},
-            ),
-          ),
-        ),
-      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,

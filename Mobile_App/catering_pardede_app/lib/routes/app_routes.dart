@@ -18,6 +18,7 @@ import '/views/pages/chat_inbox_page.dart';
 import '/views/driver/driver_home_page.dart';
 import '/views/driver/driver_order_detail_page.dart';
 import '/views/pages/map_picker_page.dart';
+import '/views/navigation/driver_shell.dart';
 
 import '/core/guards/role_guard.dart';
 import '/models/menu_model.dart';
@@ -85,14 +86,19 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => const RoleGuard(
             role: 'driver',
-            child: DriverHomePage(),
+            child: DriverShell(),
           ),
         );
 
       case '/driver-order-detail':
-        final order = settings.arguments;
+        final args = settings.arguments;
+        if (args is int) {
+          return MaterialPageRoute(
+            builder: (_) => DriverOrderDetailPage(orderId: args),
+          );
+        }
         return MaterialPageRoute(
-          builder: (_) => DriverOrderDetailPage(order: order),
+          builder: (_) => DriverOrderDetailPage(order: args),
         );
 
       // ================= Menu Detail =================

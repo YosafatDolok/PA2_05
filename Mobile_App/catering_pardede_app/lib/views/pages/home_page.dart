@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F7F2), // Slightly warmer background
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: _fetchData,
         color: AppColors.primary,
@@ -88,66 +88,75 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CustomHeader(
+              CustomHeader(
                 showIcons: true,
+                showSearch: true,
+                searchHint: 'Cari hidangan favoritmu...',
+                onSearchChanged: (q) {},
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Personalized Greeting
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user != null ? "Halo, ${user!.name.split(' ')[0]}! 👋" : "Halo, Selamat Datang! 👋",
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF420000),
-                        letterSpacing: -0.5,
+              // Personalized Greeting (Now inside a subtle fade animation)
+              _EntranceAnimation(
+                delay: 0,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user != null ? "Halo, ${user!.name.split(' ')[0]}! 👋" : "Halo, Selamat Datang! 👋",
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2D0A0A),
+                          letterSpacing: -0.8,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Mau makan apa hari ini?",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                      const SizedBox(height: 6),
+                      Text(
+                        "Pardede Catering siap melayani seleramu.",
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.brown[400],
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               
-              // Menu Populer
+              // Menu Populer (Carousel)
               _SectionHeader(title: 'Menu Populer', onSeeAll: () {}),
-              const SizedBox(height: 16),
-              isLoading ? _buildFeaturedShimmer() : _FeaturedMenu(menus: menus),
+              const SizedBox(height: 20),
+              isLoading 
+                  ? _buildFeaturedShimmer() 
+                  : _FeaturedCarousel(menus: menus.take(5).toList()),
                   
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               
               // Menu Terlaris
               _SectionHeader(title: 'Menu Terlaris', onSeeAll: () {}),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               isLoading ? _buildGridShimmer() : _MenuGrid(menus: menus),
               
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
 
               if (reviews.isNotEmpty) ...[
                 _SectionHeader(title: 'Apa Kata Mereka?', onSeeAll: () {}),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 _ReviewCarousel(reviews: reviews),
+                const SizedBox(height: 40),
               ],
               
               if (recentlyViewed.isNotEmpty) ...[
-                const SizedBox(height: 32),
-                _SectionHeader(title: 'Terakhir Anda Lihat', onSeeAll: () {}),
-                const SizedBox(height: 16),
+                _SectionHeader(title: 'Terakhir Dilihat', onSeeAll: () {}),
+                const SizedBox(height: 20),
                 _RecentlyViewedList(items: recentlyViewed),
+                const SizedBox(height: 40),
               ],
               
               const SizedBox(height: 40),
@@ -158,24 +167,268 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
   Widget _buildFeaturedShimmer() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: ShimmerLoading.rounded(width: double.infinity, height: 200, borderRadius: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ShimmerLoading.rounded(width: double.infinity, height: 220, borderRadius: 32),
     );
   }
 
   Widget _buildGridShimmer() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          Expanded(child: ShimmerLoading.rounded(width: double.infinity, height: 180, borderRadius: 24)),
-          const SizedBox(width: 16),
-          Expanded(child: ShimmerLoading.rounded(width: double.infinity, height: 180, borderRadius: 24)),
+          Expanded(child: ShimmerLoading.rounded(width: double.infinity, height: 220, borderRadius: 28)),
+          const SizedBox(width: 20),
+          Expanded(child: ShimmerLoading.rounded(width: double.infinity, height: 220, borderRadius: 28)),
         ],
+      ),
+    );
+  }
+}
+
+// --- Premium Widgets ---
+
+class _EntranceAnimation extends StatelessWidget {
+  final Widget child;
+  final int delay;
+  const _EntranceAnimation({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + (delay * 100)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+class _FeaturedCarousel extends StatefulWidget {
+  final List<MenuModel> menus;
+  const _FeaturedCarousel({required this.menus});
+
+  @override
+  State<_FeaturedCarousel> createState() => _FeaturedCarouselState();
+}
+
+class _FeaturedCarouselState extends State<_FeaturedCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.85, initialPage: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 230,
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (index) => setState(() => _currentPage = index),
+        itemCount: widget.menus.length,
+        itemBuilder: (context, index) {
+          final menu = widget.menus[index];
+          
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutQuint,
+            margin: EdgeInsets.symmetric(horizontal: 10, vertical: index == _currentPage ? 0 : 10),
+            child: _FeaturedItem(menu: menu),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FeaturedItem extends StatelessWidget {
+  final MenuModel menu;
+  const _FeaturedItem({required this.menu});
+
+  @override
+  Widget build(BuildContext context) {
+    final String? imageUrl = menu.image != null
+        ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
+        : null;
+
+    return TapScale(
+      onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.15), 
+              blurRadius: 25, 
+              offset: const Offset(0, 12)
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              imageUrl != null
+                  ? Image.network(imageUrl, fit: BoxFit.cover)
+                  : Container(color: Colors.grey[200]),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent, 
+                      Colors.black.withValues(alpha: 0.4),
+                      Colors.black.withValues(alpha: 0.9)
+                    ],
+                    stops: const [0.3, 0.6, 1.0],
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 24,
+                left: 24,
+                right: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                      ),
+                      child: const Text('TERPOPULER', style: TextStyle(
+                        color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2
+                      )),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      menu.name,
+                      style: const TextStyle(
+                        color: Colors.white, 
+                        fontSize: 26, 
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuCard extends StatelessWidget {
+  final MenuModel menu;
+  const _MenuCard({required this.menu});
+
+  @override
+  Widget build(BuildContext context) {
+    final String? imageUrl = menu.image != null
+        ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
+        : null;
+
+    return TapScale(
+      onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05), 
+              blurRadius: 20, 
+              offset: const Offset(0, 10)
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              child: AspectRatio(
+                aspectRatio: 1.1,
+                child: imageUrl != null
+                    ? Image.network(imageUrl, fit: BoxFit.cover)
+                    : Container(color: Colors.grey[200]),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    menu.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900, 
+                      fontSize: 15, 
+                      color: Color(0xFF2D0A0A),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Premium Choice',
+                        style: TextStyle(
+                          color: Colors.brown[300], 
+                          fontWeight: FontWeight.w700, 
+                          fontSize: 10,
+                          letterSpacing: 0.2
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.secondary, AppColors.accent]
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.secondary.withValues(alpha: 0.3), 
+                              blurRadius: 8, 
+                              offset: const Offset(0, 4)
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -190,10 +443,10 @@ class _RecentlyViewedList extends StatelessWidget {
     return SizedBox(
       height: 110,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final menu = items[index];
           final String? imageUrl = menu.image != null
@@ -206,13 +459,13 @@ class _RecentlyViewedList extends StatelessWidget {
               width: 100,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(22),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(22),
                 child: imageUrl != null
                     ? Image.network(imageUrl, fit: BoxFit.cover)
                     : Container(color: Colors.grey[100]),
@@ -233,122 +486,55 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
               Container(
-                width: 4,
-                height: 20,
+                width: 5,
+                height: 22,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB8860B),
-                  borderRadius: BorderRadius.circular(2),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [AppColors.secondary, AppColors.accent],
+                  ),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Text(title, style: const TextStyle(
-                fontSize: 20, 
+                fontSize: 22, 
                 fontWeight: FontWeight.w900, 
-                color: Color(0xFF420000), // Deep Maroon
+                color: Color(0xFF2D0A0A),
+                letterSpacing: -0.5,
               )),
             ],
           ),
           TapScale(
             onTap: onSeeAll,
-            child: Row(
-              children: const [
-                Text('Lihat semua', style: TextStyle(
-                  color: Color(0xFFB8860B), 
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13
-                )),
-                SizedBox(width: 4),
-                Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFB8860B), size: 12),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-class _FeaturedMenu extends StatelessWidget {
-  final List<MenuModel> menus;
-  const _FeaturedMenu({required this.menus});
-
-  @override
-  Widget build(BuildContext context) {
-    if (menus.isEmpty) return const SizedBox();
-    final menu = menus.first;
-    final String? imageUrl = menu.image != null
-        ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
-        : null;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: TapScale(
-        onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10)),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: AspectRatio(
-              aspectRatio: 16 / 10,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  imageUrl != null
-                      ? Image.network(imageUrl, fit: BoxFit.cover)
-                      : Container(color: Colors.grey[200]),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withValues(alpha: 0.85)],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text('TERPOPULER', style: TextStyle(
-                            color: Color(0xFF7A0000), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5
-                          )),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          menu.name,
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
-                        ),
-                      ],
-                    ),
-                  ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: const [
+                  Text('Lihat', style: TextStyle(
+                    color: AppColors.secondary, 
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12
+                  )),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_ios_rounded, color: AppColors.secondary, size: 10),
                 ],
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -361,61 +547,61 @@ class _ReviewCarousel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 180,
+      height: 190,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         scrollDirection: Axis.horizontal,
         itemCount: reviews.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
+        separatorBuilder: (_, __) => const SizedBox(width: 18),
         itemBuilder: (context, index) {
           final review = reviews[index];
           return Container(
-            width: 280,
-            padding: const EdgeInsets.all(20),
+            width: 300,
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(32),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 8)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        review.userName ?? 'Customer',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF420000)),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
                       ),
-                      child: Row(
-                        children: const [
-                          Icon(Icons.verified, size: 10, color: Colors.green),
-                          SizedBox(width: 4),
-                          Text('VERIFIED', style: TextStyle(color: Colors.green, fontSize: 8, fontWeight: FontWeight.w900)),
+                      child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            review.userName ?? 'Pelanggan',
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF2D0A0A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const Text('Verified Buyer', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
+                    StarRating(rating: review.rating, isInteractive: false, size: 14),
                   ],
                 ),
-                const SizedBox(height: 8),
-                StarRating(rating: review.rating, isInteractive: false, size: 16),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
                 Expanded(
                   child: Text(
-                    review.comment ?? "Tidak ada komentar",
-                    style: const TextStyle(color: Colors.black54, fontSize: 13, height: 1.4, fontStyle: FontStyle.italic),
+                    review.comment ?? "Hidangan yang sangat berkesan.",
+                    style: TextStyle(color: Colors.brown[400], fontSize: 13, height: 1.5, fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -439,82 +625,17 @@ class _MenuGrid extends StatelessWidget {
     final gridItems = menus.skip(1).take(2).toList();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: gridItems.map((menu) => Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _MenuCard(menu: menu),
+            child: _EntranceAnimation(
+              delay: 2,
+              child: _MenuCard(menu: menu),
+            ),
           ),
         )).toList(),
-      ),
-    );
-  }
-}
-
-class _MenuCard extends StatelessWidget {
-  final MenuModel menu;
-  const _MenuCard({required this.menu});
-
-  @override
-  Widget build(BuildContext context) {
-    final String? imageUrl = menu.image != null
-        ? (menu.image!.startsWith('http') ? menu.image : '${ApiEndpoints.baseStorage}/${menu.image}')
-        : null;
-
-    return TapScale(
-      onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 8)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              child: AspectRatio(
-                aspectRatio: 1.1,
-                child: imageUrl != null
-                    ? Image.network(imageUrl, fit: BoxFit.cover)
-                    : Container(color: Colors.grey[200]),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    menu.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF420000)),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Catering Quality',
-                        style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 10),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(color: Color(0xFFF9F7F2), shape: BoxShape.circle),
-                        child: const Icon(Icons.add_rounded, color: Color(0xFFB8860B), size: 18),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

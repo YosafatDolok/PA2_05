@@ -334,8 +334,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Widget build(BuildContext context) {
     if (_isLoading || _currentOrder == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Memuat Pesanan...")),
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: AppColors.background,
+        body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
       );
     }
 
@@ -357,84 +357,404 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 await _fetchOrderDetails();
                 await _fetchAdditions();
               },
+              color: AppColors.primary,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                  _buildReceipt(context),
-                  
-                  if (isCompleted) ...[
-                    const SizedBox(height: 16),
-                    if (hasReview)
-                      _buildReviewCard()
-                    else
-                      _buildReviewButton(),
-                  ],
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                child: _EntranceAnimation(
+                  delay: 0,
+                  child: Column(
+                    children: [
+                      _buildStatusStepper(),
+                      const SizedBox(height: 24),
+                      _buildReceipt(context),
+                      
+                      if (isCompleted) ...[
+                        const SizedBox(height: 20),
+                        if (hasReview)
+                          _buildReviewCard()
+                        else
+                          _buildReviewButton(),
+                      ],
 
-                  if (_isAdmin) ...[
-                    const SizedBox(height: 16),
-                    _buildAdminActions(),
-                  ],
+                      if (_isAdmin) ...[
+                        const SizedBox(height: 20),
+                        _buildAdminActions(),
+                      ],
 
-                  // The "Addition Stack"
-                  if (_additions.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    ..._additions.asMap().entries.map((entry) => _buildAdditionReceipt(entry.key + 1, entry.value)),
-                  ],
-                  // ... rest of the build logic
+                      if (_additions.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        ..._additions.asMap().entries.map((entry) => _buildAdditionReceipt(entry.key + 1, entry.value)),
+                      ],
 
-                  if (!_isAdmin && (_currentOrder!.statusId == 1 || _currentOrder!.statusId == 2)) ...[
-                    const SizedBox(height: 24),
-                    TapScale(
-                      onTap: () => _showAddMenuSheet(),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                          ],
+                      if (!_isAdmin && (_currentOrder!.statusId == 1 || _currentOrder!.statusId == 2)) ...[
+                        const SizedBox(height: 24),
+                        _buildActionButton(
+                          "TAMBAH MENU TAMBAHAN",
+                          Icons.add_circle_rounded,
+                          AppColors.secondary,
+                          () => _showAddMenuSheet(),
                         ),
-                        alignment: Alignment.center,
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_circle_outline, color: Colors.white, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              "TAMBAH MENU TAMBAHAN",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.1),
+                      ],
+                      if (!_isAdmin && _currentOrder!.statusId == 1) ...[
+                        const SizedBox(height: 16),
+                        TapScale(
+                          onTap: _isCancelling ? () {} : () => _cancelOrder(),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                             ),
-                          ],
+                            alignment: Alignment.center,
+                            child: _isCancelling
+                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.red, strokeWidth: 2))
+                                : const Text(
+                                    "BATALKAN PESANAN",
+                                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
+                                  ),
+                          ),
                         ),
+                      ],
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusStepper() {
+    final statusName = _currentOrder!.status?.name.toLowerCase() ?? 'pending';
+    int currentStep = 0;
+    if (statusName == 'preparing') currentStep = 1;
+    if (statusName == 'out for delivery') currentStep = 2;
+    if (statusName == 'delivered' || statusName == 'selesai') currentStep = 3;
+
+    final List<Map<String, dynamic>> steps = [
+      {'label': 'Dipesan', 'icon': Icons.assignment_rounded},
+      {'label': 'Diproses', 'icon': Icons.restaurant_rounded},
+      {'label': 'Dikirim', 'icon': Icons.delivery_dining_rounded},
+      {'label': 'Selesai', 'icon': Icons.check_circle_rounded},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(steps.length, (index) {
+          final isCompleted = index <= currentStep;
+          final isLast = index == steps.length - 1;
+          
+          return Expanded(
+            child: Row(
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 500),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isCompleted ? AppColors.primary : const Color(0xFFF5F5F5),
+                        shape: BoxShape.circle,
+                        boxShadow: isCompleted 
+                          ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                          : null,
+                      ),
+                      child: Icon(
+                        steps[index]['icon'],
+                        size: 16,
+                        color: isCompleted ? Colors.white : Colors.grey[400],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      steps[index]['label'],
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: isCompleted ? FontWeight.w900 : FontWeight.w700,
+                        color: isCompleted ? AppColors.primary : Colors.grey[400],
                       ),
                     ),
                   ],
-                  if (!_isAdmin && _currentOrder!.statusId == 1) ...[
-                    const SizedBox(height: 24),
-                    TapScale(
-                      onTap: _isCancelling ? () {} : () => _cancelOrder(),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
                       child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        height: 2,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.red.shade300),
+                          gradient: LinearGradient(
+                            colors: [
+                              isCompleted ? AppColors.primary : const Color(0xFFF5F5F5),
+                              (index + 1) <= currentStep ? AppColors.primary : const Color(0xFFF5F5F5),
+                            ],
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: _isCancelling
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.red, strokeWidth: 2))
-                            : const Text(
-                                "BATALKAN PESANAN",
-                                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, letterSpacing: 1.1),
-                              ),
                       ),
                     ),
+                  ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildReceipt(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 30, offset: const Offset(0, 15)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Branding Header
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.restaurant_rounded, color: AppColors.primary, size: 36),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "CATERING PARDEDE",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 3, color: AppColors.primary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Traditional Luxury Catering",
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.brown[200], letterSpacing: 1),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildTicketInfo("ID PESANAN", "#ORD-${_currentOrder!.id.toString().padLeft(5, '0')}"),
+                    _buildTicketInfo("TANGGAL", "${_currentOrder!.orderDate.day}/${_currentOrder!.orderDate.month}/${_currentOrder!.orderDate.year}"),
                   ],
+                ),
+              ],
+            ),
+          ),
+
+          const _DashedDivider(),
+
+          // Menu Items
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "DETAIL HIDANGAN",
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+                ),
+                const SizedBox(height: 24),
+                ...?_currentOrder!.items?.map((item) => _buildMenuReceiptRow(item)),
+              ],
+            ),
+          ),
+
+          const _DashedDivider(),
+
+          // Event Info
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              children: [
+                _buildEventDetailRow(Icons.event_available_rounded, "Tanggal Acara",
+                    "${_currentOrder!.eventDate.day}/${_currentOrder!.eventDate.month}/${_currentOrder!.eventDate.year}"),
+                const SizedBox(height: 20),
+                _buildEventDetailRow(Icons.location_on_rounded, "Lokasi Pengiriman", _currentOrder!.eventAddress),
+                if (_currentOrder!.eventLatitude != null && _currentOrder!.eventLongitude != null) ...[
+                  const SizedBox(height: 20),
+                  _buildMapCard(),
+                ],
+                if (_currentOrder!.notes != null && _currentOrder!.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _buildEventDetailRow(Icons.note_alt_rounded, "Catatan Khusus", _currentOrder!.notes!),
+                ],
+              ],
+            ),
+          ),
+
+          // Total Section
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.white, AppColors.primary.withValues(alpha: 0.03)],
+              ),
+              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "TOTAL TRANSAKSI",
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1),
+                    ),
+                    _buildFinalPrice(),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildReceiptActions(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTicketInfo(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF2D0A0A))),
+      ],
+    );
+  }
+
+  Widget _buildMenuReceiptRow(OrderItemModel item) {
+    final String imageUrl = item.menu?.image != null
+        ? (item.menu!.image!.startsWith('http') ? item.menu!.image! : '${ApiEndpoints.baseStorage}/${item.menu!.image}')
+        : '';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              image: imageUrl.isNotEmpty ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover) : null,
+            ),
+            child: imageUrl.isEmpty ? const Icon(Icons.fastfood_rounded, color: Colors.grey, size: 20) : null,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.menu?.name ?? "Menu Item", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF2D0A0A))),
+                Text("Catering Menu Item", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.brown[200])),
+              ],
+            ),
+          ),
+          Text(
+            item.finalPrice != null ? "Rp ${item.finalPrice!.toStringAsFixed(0)}" : "Included",
+            style: TextStyle(
+              fontWeight: FontWeight.w900, 
+              fontSize: 14, 
+              color: item.finalPrice != null ? AppColors.secondary : Colors.green[400]
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventDetailRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: const Color(0xFFF9F9F9), borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, size: 16, color: AppColors.secondary),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 0.5)),
+              const SizedBox(height: 4),
+              Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF4A4A4A), height: 1.4)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMapCard() {
+    return Container(
+      height: 180,
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5))],
+      ),
+      child: Stack(
+        children: [
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: LatLng(_currentOrder!.eventLatitude!, _currentOrder!.eventLongitude!),
+              initialZoom: 15.0,
+              interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+            ),
+            children: [
+              TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.catering.pardede.app'),
+              MarkerLayer(markers: [
+                Marker(
+                  point: LatLng(_currentOrder!.eventLatitude!, _currentOrder!.eventLongitude!),
+                  width: 40, height: 40,
+                  child: const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 30),
+                ),
+              ]),
+            ],
+          ),
+          Positioned(
+            bottom: 12,
+            right: 12,
+            child: TapScale(
+              onTap: () => Helpers.launchMap(_currentOrder!.eventLatitude!, _currentOrder!.eventLongitude!),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]),
+                child: const Row(
+                  children: [
+                    Icon(Icons.directions_rounded, size: 16, color: AppColors.primary),
+                    SizedBox(width: 8),
+                    Text("DIRECTIONS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: 1)),
                   ],
                 ),
               ),
@@ -445,271 +765,89 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
   }
 
-  Widget _buildReceipt(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Top Section with Logo/Header
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.restaurant, color: AppColors.primary, size: 32),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "CATERING PARDEDE",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const Text(
-                  "Traditional Luxury Catering",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildInfoRow("Order ID", "#ORD-${_currentOrder!.id.toString().padLeft(5, '0')}"),
-                _buildInfoRow("Tanggal Pesan",
-                    "${_currentOrder!.orderDate.day}/${_currentOrder!.orderDate.month}/${_currentOrder!.orderDate.year}"),
-                _buildInfoRow("Status", _currentOrder!.status?.name.toUpperCase() ?? "PENDING", isStatus: true),
-              ],
-            ),
-          ),
-
-          const _DashedDivider(),
-
-          // Menu Items Section
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "ITEM PESANAN",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...?_currentOrder!.items?.map((item) => _buildItemRow(
-                      item.menu?.name ?? "Menu Item",
-                      "Catering Menu",
-                      item.finalPrice ?? 0,
-                    )),
-              ],
-            ),
-          ),
-
-          const _DashedDivider(),
-
-          // Details Section
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                _buildDetailRow(Icons.calendar_today_outlined, "Tanggal Acara",
-                    "${_currentOrder!.eventDate.day}/${_currentOrder!.eventDate.month}/${_currentOrder!.eventDate.year}"),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.location_on_outlined, "Alamat", _currentOrder!.eventAddress),
-                if (_currentOrder!.eventLatitude != null && _currentOrder!.eventLongitude != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: LatLng(_currentOrder!.eventLatitude!, _currentOrder!.eventLongitude!),
-                        initialZoom: 15.0,
-                        interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.catering.pardede.app',
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: LatLng(_currentOrder!.eventLatitude!, _currentOrder!.eventLongitude!),
-                              width: 40,
-                              height: 40,
-                              child: const Icon(Icons.location_on, color: AppColors.primary, size: 30),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                if (_currentOrder!.notes != null && _currentOrder!.notes!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildDetailRow(Icons.note_alt_outlined, "Catatan", _currentOrder!.notes!),
-                ],
-              ],
-            ),
-          ),
-
-          // Total Section
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.05),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "TOTAL HARGA",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    Builder(
-                      builder: (context) {
-                        double totalAdditions = 0;
-                        for (var req in _additions) {
-                          if (req.statusId == 2) {
-                            for (var item in req.items) {
-                              totalAdditions += item.finalPrice ?? 0;
-                            }
-                          }
-                        }
-                        double finalTotal = _currentOrder!.finalPrice + totalAdditions;
-
-                        return finalTotal > 0
-                            ? Text(
-                                "Rp ${finalTotal.toStringAsFixed(0)}",
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFFB8860B),
-                                ),
-                              )
-                            : const Text(
-                                "Menunggu Konfirmasi",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.orange,
-                                ),
-                              );
-                      },
-                    ),
-                  ],
-                ),
-                  if (_currentOrder!.finalPrice <= 0 && !_isAdmin)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        "*Harga final akan ditentukan oleh admin segera.",
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  TapScale(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder!.id)),
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.chat_outlined, color: AppColors.primary, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            _isAdmin ? "DISKUSI DENGAN PELANGGAN" : "DISKUSI HARGA DENGAN ADMIN",
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                 // 🔥 TOMBOL BAYAR
-    if (_currentOrder!.finalPrice > 0 && _currentOrder!.statusId == 1 && !_isAdmin)
-      TapScale(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => PaymentMethodPage(order: _currentOrder!),
-            ),
+  Widget _buildFinalPrice() {
+    return _currentOrder!.totalPayable > 0
+        ? Text(
+            "Rp ${Helpers.formatNumber(_currentOrder!.totalPayable)}",
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.secondary),
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+            child: const Text("Menunggu Konfirmasi", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.orange)),
           );
-        },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFF8B0000),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            "BAYAR SEKARANG",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-                    ),
-          ),
+  }
+
+  Widget _buildReceiptActions() {
+    return Column(
+      children: [
+        if (_currentOrder!.totalPaid > 0) ...[
+          _buildPaymentSummaryRow("SUDAH DIBAYAR", "- Rp ${Helpers.formatNumber(_currentOrder!.totalPaid)}", Colors.green),
+          const SizedBox(height: 12),
+          const _DashedDivider(),
+          const SizedBox(height: 12),
+          _buildPaymentSummaryRow("SISA TAGIHAN", "Rp ${Helpers.formatNumber(_currentOrder!.remainingBalance)}", AppColors.secondary, isBold: true),
+          const SizedBox(height: 24),
+        ],
+        _buildReceiptActionButton(
+          _isAdmin ? "DISKUSI DENGAN PELANGGAN" : "DISKUSI DENGAN ADMIN",
+          Icons.chat_bubble_rounded,
+          AppColors.primary,
+          () => Navigator.push(context, MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder!.id))),
         ),
-      ),
-            
-              ],
-            ),
+        if (_currentOrder!.remainingBalance > 0 && !_isAdmin && _currentOrder!.statusId != 9 && _currentOrder!.totalPayable > 0) ...[
+          const SizedBox(height: 12),
+          _buildReceiptActionButton(
+            _currentOrder!.totalPaid > 0 ? "BAYAR SISA TAGIHAN" : "BAYAR SEKARANG",
+            Icons.payments_rounded,
+            const Color(0xFF8B0000),
+            () => Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentMethodPage(order: _currentOrder!))),
+            isFilled: true,
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildPaymentSummaryRow(String label, String value, Color color, {bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, fontWeight: isBold ? FontWeight.w900 : FontWeight.w700, color: Colors.grey, letterSpacing: 1),
+        ),
+        Text(
+          value,
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: color),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReceiptActionButton(String label, IconData icon, Color color, VoidCallback onTap, {bool isFilled = false}) {
+    return TapScale(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: isFilled ? color : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: isFilled ? null : Border.all(color: color.withValues(alpha: 0.3)),
+          boxShadow: isFilled ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))] : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: isFilled ? Colors.white : color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(color: isFilled ? Colors.white : color, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -885,80 +1023,6 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isStatus = false}) {
-    Color statusColor = Colors.orange;
-    if (value == "CANCELLED") statusColor = Colors.red;
-    if (value == "DELIVERED") statusColor = Colors.green;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              color: isStatus ? statusColor : Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildItemRow(String name, String qty, double price) {
-    bool isOrderPriced = (_currentOrder?.finalPrice ?? 0) > 0;
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                Text(qty, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
-            ),
-          ),
-          Text(
-            price > 0 
-              ? "Rp ${price.toStringAsFixed(0)}" 
-              : (isOrderPriced ? "Included" : "Pending"),
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: price > 0 ? Colors.black87 : (isOrderPriced ? Colors.green : Colors.orange),
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
-              Text(value, style: const TextStyle(fontSize: 13, color: Colors.black87)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildAdditionReceipt(int index, OrderAdditionRequest req) {
     double requestTotal = 0;
@@ -1172,6 +1236,31 @@ class _DashedDivider extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _EntranceAnimation extends StatelessWidget {
+  final Widget child;
+  final int delay;
+  const _EntranceAnimation({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + (delay * 80)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

@@ -6,6 +6,8 @@ import '../../core/theme/app_text_styles.dart';
 import '../widgets/shimmer_loading.dart';
 import 'package:intl/intl.dart';
 import '../../core/services/location_service.dart';
+import '../widgets/tap_scale.dart';
+import '../../core/services/push_notification_service.dart';
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({super.key});
@@ -65,7 +67,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F7F2),
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
         onRefresh: _fetchOrders,
         color: AppColors.primary,
@@ -74,13 +76,13 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
           slivers: [
             _buildSliverAppBar(),
             SliverToBoxAdapter(
-              child: _buildStatsBar(),
+              child: _EntranceAnimation(delay: 0, child: _buildStatsBar()),
             ),
             SliverToBoxAdapter(
-              child: _buildTabSwitcher(),
+              child: _EntranceAnimation(delay: 1, child: _buildTabSwitcher()),
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
               sliver: isLoading
                   ? SliverToBoxAdapter(child: _buildShimmer())
                   : filteredOrders.isEmpty
@@ -89,8 +91,11 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: _OrderCard(order: filteredOrders[index]),
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: _EntranceAnimation(
+                                  delay: index + 2,
+                                  child: _OrderCard(order: filteredOrders[index]),
+                                ),
                               );
                             },
                             childCount: filteredOrders.length,
@@ -105,32 +110,15 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
 
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: 160,
       pinned: true,
       elevation: 0,
       backgroundColor: AppColors.primary,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        title: Row(
-          children: [
-            const Text(
-              "DASHBOARD DRIVER",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1),
-            ),
-            if (LocationService.isTracking) ...[
-              const SizedBox(width: 8),
-              ScaleTransition(
-                scale: Tween(begin: 0.8, end: 1.2).animate(
-                  CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-                ),
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle),
-                ),
-              ),
-            ],
-          ],
+        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        title: const Text(
+          "DASHBOARD DRIVER",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.5),
         ),
         background: Stack(
           fit: StackFit.expand,
@@ -140,26 +128,50 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
                 gradient: LinearGradient(
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
-                  colors: [AppColors.primary, Color(0xFF600000)],
+                  colors: [AppColors.primary, AppColors.primaryDark],
                 ),
               ),
             ),
+            // Subtle Map Overlay Pattern (Simplified with Icons)
             Positioned(
-              right: -50,
-              top: -50,
-              child: Icon(Icons.local_shipping, size: 200, color: Colors.white.withValues(alpha: 0.05)),
+              right: -20,
+              bottom: -20,
+              child: Opacity(
+                opacity: 0.05,
+                child: Icon(Icons.map_rounded, size: 200, color: Colors.white),
+              ),
             ),
           ],
         ),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-          onPressed: () => Navigator.pushNamed(context, '/notifications'),
-        ),
-        IconButton(
-          icon: const Icon(Icons.logout, color: Colors.white),
-          onPressed: () => AuthController.logout(context),
+        ValueListenableBuilder<int>(
+          valueListenable: PushNotificationService.unreadCount,
+          builder: (context, count, _) {
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 24),
+                  onPressed: () => Navigator.pushNamed(context, '/notifications').then((_) => PushNotificationService.updateUnreadCount()),
+                ),
+                if (count > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        count > 9 ? '9+' : count.toString(),
+                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -170,14 +182,14 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
     final doneCount = orders.where((o) => o['status_id'] >= 4).length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       child: Row(
         children: [
-          _statsCard("Aktif", activeCount.toString(), Icons.directions_car, Colors.blue),
-          const SizedBox(width: 12),
-          _statsCard("Selesai", doneCount.toString(), Icons.check_circle, Colors.green),
-          const SizedBox(width: 12),
-          _statsCard("Total", orders.length.toString(), Icons.assignment, AppColors.secondary),
+          _statsCard("AKTIF", activeCount.toString(), Icons.local_shipping_rounded, Colors.blue),
+          const SizedBox(width: 16),
+          _statsCard("SELESAI", doneCount.toString(), Icons.check_circle_rounded, Colors.green),
+          const SizedBox(width: 16),
+          _statsCard("TOTAL", orders.length.toString(), Icons.assignment_rounded, AppColors.secondary),
         ],
       ),
     );
@@ -186,21 +198,25 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
   Widget _statsCard(String label, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8)),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 20),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 18),
+            ),
             const SizedBox(height: 12),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.primary)),
-            Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF2D0A0A))),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
           ],
         ),
       ),
@@ -209,12 +225,13 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
 
   Widget _buildTabSwitcher() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
       child: Container(
+        height: 56,
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           children: [
@@ -229,14 +246,13 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
   Widget _tabButton(int index, String label) {
     final isSelected = activeTab == index;
     return Expanded(
-      child: GestureDetector(
+      child: TapScale(
         onTap: () => setState(() => activeTab = index),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5)] : null,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))] : null,
           ),
           alignment: Alignment.center,
           child: Text(
@@ -244,7 +260,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,
-              color: isSelected ? AppColors.primary : Colors.grey,
+              color: isSelected ? AppColors.primary : Colors.grey[500],
               letterSpacing: 1,
             ),
           ),
@@ -256,8 +272,8 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
   Widget _buildShimmer() {
     return Column(
       children: List.generate(3, (i) => Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: ShimmerLoading.rounded(width: double.infinity, height: 120, borderRadius: 24),
+        padding: const EdgeInsets.only(bottom: 20),
+        child: ShimmerLoading.rounded(width: double.infinity, height: 160, borderRadius: 32),
       )),
     );
   }
@@ -265,12 +281,21 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
   Widget _buildEmptyState() {
     return Column(
       children: [
-        const SizedBox(height: 40),
-        Icon(Icons.assignment_turned_in_outlined, size: 60, color: Colors.grey.shade300),
-        const SizedBox(height: 16),
+        const SizedBox(height: 60),
+        Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20)]),
+          child: Icon(Icons.assignment_turned_in_rounded, size: 64, color: Colors.grey[200]),
+        ),
+        const SizedBox(height: 24),
         Text(
           activeTab == 0 ? "Tidak ada tugas aktif" : "Belum ada riwayat pengantaran",
-          style: AppTextStyles.subtitle.copyWith(color: Colors.grey),
+          style: TextStyle(color: Colors.brown[200], fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Tetap stand-by untuk pesanan baru.",
+          style: TextStyle(color: Colors.grey[400], fontSize: 13),
         ),
       ],
     );
@@ -289,75 +314,103 @@ class _OrderCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 25, offset: const Offset(0, 12)),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => Navigator.pushNamed(context, '/driver-order-detail', arguments: order),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(32),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "ORD-${order['order_id'].toString().padLeft(5, '0')}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
-                        fontSize: 16,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "ORD-${order['order_id'].toString().padLeft(5, '0')}",
+                          style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 18, letterSpacing: -0.5),
+                        ),
+                        Text(
+                          DateFormat('dd MMM yyyy').format(DateTime.parse(order['event_date'])),
+                          style: TextStyle(color: Colors.grey[400], fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
                     _buildStatusBadge(statusId, statusName),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(color: Color(0xFFF5F5F5), thickness: 1.5),
+                ),
                 Row(
                   children: [
-                    const Icon(Icons.person_outline, size: 16, color: Colors.grey),
-                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.person_rounded, size: 16, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 14),
                     Text(
                       order['user']['name'],
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF2D0A0A)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
-                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: AppColors.secondary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.location_on_rounded, size: 16, color: AppColors.secondary),
+                    ),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         order['event_address'],
-                        style: const TextStyle(color: Colors.black54, fontSize: 13),
+                        style: TextStyle(color: Colors.brown[400], fontSize: 14, height: 1.4, fontWeight: FontWeight.w500),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const Divider(height: 32),
+                const SizedBox(height: 24),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      DateFormat('dd MMM yyyy').format(DateTime.parse(order['event_date'])),
-                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Text("DETAIL PESANAN", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+                      ),
                     ),
-                    const Icon(Icons.arrow_forward_rounded, color: AppColors.secondary, size: 20),
+                    const SizedBox(width: 12),
+                    Container(
+                      height: 48,
+                      width: 48,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [AppColors.secondary, AppColors.accent]),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
+                      ),
+                      child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
+                    ),
                   ],
                 ),
               ],
@@ -371,20 +424,45 @@ class _OrderCard extends StatelessWidget {
   Widget _buildStatusBadge(int id, String name) {
     Color color;
     switch (id) {
-      case 3: color = Colors.blue; break; // Out for delivery
-      case 4: color = Colors.green; break; // Delivered
+      case 3: color = Colors.blue; break;
+      case 4: color = Colors.green; break;
       default: color = Colors.orange;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
         name.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900),
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
       ),
+    );
+  }
+}
+
+class _EntranceAnimation extends StatelessWidget {
+  final Widget child;
+  final int delay;
+  const _EntranceAnimation({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600 + (delay * 100)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

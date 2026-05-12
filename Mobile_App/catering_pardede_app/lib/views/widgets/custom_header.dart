@@ -43,15 +43,22 @@ class _CustomHeaderState extends State<CustomHeader> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 40, bottom: 24),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 50, bottom: 24),
       decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primary,
+            AppColors.primaryDark,
+          ],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black26,
-            blurRadius: 15,
-            offset: Offset(0, 5),
+            color: Color(0x33000000),
+            blurRadius: 20,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -116,7 +123,7 @@ class _CustomHeaderState extends State<CustomHeader> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.group_rounded, color: Colors.white, size: 28),
-                      onPressed: () {},
+                      onPressed: () => Navigator.pushNamed(context, '/messages'),
                     ),
                     ValueListenableBuilder<int>(
                       valueListenable: PushNotificationService.unreadCount,

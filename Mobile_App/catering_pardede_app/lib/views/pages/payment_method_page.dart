@@ -21,18 +21,18 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     setState(() => isLoading = true);
 
     try {
-      // 1. CREATE PAYMENT
+      // 1. CREATE PAYMENT (on port 8001)
       final payment = await ApiService.post(
         ApiEndpoints.payments,
         {
           "order_id": widget.order.id,
-          "amount": widget.order.finalPrice,
+          "amount": widget.order.remainingBalance,
         },
       );
 
       final paymentId = payment['id'];
 
-      // 2. REQUEST MIDTRANS TOKEN
+      // 2. REQUEST MIDTRANS TOKEN (on port 8001)
       final res = await ApiService.post(
         "${ApiEndpoints.basePayment}/payments/$paymentId/midtrans",
         {},
@@ -41,12 +41,14 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       final snapToken = res['snap_token'];
 
       // 3. OPEN WEBVIEW MIDTRANS
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PaymentWebView(snapToken: snapToken),
-        ),
-      );
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentWebView(snapToken: snapToken),
+          ),
+        );
+      }
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,8 +108,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Total"),
-                Text("Rp ${widget.order.finalPrice}"),
+                const Text("Total Tagihan"),
+                Text("Rp ${widget.order.remainingBalance}"),
               ],
             ),
 

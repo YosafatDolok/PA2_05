@@ -1,7 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import 'app_alerts.dart';
 
 class Helpers {
+  /// Formats a number with thousands separator (e.g., 1000 -> 1.000).
+  static String formatNumber(num number) {
+    final formatter = NumberFormat("#,###", "id_ID");
+    return formatter.format(number).replaceAll(',', '.');
+  }
+  /// Launches an external map application with the specified coordinates.
+  static Future<void> launchMap(double lat, double lng) async {
+    final Uri googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+    final Uri appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
+
+    if (await canLaunchUrl(googleMapsUrl)) {
+      await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+    } else if (await canLaunchUrl(appleMapsUrl)) {
+      await launchUrl(appleMapsUrl, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch map application';
+    }
+  }
+
   /// Upgraded SnackBar that now uses our Premium AppAlerts system.
   /// It automatically detects if the message is a Success or an Error.
   static void showSnackBar(

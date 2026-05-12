@@ -4,11 +4,13 @@ import '../../core/theme/app_colors.dart';
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
+  final List<BottomNavigationBarItem>? items;
 
   const CustomBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    this.items,
   });
 
   @override
@@ -25,21 +27,21 @@ class CustomBottomNavBar extends StatelessWidget {
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
-        selectedItemColor: const Color(0xFFFFD700), // Yellow/Gold for active
-        unselectedItemColor: Colors.white.withValues(alpha: 0.7),
+        selectedItemColor: AppColors.secondary, // Yellow/Gold for active
+        unselectedItemColor: Colors.white.withValues(alpha: 0.5),
         showSelectedLabels: true,
         showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 0.5),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10),
         type: BottomNavigationBarType.fixed,
-        backgroundColor: AppColors.primary, // Maroon
+        backgroundColor: AppColors.primary,
         onTap: onTap,
-        items: [
-          _buildNavItem(Icons.home, 'Home', 0),
-          _buildNavItem(Icons.grid_view, 'Menu', 1),
-          _buildNavItem(Icons.assignment, 'Order', 2),
-          _buildNavItem(Icons.image, 'Galeri', 3),
-          _buildNavItem(Icons.account_circle, 'Akun', 4),
+        items: items ?? [
+          _buildNavItem(Icons.home_rounded, 'Home', 0),
+          _buildNavItem(Icons.grid_view_rounded, 'Menu', 1),
+          _buildNavItem(Icons.assignment_rounded, 'Order', 2),
+          _buildNavItem(Icons.image_rounded, 'Galeri', 3),
+          _buildNavItem(Icons.person_rounded, 'Akun', 4),
         ],
       ),
     );
@@ -48,12 +50,54 @@ class CustomBottomNavBar extends StatelessWidget {
   BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
     final bool isActive = currentIndex == index;
     return BottomNavigationBarItem(
-      icon: AnimatedScale(
-        scale: isActive ? 1.2 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        child: Icon(icon),
+      icon: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: 3,
+            width: isActive ? 20 : 0,
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 4),
+          AnimatedScale(
+            scale: isActive ? 1.1 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            child: Icon(icon),
+          ),
+        ],
       ),
       label: label,
     );
   }
-}
+
+  static BottomNavigationBarItem buildNavItemStatic(IconData icon, String label, int index, int currentIndex) {
+    final bool isActive = currentIndex == index;
+    return BottomNavigationBarItem(
+      icon: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: 3,
+            width: isActive ? 20 : 0,
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 4),
+          AnimatedScale(
+            scale: isActive ? 1.1 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            child: Icon(icon),
+          ),
+        ],
+      ),
+      label: label,
+    );
+  }
+}
