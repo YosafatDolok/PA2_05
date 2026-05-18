@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Kode Verifikasi</title>
+    <title>Verifikasi Registrasi</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -64,15 +64,15 @@
             <h1>Pardede Catering</h1>
         </div>
         <div class="content">
-            <h2 style="color: #7A0000;">Halo, {{ $userName }}!</h2>
-            <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun Anda. Gunakan kode verifikasi di bawah ini untuk melanjutkan:</p>
+            <h2 style="color: #7A0000;">Selamat Datang, {{ $name }}!</h2>
+            <p>Terima kasih telah mendaftar di Pardede Catering. Gunakan kode verifikasi di bawah ini untuk menyelesaikan pendaftaran Anda:</p>
             
             <div class="otp-container">
                 <div class="otp-code">{{ $otp }}</div>
                 <p style="margin-top: 10px; font-size: 14px; color: #666;">Kode ini berlaku selama 5 menit.</p>
             </div>
             
-            <p>Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan email ini. Keamanan akun Anda adalah prioritas kami.</p>
+            <p>Jika Anda tidak merasa melakukan pendaftaran ini, silakan abaikan email ini.</p>
             
             <p>Terika kasih,<br><strong>Tim Pardede Catering</strong></p>
         </div>

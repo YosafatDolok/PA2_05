@@ -82,6 +82,11 @@ class OrderPageState extends State<OrderPage> {
     }
   }
 
+  // Public method to trigger refresh from other widgets
+  void refresh() {
+    _fetchOrders();
+  }
+
   void _applyFilters() {
     setState(() {
       if (activeTabIndex == 0) {
@@ -206,24 +211,27 @@ class OrderPageState extends State<OrderPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '#ORD-${order.id.toString().padLeft(5, '0')}',
-                      style: TextStyle(fontWeight: FontWeight.w900, color: Colors.brown[300], fontSize: 12, letterSpacing: 0.5),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      order.items != null && order.items!.isNotEmpty
-                          ? order.items!.map((i) => i.menu?.name ?? 'Menu').join(', ')
-                          : 'Catering Event',
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF2D0A0A), letterSpacing: -0.5),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '#ORD-${order.id.toString().padLeft(5, '0')}',
+                        style: TextStyle(fontWeight: FontWeight.w900, color: Colors.brown[300], fontSize: 12, letterSpacing: 0.5),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        order.items != null && order.items!.isNotEmpty
+                            ? order.items!.map((i) => i.menu?.name ?? 'Menu').join(', ')
+                            : 'Catering Event',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF2D0A0A), letterSpacing: -0.5),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 12),
                 _buildStatusBadge(status, order.unreadMessagesCount),
               ],
             ),
@@ -334,9 +342,11 @@ class OrderPageState extends State<OrderPage> {
     IconData icon;
     switch (status.toLowerCase()) {
       case 'pending': color = Colors.orange; icon = Icons.timer_outlined; break;
+      case 'paid':
+      case 'settlement':
+      case 'delivered': color = Colors.green; icon = Icons.check_circle_rounded; break;
       case 'preparing': color = Colors.blue; icon = Icons.restaurant_rounded; break;
       case 'out for delivery': color = Colors.purple; icon = Icons.delivery_dining_rounded; break;
-      case 'delivered': color = Colors.green; icon = Icons.check_circle_rounded; break;
       case 'cancelled': color = Colors.red; icon = Icons.cancel_rounded; break;
       default: color = Colors.grey; icon = Icons.help_outline_rounded;
     }

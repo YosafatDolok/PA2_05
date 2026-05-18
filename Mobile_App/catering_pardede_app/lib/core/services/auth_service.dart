@@ -3,13 +3,33 @@ import '/core/constants/api_endpoints.dart';
 import '/core/storage/local_storage.dart';
 
 class AuthService {
-  static Future<Map<String, dynamic>> register(
+  static Future<Map<String, dynamic>> requestRegisterOtp(
       String name, String email, String password) async {
     try {
-      final data = await ApiService.post(ApiEndpoints.register, {
+      final data = await ApiService.post(ApiEndpoints.registerOtp, {
         'name': name,
         'email': email,
         'password': password,
+      });
+
+      return {
+        'success': true,
+        'message': data['message'],
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> register(
+      String email, String otp) async {
+    try {
+      final data = await ApiService.post(ApiEndpoints.register, {
+        'email': email,
+        'otp': otp,
       });
 
       if (data['token'] != null) {

@@ -29,7 +29,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         'email': _emailController.text,
       });
 
-      if (response['success']) {
+      bool isSuccess = response['success'] == true || response['message'] != null;
+
+      if (isSuccess) {
         if (mounted) {
           Helpers.showSnackBar(context, response['message'] ?? 'Kode OTP telah dikirim');
           Navigator.pushNamed(context, '/otp-verify', arguments: _emailController.text);

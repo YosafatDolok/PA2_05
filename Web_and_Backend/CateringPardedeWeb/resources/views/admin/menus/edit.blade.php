@@ -31,22 +31,30 @@
                                 </div>
                             </div>
 
-                            {{-- CATEGORY --}}
-                            <div class="col-md-6">
-                                <div class="form-group mb-0">
-                                    <label>CATEGORY</label>
-                                    <select name="category_id" class="form-select @error('category_id') is-invalid @enderror">
-                                        @foreach($categories as $cat)
-                                            <option value="{{ $cat->category_id }}" {{ old('category_id', $menu->category_id) == $cat->category_id ? 'selected' : '' }}>
-                                                {{ $cat->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('category_id')
-                                        <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
+                             {{-- CATEGORY --}}
+                             <div class="col-md-6">
+                                 <div class="form-group mb-0">
+                                     <label>CATEGORY</label>
+                                     <div class="aura-select-container" id="categorySelect">
+                                         <div class="aura-select-trigger">
+                                             <span>{{ old('category_id', $menu->category_id) ? $categories->firstWhere('category_id', old('category_id', $menu->category_id))->name : 'Pilih Kategori' }}</span>
+                                             <i class="fas fa-chevron-down"></i>
+                                         </div>
+                                         <div class="aura-select-options">
+                                             @foreach($categories as $cat)
+                                                 <div class="aura-option {{ old('category_id', $menu->category_id) == $cat->category_id ? 'selected' : '' }}" 
+                                                      data-value="{{ $cat->category_id }}">
+                                                     {{ $cat->name }}
+                                                 </div>
+                                             @endforeach
+                                         </div>
+                                         <input type="hidden" name="category_id" value="{{ old('category_id', $menu->category_id) }}" required>
+                                     </div>
+                                     @error('category_id')
+                                         <span class="invalid-feedback d-block">{{ $message }}</span>
+                                     @enderror
+                                 </div>
+                             </div>
 
                             {{-- DESCRIPTION --}}
                             <div class="col-12">
@@ -121,5 +129,43 @@
             reader.readAsDataURL(event.target.files[0]);
         }
     }
+    
+    // Custom Select Interaction
+    const selectContainer = document.getElementById('categorySelect');
+    const selectTrigger = selectContainer.querySelector('.aura-select-trigger');
+    const selectOptions = selectContainer.querySelector('.aura-select-options');
+    const optionsList = selectContainer.querySelectorAll('.aura-option');
+    const hiddenInput = selectContainer.querySelector('input[type="hidden"]');
+    
+    selectTrigger.addEventListener('click', () => {
+        selectContainer.classList.toggle('active');
+    });
+    
+    optionsList.forEach(option => {
+        option.addEventListener('click', () => {
+            const value = option.getAttribute('data-value');
+            const text = option.textContent.trim();
+            
+            // Update Trigger
+            selectTrigger.querySelector('span').textContent = text;
+            
+            // Update Hidden Input
+            hiddenInput.value = value;
+            
+            // Toggle selected class
+            optionsList.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+            
+            // Close dropdown
+            selectContainer.classList.remove('active');
+        });
+    });
+    
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!selectContainer.contains(e.target)) {
+            selectContainer.classList.remove('active');
+        }
+    });
     </script>
 @endsection

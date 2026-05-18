@@ -12,6 +12,7 @@ import '/views/pages/notification_page.dart';
 import '/views/auth/forgot_password/forgot_password_page.dart';
 import '/views/auth/forgot_password/otp_verification_page.dart';
 import '/views/auth/forgot_password/reset_password_page.dart';
+import '/views/auth/forgot_password/registration_otp_page.dart';
 import '/views/pages/order_page.dart';
 import '/views/pages/menu_page.dart';
 import '/views/pages/chat_inbox_page.dart';
@@ -60,6 +61,14 @@ class AppRoutes {
           builder: (_) => ResetPasswordPage(
             email: args['email'],
             otp: args['otp'],
+          ),
+        );
+
+      case '/registration-otp':
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => RegistrationOtpPage(
+            email: args['email'],
           ),
         );
 

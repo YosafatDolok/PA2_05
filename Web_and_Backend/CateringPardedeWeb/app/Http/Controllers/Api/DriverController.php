@@ -69,12 +69,27 @@ class DriverController extends Controller
         // Logistics Timestamps
         if ($request->status_id == 3) { // 3 is "Out for Delivery"
             $order->started_delivery_at = now();
-        } elseif ($request->status_id == 4) { // 4 is "Delivered"
-            $order->delivered_at = now();
+        } elseif ($request->status_id == 4 || $request->status_id == 5) { // 4 is "Delivered", 5 is "Paid"
+            if (!$order->delivered_at) {
+                $order->delivered_at = now();
+            }
             
             if ($request->hasFile('proof_image')) {
                 $path = $request->file('proof_image')->store('delivery_proofs', 'public');
                 $order->delivery_proof_image = $path;
+            }
+
+            // AUTO-PAID / CASH-PAID TRANSITION
+            if ($request->status_id == 5) {
+                // If explicitly marked as Paid by the driver (meaning they collected cash/transfer)
+                if ($order->total_paid < $order->total_payable) {
+                    $order->total_paid = $order->total_payable;
+                }
+            } else {
+                // Otherwise, check if it was already prepaid online
+                if ($order->remaining_balance <= 0) {
+                    $order->status_id = 5; // Paid
+                }
             }
         }
 

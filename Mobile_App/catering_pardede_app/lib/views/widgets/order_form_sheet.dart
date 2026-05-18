@@ -6,6 +6,7 @@ import '../../core/constants/api_endpoints.dart';
 import 'tap_scale.dart';
 import '../../core/services/cart_service.dart';
 import '../../core/utils/helpers.dart';
+import '../navigation/UserShell.dart';
 
 class OrderFormSheet extends StatefulWidget {
   final MenuModel? menu;
@@ -20,6 +21,7 @@ class OrderFormSheet extends StatefulWidget {
 
 class _OrderFormSheetState extends State<OrderFormSheet> {
   final _addressController = TextEditingController();
+  final _locationNotesController = TextEditingController();
   final _peopleController = TextEditingController();
   final _notesController = TextEditingController();
   DateTime? _selectedDate;
@@ -95,6 +97,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
               ],
             ),
             _buildTextField(_addressController, "Masukkan atau pilih alamat...", maxLines: 2),
+            const SizedBox(height: 12),
+            _buildTextField(_locationNotesController, "Detail lokasi (Patokan, No. Rumah, Lantai...)", maxLines: 1),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -230,6 +234,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
         'event_address': _addressController.text,
         'event_latitude': _latitude,
         'event_longitude': _longitude,
+        'location_notes': _locationNotesController.text,
         'event_date': _selectedDate!.toIso8601String().split('T')[0],
         'people': int.parse(_peopleController.text),
         'notes': _notesController.text,
@@ -244,8 +249,15 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
           'Pesanan Terkirim!', 
           'Pesanan Anda telah diterima. Tim kami akan segera meninjau dan menghubungi Anda.',
           onConfirm: () {
+            // Trigger cart clearing if applicable
             if (widget.onOrderSuccess != null) {
               widget.onOrderSuccess!();
+            }
+
+            // Switch to Order Tab (Index 2)
+            final shellState = context.findAncestorStateOfType<UserShellState>();
+            if (shellState != null) {
+              shellState.setIndex(2);
             } else {
               Navigator.pushNamed(context, '/order');
             }

@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\OrderMessageController;
 use App\Http\Controllers\Api\AdminDashboardController;
 
 
+Route::post('/register/otp', [AuthController::class, 'requestRegistrationOtp']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -45,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::post('/orders/{id}/request-cancel', [OrderController::class, 'requestCancel']);
     Route::post('/orders/{id}/review', [ReviewController::class, 'store']);
 
     // Order Messaging

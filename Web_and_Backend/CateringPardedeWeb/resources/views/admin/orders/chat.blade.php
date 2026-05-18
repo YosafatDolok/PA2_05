@@ -45,26 +45,21 @@
                 </ul>
             </div>
 
-            <hr class="border-secondary opacity-20">
-
+            {{-- <hr class="border-secondary opacity-20">
             <div class="mt-4">
                 <h5 class="font-weight-bold text-secondary mb-3">Quick Actions</h5>
                 <button type="button" class="btn btn-primary w-100 rounded-pill mb-2" data-bs-toggle="modal" data-bs-target="#proposalModal">
                     <i class="fas fa-file-invoice-dollar mr-2"></i> SEND NEW PROPOSAL
                 </button>
-            </div>
+            </div> --}}
         </div>
     </div>
 
     <!-- Right Side: Chat Window -->
     <div class="col-md-8">
         <div class="card aura-card border-0 shadow-lg d-flex flex-column" style="height: 75vh;">
-            <div class="card-header border-bottom border-secondary p-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <div class="status-dot online mr-2"></div>
-                    <h5 class="m-0 font-weight-bold text-white">Live Discussion</h5>
-                </div>
-                <div class="text-muted small">Real-time via Reverb</div>
+            <div class="card-header border-bottom border-secondary p-3">
+                <h5 class="m-0 font-weight-bold text-white">{{ $order->user->name }}</h5>
             </div>
             
             <div id="chat-messages" class="card-body overflow-auto p-4 d-flex flex-column">

@@ -408,16 +408,19 @@ class _MenuPageState extends State<MenuPage> {
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28)),
         child: Column(
           children: [
-            ShimmerLoading.rounded(width: double.infinity, height: 160, borderRadius: 28),
-            const SizedBox(height: 14),
+            AspectRatio(
+              aspectRatio: 1.1,
+              child: ShimmerLoading.rounded(width: double.infinity, height: double.infinity, borderRadius: 28),
+            ),
+            const SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Column(
                 children: [
                   ShimmerLoading.rounded(width: 100, height: 16, borderRadius: 6),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   ShimmerLoading.rounded(width: 140, height: 12, borderRadius: 4),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   ShimmerLoading.rounded(width: double.infinity, height: 40, borderRadius: 14),
                 ],
               ),

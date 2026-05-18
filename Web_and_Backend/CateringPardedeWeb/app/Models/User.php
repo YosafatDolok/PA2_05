@@ -88,6 +88,11 @@ class User extends Authenticatable
         return $this->hasOne(DriverLocation::class, 'user_id', 'user_id');
     }
 
+    public function assignedOrders()
+    {
+        return $this->hasMany(Order::class, 'driver_id', 'user_id');
+    }
+
     protected $primaryKey = 'user_id';
 
     public $incrementing = true;

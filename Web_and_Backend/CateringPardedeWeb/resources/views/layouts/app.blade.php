@@ -345,6 +345,13 @@
                 currentIndex = -1;
             }
         });
+
+        // Force refresh when navigating back via Back button to ensure all badges/notifications are updated
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (typeof window.performance != 'undefined' && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
     });
 </script>
 

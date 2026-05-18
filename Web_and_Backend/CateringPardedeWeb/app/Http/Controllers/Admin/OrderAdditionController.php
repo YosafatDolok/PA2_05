@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OrderAdditionRequest;
 use App\Models\OrderAdditionItem;
 use App\Models\Notification;
+use App\Models\OrderActivity;
 use Illuminate\Http\Request;
 
 class OrderAdditionController extends Controller
@@ -38,13 +39,13 @@ class OrderAdditionController extends Controller
         
         $additionRequest->update(['status_id' => 2]); // Approved
 
-        // Notify User
-        Notification::create([
-            'user_id' => $additionRequest->order->user_id,
-            'type' => 'order_status',
-            'title' => 'Tambahan Menu Disetujui',
-            'message' => 'Tambahan menu Anda untuk Order #ORD-' . str_pad($additionRequest->order_id, 5, '0', STR_PAD_LEFT) . ' telah disetujui.',
-            'related_id' => $additionRequest->order_id,
+        // LOG ACTIVITY
+        OrderActivity::create([
+            'order_id' => $additionRequest->order_id,
+            'user_id' => auth()->id(),
+            'type' => 'addition_approved',
+            'description' => "Permintaan menu tambahan disetujui (Total: Rp " . number_format($additionRequest->items->sum('final_price'), 0, ',', '.') . ")",
+            'new_value' => 'Approved',
         ]);
 
         return back()->with('success', 'Permintaan tambahan berhasil disetujui');
@@ -54,6 +55,15 @@ class OrderAdditionController extends Controller
     {
         $additionRequest = OrderAdditionRequest::findOrFail($id);
         $additionRequest->update(['status_id' => 3]); // Rejected
+
+        // LOG ACTIVITY
+        OrderActivity::create([
+            'order_id' => $additionRequest->order_id,
+            'user_id' => auth()->id(),
+            'type' => 'addition_rejected',
+            'description' => "Permintaan menu tambahan ditolak",
+            'new_value' => 'Rejected',
+        ]);
 
         return back()->with('success', 'Permintaan tambahan berhasil ditolak');
     }

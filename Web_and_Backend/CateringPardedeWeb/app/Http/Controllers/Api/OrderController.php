@@ -137,7 +137,7 @@ class OrderController extends Controller
 
     public function show($id, Request $request)
     {
-        $order = Order::with(['status', 'driver', 'items.menu'])
+        $order = Order::with(['status', 'driver', 'items.menu', 'review'])
             ->withCount(['messages as unread_messages_count' => function ($query) {
                 $query->where('is_read', false)
                       ->where('sender_id', '!=', auth()->id());
@@ -152,31 +152,95 @@ class OrderController extends Controller
 
     public function cancel($id, Request $request)
     {
-        $order = Order::where('user_id', $request->user()->user_id)
-            ->findOrFail($id);
+        $user = $request->user();
+        
+        // Find order
+        $query = Order::query();
+        if ((int)$user->role_id !== 1) { // If not admin, must be owner
+            $query->where('user_id', $user->user_id);
+        }
+        
+        $order = $query->findOrFail($id);
 
-        // Only allow cancellation if status is Pending (1)
+        // Universal Rule: Only allow direct cancellation if status is Pending (1)
         if ($order->status_id != 1) {
             return response()->json([
-                'message' => 'Pesanan tidak dapat dibatalkan karena sudah diproses admin.'
+                'message' => 'Pesanan tidak dapat dibatalkan langsung karena sudah diproses. Silakan ajukan permintaan pembatalan.'
+            ], 400);
+        }
+
+        $oldStatusName = $order->status->status_name ?? 'Pending';
+
+        $order->update([
+            'status_id' => 9 // Cancelled
+        ]);
+
+        // LOG ACTIVITY
+        \App\Models\OrderActivity::create([
+            'order_id' => $order->order_id,
+            'user_id' => $user->user_id,
+            'type' => 'status_change',
+            'description' => "Pesanan dibatalkan oleh " . ((int)$user->role_id === 1 ? 'Admin' : 'Customer'),
+            'old_value' => $oldStatusName,
+            'new_value' => 'Cancelled',
+        ]);
+
+        // Notify Admin if Customer cancelled
+        if ((int)$user->role_id !== 1) {
+            \App\Models\Notification::create([
+                'user_id' => 1, // Admin
+                'type' => 'system',
+                'title' => 'Pesanan Dibatalkan #' . $order->order_id,
+                'message' => $user->name . ' membatalkan pesanannya.',
+                'related_id' => $order->order_id,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Pesanan berhasil dibatalkan',
+            'order' => $order->load(['status', 'items.menu'])
+        ]);
+    }
+
+    public function requestCancel($id, Request $request)
+    {
+        $request->validate([
+            'reason' => 'required|string|min:5'
+        ]);
+
+        $user = $request->user();
+        $order = Order::where('user_id', $user->user_id)->findOrFail($id);
+
+        // Security Check: Status must be 2 (Confirmed) or 3 (Preparing)
+        if (!in_array($order->status_id, [2, 3])) {
+            return response()->json([
+                'message' => 'Permintaan pembatalan tidak diizinkan pada tahap ini.'
+            ], 400);
+        }
+
+        // Security Check: Must not be paid
+        if ($order->total_paid > 0) {
+            return response()->json([
+                'message' => 'Pesanan yang sudah dibayar tidak dapat dibatalkan lewat aplikasi.'
             ], 400);
         }
 
         $order->update([
-            'status_id' => 9 // Cancelled
+            'is_cancelling' => true,
+            'cancel_reason' => $request->reason
         ]);
 
         // Notify Admin
         \App\Models\Notification::create([
             'user_id' => 1, // Admin
             'type' => 'system',
-            'title' => 'Pesanan Dibatalkan #' . $order->order_id,
-            'message' => $request->user()->name . ' membatalkan pesanannya.',
+            'title' => 'Permintaan Pembatalan #' . $order->order_id,
+            'message' => $user->name . ' mengajukan pembatalan: "' . $request->reason . '"',
             'related_id' => $order->order_id,
         ]);
 
         return response()->json([
-            'message' => 'Pesanan berhasil dibatalkan',
+            'message' => 'Permintaan pembatalan telah dikirim ke admin',
             'order' => $order->load(['status', 'items.menu'])
         ]);
     }
@@ -218,28 +282,22 @@ class OrderController extends Controller
             Log::info("Payment of {$request->amount} accumulated for Order #{$id}. Total now: {$order->total_paid}");
         }
 
-        // 🛡️ Logic Shield: Never allow a payment to "downgrade" a status
-        // If it's already In Delivery (3), Delivered (4), or Cancelled (9), don't set it back to Paid (5)
-        if (in_array((int)$order->status_id, [3, 4, 9]) && $request->status_id == 5) {
-            $order->save(); // Save the total_paid increment
-            Log::info("Payment received for Order #{$id}, but status is already advanced ({$order->status_id}). Status was NOT reset.");
-            return response()->json([
-                'message' => 'Payment acknowledged, but status was not reset as order is already processed.',
-                'order' => $order
-            ]);
+        if ($request->status_id == 5) {
+            // Webhook payment notification
+            // We ONLY transition to status 5 (Paid) if:
+            // 1. Order is currently Delivered (4) AND remaining balance is <= 0
+            // 2. Or if the order is already Paid (5)
+            if (((int)$order->status_id === 4 && $order->remaining_balance <= 0) || (int)$order->status_id === 5) {
+                $order->status_id = 5;
+                Log::info("Order #{$id} status set/kept to PAID.");
+            } else {
+                Log::info("Order #{$id} received payment, but status remains {$order->status_id} (not Delivered yet, or not fully paid).");
+            }
+        } else {
+            // For other status changes
+            $order->status_id = $request->status_id;
         }
 
-        // If order is already paid, we don't need to change status to paid again
-        if ($order->status_id == 5 && $request->status_id == 5) {
-            $order->save(); // Save the total_paid increment
-            Log::info("Additional payment received for Order #{$id}. Status remains PAID.");
-            return response()->json([
-                'message' => 'Additional payment acknowledged',
-                'order' => $order
-            ]);
-        }
-
-        $order->status_id = $request->status_id;
         $order->save();
 
         return response()->json([

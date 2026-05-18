@@ -40,6 +40,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     
     Route::prefix('admin')->group(function () {
         // Existing routes...
+        // Menu Soft Deletes
+        Route::get('menus/trashed', [MenuController::class, 'trashed'])->name('menus.trashed');
+        Route::post('menus/{id}/restore', [MenuController::class, 'restore'])->name('menus.restore');
+        
         Route::resource('menus', MenuController::class);
         Route::resource('categories', MenuCategoryController::class);
         Route::resource('galleries', GalleryController::class);
@@ -53,6 +57,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/{id}/chat', [OrderController::class, 'chat'])->name('orders.chat');
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+        Route::post('/orders/{id}/cancel-request', [App\Http\Controllers\Admin\OrderController::class, 'handleCancelRequest'])->name('orders.cancel-request');
         Route::get('/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
 
         Route::get('/additions', [OrderAdditionController::class, 'index'])->name('admin.additions.index');

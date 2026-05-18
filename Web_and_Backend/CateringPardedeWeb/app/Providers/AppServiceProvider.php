@@ -33,12 +33,18 @@ class AppServiceProvider extends ServiceProvider
         });
 
         \Illuminate\Support\Facades\View::composer('layouts.navbars.sidebar', function ($view) {
-            $pendingOrdersCount = \App\Models\Order::where('status_id', 1)->count();
-            $pendingAdditionsCount = \App\Models\OrderAdditionRequest::where('status_id', 1)->count();
-            $unreadMessagesTotalCount = \App\Models\OrderMessage::where('sender_id', '!=', auth()->id())
-                ->where('is_read', false)
-                ->count();
-            $view->with(compact('pendingOrdersCount', 'pendingAdditionsCount', 'unreadMessagesTotalCount'));
+            if (auth()->check()) {
+                $pendingOrdersCount = \App\Models\Order::where('status_id', 1)->count();
+                $pendingAdditionsCount = \App\Models\OrderAdditionRequest::where('status_id', 1)->count();
+                
+                // Fix: Count unique orders with unread messages instead of raw message count
+                $unreadMessagesTotalCount = \App\Models\Order::whereHas('messages', function($query) {
+                    $query->where('is_read', false)
+                          ->where('sender_id', '!=', auth()->id());
+                })->count();
+                
+                $view->with(compact('pendingOrdersCount', 'pendingAdditionsCount', 'unreadMessagesTotalCount'));
+            }
         });
     }
 }

@@ -102,11 +102,32 @@ class MenuController extends Controller
             Menu::findOrFail($id)->delete();
 
             return redirect()->route('menus.index')
-                ->with('success', 'Menu deleted successfully');
+                ->with('success', 'Menu moved to trash successfully');
 
         } catch (\Exception $e) {
             return redirect()->route('menus.index')
                 ->with('error', 'Failed to delete menu');
+        }
+    }
+
+    public function trashed()
+    {
+        $menus = Menu::onlyTrashed()->with('category')->latest()->get();
+        return view('admin.menus.trashed', compact('menus'));
+    }
+
+    public function restore($id)
+    {
+        try {
+            $menu = Menu::onlyTrashed()->findOrFail($id);
+            $menu->restore();
+
+            return redirect()->route('menus.index')
+                ->with('success', 'Menu restored successfully');
+
+        } catch (\Exception $e) {
+            return redirect()->route('menus.index')
+                ->with('error', 'Failed to restore menu');
         }
     }
 

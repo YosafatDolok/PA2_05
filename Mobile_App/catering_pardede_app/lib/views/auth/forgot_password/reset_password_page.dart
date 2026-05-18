@@ -36,7 +36,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         ApiEndpoints.resetPassword,
         {
           'email': widget.email,
-          'token': widget.otp, // Backend usually expects 'token' or 'otp'
+          'otp': widget.otp,
           'password': _passwordController.text,
           'password_confirmation': _confirmController.text,
         },

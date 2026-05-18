@@ -10,13 +10,58 @@ use App\Models\Role;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function requestRegistrationOtp(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|min:8',
         ]);
+
+        $otp = rand(100000, 999999);
+
+        \Illuminate\Support\Facades\DB::table('pending_registrations')->updateOrInsert(
+            ['email' => $validated['email']],
+            [
+                'name' => $validated['name'],
+                'password' => Hash::make($validated['password']),
+                'otp_code' => $otp,
+                'expires_at' => \Carbon\Carbon::now()->addMinutes(5),
+                'created_at' => \Carbon\Carbon::now(),
+                'updated_at' => \Carbon\Carbon::now(),
+            ]
+        );
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($validated['email'])->send(new \App\Mail\RegistrationOtpMail($otp, $validated['name']));
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode verifikasi telah dikirim ke email Anda.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal mengirim email verifikasi.'], 500);
+        }
+    }
+
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string|size:6',
+        ]);
+
+        $pending = \Illuminate\Support\Facades\DB::table('pending_registrations')
+            ->where('email', $validated['email'])
+            ->where('otp_code', $validated['otp'])
+            ->first();
+
+        if (!$pending) {
+            return response()->json(['message' => 'Kode verifikasi salah.'], 422);
+        }
+
+        if (\Carbon\Carbon::parse($pending->expires_at)->isPast()) {
+            return response()->json(['message' => 'Kode verifikasi telah kadaluarsa.'], 422);
+        }
 
         $userRole = Role::where('name', 'user')->first();
 
@@ -25,15 +70,19 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role_id' => $userRole->id, // Corrected from role_id to id
+            'name' => $pending->name,
+            'email' => $pending->email,
+            'password' => $pending->password,
+            'role_id' => $userRole->id,
         ]);
+
+        // Delete pending registration
+        \Illuminate\Support\Facades\DB::table('pending_registrations')->where('email', $pending->email)->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'success' => true,
             'message' => 'Registrasi berhasil',
             'user' => $user->load('role'),
             'token' => $token

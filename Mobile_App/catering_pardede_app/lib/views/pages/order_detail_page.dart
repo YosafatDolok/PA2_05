@@ -304,6 +304,83 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
   }
 
+  Future<void> _submitCancelRequest(String reason) async {
+    setState(() => _isCancelling = true);
+    try {
+      final response = await ApiService.post("${ApiEndpoints.orders}/${_currentOrder!.id}/request-cancel", {
+        'reason': reason
+      });
+      if (mounted) {
+        setState(() {
+          _currentOrder = OrderModel.fromJson(response['order']);
+          _isCancelling = false;
+        });
+        Helpers.showSnackBar(context, 'Permintaan pembatalan telah dikirim');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isCancelling = false);
+        Helpers.showSnackBar(context, 'Gagal mengirim permintaan: $e');
+      }
+    }
+  }
+
+  void _showRequestCancelSheet() {
+    String reason = "";
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Minta Pembatalan", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.primary)),
+              const SizedBox(height: 8),
+              const Text("Pesanan Anda sudah dikonfirmasi. Mohon berikan alasan pembatalan untuk ditinjau Admin.", style: TextStyle(color: Colors.grey, fontSize: 13)),
+              const SizedBox(height: 24),
+              TextField(
+                onChanged: (v) => reason = v,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Contoh: Acara dibatalkan / Salah pilih menu...",
+                  fillColor: Colors.grey[100],
+                  filled: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (reason.length < 5) {
+                      Helpers.showSnackBar(context, "Mohon berikan alasan yang lebih jelas");
+                      return;
+                    }
+                    Navigator.pop(context);
+                    _submitCancelRequest(reason);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text("KIRIM PERMINTAAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _fetchOrderDetails() async {
     try {
       final response = await ApiService.get("${ApiEndpoints.orders}/${_currentOrder!.id}");
@@ -340,7 +417,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
 
     bool isCompleted = _currentOrder!.status?.name.toLowerCase() == 'selesai' || 
-                       _currentOrder!.status?.name.toLowerCase() == 'delivered';
+                       _currentOrder!.status?.name.toLowerCase() == 'delivered' ||
+                       _currentOrder!.status?.name.toLowerCase() == 'paid' ||
+                       _currentOrder!.status?.name.toLowerCase() == 'settlement';
     bool hasReview = _currentOrder!.review != null;
 
     return Scaffold(
@@ -396,7 +475,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           () => _showAddMenuSheet(),
                         ),
                       ],
-                      if (!_isAdmin && _currentOrder!.statusId == 1) ...[
+                      if (_currentOrder!.statusId == 1) ...[
                         const SizedBox(height: 16),
                         TapScale(
                           onTap: _isCancelling ? () {} : () => _cancelOrder(),
@@ -417,6 +496,52 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                                   ),
                           ),
                         ),
+                      ] else if (_currentOrder!.isCancelling) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                          ),
+                          child: const Column(
+                            children: [
+                              Icon(Icons.hourglass_empty_rounded, color: Colors.orange, size: 28),
+                              SizedBox(height: 12),
+                              Text(
+                                "MENUNGGU PERSETUJUAN PEMBATALAN",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                "Admin sedang meninjau permintaan Anda.",
+                                style: TextStyle(color: Colors.grey, fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if ((_currentOrder!.statusId == 2 || _currentOrder!.statusId == 3) && _currentOrder!.totalPaid == 0) ...[
+                        const SizedBox(height: 16),
+                        TapScale(
+                          onTap: () => _showRequestCancelSheet(),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              "MINTA PEMBATALAN",
+                              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1),
+                            ),
+                          ),
+                        ),
                       ],
                       const SizedBox(height: 40),
                     ],
@@ -435,7 +560,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     int currentStep = 0;
     if (statusName == 'preparing') currentStep = 1;
     if (statusName == 'out for delivery') currentStep = 2;
-    if (statusName == 'delivered' || statusName == 'selesai') currentStep = 3;
+    if (statusName == 'delivered' || statusName == 'selesai' || statusName == 'paid' || statusName == 'settlement') currentStep = 3;
 
     final List<Map<String, dynamic>> steps = [
       {'label': 'Dipesan', 'icon': Icons.assignment_rounded},
@@ -592,6 +717,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     "${_currentOrder!.eventDate.day}/${_currentOrder!.eventDate.month}/${_currentOrder!.eventDate.year}"),
                 const SizedBox(height: 20),
                 _buildEventDetailRow(Icons.location_on_rounded, "Lokasi Pengiriman", _currentOrder!.eventAddress),
+                if (_currentOrder!.locationNotes != null && _currentOrder!.locationNotes!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildEventDetailRow(Icons.map_outlined, "Catatan Lokasi (Patokan)", _currentOrder!.locationNotes!),
+                ],
                 if (_currentOrder!.eventLatitude != null && _currentOrder!.eventLongitude != null) ...[
                   const SizedBox(height: 20),
                   _buildMapCard(),
@@ -801,7 +930,19 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             _currentOrder!.totalPaid > 0 ? "BAYAR SISA TAGIHAN" : "BAYAR SEKARANG",
             Icons.payments_rounded,
             const Color(0xFF8B0000),
-            () => Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentMethodPage(order: _currentOrder!))),
+            () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => PaymentMethodPage(order: _currentOrder!)),
+              );
+
+              if (result == true && mounted) {
+                // Beri jeda 2 detik agar callback Midtrans selesai diproses di server
+                await Future.delayed(const Duration(seconds: 2));
+                _fetchOrderDetails();
+                _fetchAdditions();
+              }
+            },
             isFilled: true,
           ),
         ],
@@ -1196,9 +1337,10 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             review.comment ?? "Tidak ada komentar",
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white70,
+              color: AppColors.textPrimary,
               fontStyle: FontStyle.italic,
               fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 8),

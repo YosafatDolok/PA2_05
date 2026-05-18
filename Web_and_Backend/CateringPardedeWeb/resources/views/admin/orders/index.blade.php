@@ -9,9 +9,23 @@
             <h2 class="m-0 font-weight-bold">Order Management</h2>
             <p class="text-muted small uppercase letter-spacing-1 mb-0">Track and manage customer catering requests</p>
         </div>
-        <a href="{{ route('orders.export') }}" class="btn btn-outline-success border-2 font-weight-bold">
-            <i class="fas fa-file-excel mr-2"></i> EXPORT EXCEL
-        </a>
+        <div class="d-flex align-items-center" style="gap: 15px;">
+            <div class="filter-group">
+                <form action="{{ route('orders.index') }}" method="GET" id="filter-form" class="m-0">
+                    <select name="status" class="form-control bg-dark border-secondary text-white font-weight-bold" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        @foreach($statuses as $status)
+                            <option value="{{ $status->status_id }}" {{ request('status') == $status->status_id ? 'selected' : '' }}>
+                                {{ strtoupper($status->status_name) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
+            <a href="{{ route('orders.export', ['status' => request('status')]) }}" class="btn btn-outline-success border-2 font-weight-bold">
+                <i class="fas fa-file-excel mr-2"></i> EXPORT EXCEL
+            </a>
+        </div>
     </div>
 
     <div class="row">
@@ -47,7 +61,7 @@
                                 </td>
                                 <td>
                                     @foreach($order->items as $item)
-                                        <span class="badge bg-secondary-light extra-small mb-1 d-inline-block">{{ $item->menu->name }}</span>
+                                        <span class="badge bg-secondary-light extra-small mb-1 d-inline-block">{{ $item->menu->name ?? 'Unknown Item' }}</span>
                                     @endforeach
                                 </td>
                                 <td>

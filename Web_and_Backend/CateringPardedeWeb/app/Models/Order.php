@@ -22,6 +22,8 @@ class Order extends Model
         'event_latitude',
         'event_longitude',
         'location_notes',
+        'is_cancelling',
+        'cancel_reason',
         'event_date',
         'status_id',
         'final_price',
@@ -80,6 +82,11 @@ class Order extends Model
     public function latestMessage()
     {
         return $this->hasOne(OrderMessage::class, 'order_id')->latestOfMany('message_id');
+    }
+
+    public function activities()
+    {
+        return $this->hasMany(OrderActivity::class, 'order_id')->latest();
     }
 
     /**

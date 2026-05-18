@@ -411,6 +411,11 @@ h6,
     box-shadow: 0 0 15px rgba(255, 51, 75, 0.15);
 }
 
+.form-select option {
+    background: #16161e; /* Match --aura-panel */
+    color: var(--aura-white);
+}
+
 .form-control::placeholder {
     color: var(--aura-text-muted);
 }
@@ -713,4 +718,94 @@ label {
 
 .pulse-red {
     animation: pulse-red 2s infinite;
-}
+}
+/* Custom Premium Select */
+.aura-select-container {
+    position: relative;
+    width: 100%;
+    user-select: none;
+}
+
+.aura-select-trigger {
+    background: var(--aura-glass);
+    border: 1px solid var(--aura-border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    color: var(--aura-white);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.aura-select-container.active .aura-select-trigger {
+    border-color: var(--aura-crimson);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 15px rgba(255, 51, 75, 0.15);
+}
+
+.aura-select-trigger i {
+    font-size: 0.8rem;
+    color: var(--aura-text-muted);
+    transition: transform 0.3s ease;
+}
+
+.aura-select-container.active .aura-select-trigger i {
+    transform: rotate(180deg);
+    color: var(--aura-crimson);
+}
+
+.aura-select-options {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    background: rgba(22, 22, 30, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--aura-border);
+    border-radius: 16px;
+    padding: 10px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.aura-select-container.active .aura-select-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.aura-option {
+    padding: 12px 15px;
+    color: var(--aura-text-main);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.aura-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--aura-white);
+    padding-left: 20px;
+}
+
+.aura-option.selected {
+    background: rgba(255, 51, 75, 0.1);
+    color: var(--aura-crimson);
+}
+
+.aura-select-options::-webkit-scrollbar {
+    width: 4px;
+}
+
+.aura-select-options::-webkit-scrollbar-thumb {
+    background: var(--aura-border);
+    border-radius: 10px;
+}

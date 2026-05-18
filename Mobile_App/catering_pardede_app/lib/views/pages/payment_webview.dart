@@ -31,10 +31,10 @@ class _PaymentWebViewState extends State<PaymentWebView> {
 
             // 🔥 DETEKSI JIKA PEMBAYARAN SELESAI
             if (url.contains("finish") || url.contains("success")) {
-              Navigator.pop(context); // kembali ke halaman sebelumnya
-
+              Navigator.pop(context, true); // kembali ke halaman sebelumnya dengan hasil true
+              
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Pembayaran berhasil")),
+                const SnackBar(content: Text("Pembayaran sedang diproses...")),
               );
             }
           },

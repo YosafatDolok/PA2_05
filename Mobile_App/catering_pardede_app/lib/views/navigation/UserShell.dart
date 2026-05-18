@@ -29,6 +29,7 @@ class UserShellState extends State<UserShell> {
   void setIndex(int index) {
     if (index == 2) {
       _orderPageKey.currentState?.clearFilter();
+      _orderPageKey.currentState?.refresh();
     }
     setState(() => _currentIndex = index);
   }
@@ -44,6 +45,7 @@ class UserShellState extends State<UserShell> {
   void _onTabChanged(int index) {
     if (index == 2) {
       _orderPageKey.currentState?.clearFilter();
+      _orderPageKey.currentState?.refresh();
     }
     setState(() => _currentIndex = index);
   }

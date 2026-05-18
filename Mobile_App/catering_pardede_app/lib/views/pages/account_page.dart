@@ -174,7 +174,6 @@ class _AccountPageState extends State<AccountPage> {
                 final updated = await Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfilePage(user: user!)));
                 if (updated == true) _fetchAccountData();
               }, delay: 5),
-              _accountTile(Icons.help_center_rounded, "Pusat Bantuan", () {}, delay: 6),
             ]),
             const SizedBox(height: 32),
             _EntranceAnimation(

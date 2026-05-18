@@ -4,6 +4,7 @@ class ApiEndpoints {
   static const String basePayment = "https://tucking-grope-angelic.ngrok-free.dev/api";
 
   static const String register = '$baseUrl/register';
+  static const String registerOtp = '$baseUrl/register/otp';
   static const String login = '$baseUrl/login';
   static const String user = '$baseUrl/user';
   static const String logout = '$baseUrl/logout';

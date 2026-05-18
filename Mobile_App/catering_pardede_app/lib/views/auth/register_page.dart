@@ -25,7 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => isLoading = true);
 
-    await AuthController.register(
+    await AuthController.requestOtp(
       context,
       nameController.text.trim(),
       emailController.text.trim(),

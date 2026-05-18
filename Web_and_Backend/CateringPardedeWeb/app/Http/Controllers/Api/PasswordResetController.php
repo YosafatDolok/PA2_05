@@ -42,7 +42,10 @@ class PasswordResetController extends Controller
         // Send Email
         try {
             Mail::to($email)->send(new OtpMail($otp, $user->name));
-            return response()->json(['message' => 'Kode OTP telah dikirim ke email Anda.']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode OTP telah dikirim ke email Anda.'
+            ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Gagal mengirim email. Silakan coba lagi.'], 500);
         }
@@ -68,12 +71,15 @@ class PasswordResetController extends Controller
             return response()->json(['message' => 'Kode OTP salah.'], 422);
         }
 
-        // Check if expired (15 minutes)
-        if (Carbon::parse($resetData->created_at)->addMinutes(15)->isPast()) {
+        // Check if expired (5 minutes)
+        if (Carbon::parse($resetData->created_at)->addMinutes(5)->isPast()) {
             return response()->json(['message' => 'Kode OTP telah kadaluarsa.'], 422);
         }
 
-        return response()->json(['message' => 'Kode OTP berhasil diverifikasi.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Kode OTP berhasil diverifikasi.'
+        ]);
     }
 
     public function resetPassword(Request $request)
@@ -93,7 +99,7 @@ class PasswordResetController extends Controller
             ->where('token', $request->otp)
             ->first();
 
-        if (!$resetData || Carbon::parse($resetData->created_at)->addMinutes(15)->isPast()) {
+        if (!$resetData || Carbon::parse($resetData->created_at)->addMinutes(5)->isPast()) {
             return response()->json(['message' => 'Sesi reset password tidak valid atau telah kadaluarsa.'], 422);
         }
 
@@ -106,6 +112,9 @@ class PasswordResetController extends Controller
         // Delete used token
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
-        return response()->json(['message' => 'Kata sandi berhasil diperbarui.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Kata sandi berhasil diperbarui.'
+        ]);
     }
 }

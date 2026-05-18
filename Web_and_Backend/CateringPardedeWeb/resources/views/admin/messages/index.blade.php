@@ -38,9 +38,6 @@
                                                 <div class="avatar-premium">
                                                     {{ substr($order->user->name, 0, 1) }}
                                                 </div>
-                                                @if($isUnread)
-                                                    <span class="status-indicator-pulse"></span>
-                                                @endif
                                             </div>
                                             <div class="lh-sm">
                                                 <div class="font-weight-bold text-white fs-6 mb-1">{{ $order->user->name }}</div>

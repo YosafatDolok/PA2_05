@@ -39,11 +39,9 @@ class ReviewController extends Controller
             ], 404);
         }
 
-        // Only allow reviews for completed orders
-        // Note: Assuming status_id for 'Selesai' is 4 based on typical flows, 
-        // but we should check the actual status name if possible.
-        // For now, let's look at the status relationship.
-        if ($order->status->status_name !== 'Selesai') {
+        // Only allow reviews for completed orders (Delivered or Paid)
+        $validStatuses = ['Delivered', 'Paid'];
+        if (!in_array($order->status->status_name, $validStatuses)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda hanya dapat memberikan ulasan untuk pesanan yang sudah selesai'

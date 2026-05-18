@@ -20,8 +20,11 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
   bool isUpdating = false;
   bool isLoading = true;
   dynamic _currentOrder;
+  final List<String> _checklistItems = [];
+  final Map<String, bool> _checklistStates = {};
 
   @override
+
   void initState() {
     super.initState();
     if (widget.order != null) {
@@ -113,25 +116,104 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
 
     if (image == null) return;
 
+    if (!mounted) return;
+
+    // Custom Confirmation Dialog for payment status
+    final int? selectedStatusId = await showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Column(
+            children: [
+              Icon(Icons.monetization_on_rounded, color: AppColors.secondary, size: 48),
+              SizedBox(height: 12),
+              Text(
+                "Konfirmasi Pembayaran",
+                style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          content: const Text(
+            "Apakah pelanggan sudah membayar pesanan ini secara lunas (Tunai / Transfer)?",
+            style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.5),
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      onPressed: () => Navigator.pop(context, 5), // 5 is Paid
+                      child: const Text("YA, SUDAH LUNAS", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.grey),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: () => Navigator.pop(context, 4), // 4 is Delivered
+                      child: const Text("BELUM LUNAS", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, null), // Cancel
+                    child: const Text("BATALKAN", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            )
+          ],
+        );
+      }
+    );
+
+    if (selectedStatusId == null) return;
+
     setState(() => isUpdating = true);
     try {
       await DriverOrderController.updateOrderStatus(
         orderId: _currentOrder['order_id'],
-        statusId: 4, // Delivered
+        statusId: selectedStatusId,
         proofImagePath: image.path,
       );
       LocationService.stopTracking();
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pesanan Berhasil Diantar!')),
+          SnackBar(
+            content: Text(selectedStatusId == 5
+                ? 'Pesanan Berhasil Diantar & Ditandai LUNAS!'
+                : 'Pesanan Berhasil Diantar (Menunggu Pembayaran)!'),
+          ),
         );
       }
     } catch (e) {
-      setState(() => isUpdating = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        setState(() => isUpdating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -152,6 +234,9 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
 
     final order = _currentOrder;
     final int statusId = order['status_id'];
+    
+    final double remainingBalance = double.tryParse((order['remaining_balance'] ?? 0).toString()) ?? 0.0;
+    final double totalPayable = double.tryParse((order['total_payable'] ?? 0).toString()) ?? 0.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F7F2),
@@ -175,12 +260,15 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
                     onAction: (order['user']['phone'] != null && order['user']['phone'].toString().isNotEmpty) ? _callCustomer : null, 
                     actionIcon: Icons.call
                   ),
+                  const SizedBox(height: 12),
+                  _buildPaymentCard(remainingBalance, totalPayable),
                   
                   const SizedBox(height: 32),
                   _buildSectionHeader("LOKASI PENGANTARAN"),
                   const SizedBox(height: 16),
                   _buildInfoCard("Alamat", order['event_address'], Icons.location_on_outlined, onAction: _launchNavigation, actionIcon: Icons.directions),
                   
+                  const SizedBox(height: 32),
                   _buildSectionHeader("WAKTU & KAPASITAS"),
                   const SizedBox(height: 16),
                   Row(
@@ -191,15 +279,37 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
                     ],
                   ),
 
+                  if (statusId < 3) ...[
+                    const SizedBox(height: 32),
+                    _buildLoadingChecklist(order),
+                  ],
+
                   const SizedBox(height: 32),
                   _buildSectionHeader("DAFTAR MENU"),
                   const SizedBox(height: 16),
                   _buildMenuList(order['items'] ?? []),
                   
                   const SizedBox(height: 32),
-                  _buildSectionHeader("CATATAN TAMBAHAN"),
+                  _buildSectionHeader("CATATAN MASAKAN (KULINER)"),
                   const SizedBox(height: 16),
-                  _buildInfoCard("Notes", order['notes'] ?? "Tidak ada catatan khusus", Icons.note_alt_outlined),
+                  _buildInfoCard(
+                    "Catatan Chef",
+                    (order['notes'] != null && order['notes'].toString().trim().isNotEmpty)
+                        ? order['notes']
+                        : "Tidak ada catatan masakan khusus",
+                    Icons.restaurant_menu_outlined,
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  _buildSectionHeader("PETUNJUK LOKASI & PENGIRIMAN"),
+                  const SizedBox(height: 16),
+                  _buildInfoCard(
+                    "Catatan Alamat",
+                    (order['location_notes'] != null && order['location_notes'].toString().trim().isNotEmpty)
+                        ? order['location_notes']
+                        : "Tidak ada petunjuk khusus untuk alamat ini",
+                    Icons.map_outlined,
+                  ),
                   
                   const SizedBox(height: 120), // Space for bottom action
                 ],
@@ -356,4 +466,179 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
       ),
     );
   }
+
+  Widget _buildPaymentCard(double remainingBalance, double totalPayable) {
+    final bool isPaid = remainingBalance <= 0;
+    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isPaid ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPaid ? Colors.green.withValues(alpha: 0.3) : Colors.orange.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isPaid ? Icons.check_circle_outline : Icons.monetization_on_outlined,
+              color: isPaid ? Colors.green : Colors.orange,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPaid ? "STATUS PEMBAYARAN" : "TAGIHAN COD / SISA BAYAR",
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isPaid ? Colors.green[800] : Colors.orange[850],
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isPaid ? "LUNAS (Paid Online)" : formatter.format(remainingBalance),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: isPaid ? Colors.green[900] : Colors.orange[900],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isPaid 
+                      ? "Tidak perlu menagih pembayaran." 
+                      : "Harap tagih sisa pembayaran saat serah terima.",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isPaid ? Colors.green[700] : Colors.orange[800],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _initChecklist(dynamic order) {
+    if (_checklistItems.isNotEmpty) return;
+    
+    final List<dynamic> items = order['items'] ?? [];
+    for (var item in items) {
+      final name = item['menu']['name'] ?? 'Menu';
+      _checklistItems.add("Menu: $name");
+    }
+    _checklistItems.add("Peralatan Prasmanan (Pemanas & Meja)");
+    _checklistItems.add("Set Alat Makan (${order['people']} Pax)");
+
+    for (var item in _checklistItems) {
+      _checklistStates[item] = false;
+    }
+  }
+
+  Widget _buildLoadingChecklist(dynamic order) {
+    _initChecklist(order);
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.playlist_add_check, color: AppColors.secondary, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "CHECKLIST MUATAN (SEBELUM BERANGKAT)",
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Pastikan semua barang masuk ke kendaraan sebelum berangkat.",
+                      style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ..._checklistItems.map((item) {
+            final isChecked = _checklistStates[item] ?? false;
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  _checklistStates[item] = !isChecked;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: isChecked ? Colors.green : Colors.transparent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isChecked ? Colors.green : Colors.grey,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.check,
+                        color: isChecked ? Colors.white : Colors.transparent,
+                        size: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isChecked ? FontWeight.bold : FontWeight.normal,
+                          color: isChecked ? Colors.green[800] : AppColors.primary,
+                          decoration: isChecked ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
 }
+

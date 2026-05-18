@@ -90,25 +90,38 @@ class _ReviewSheetState extends State<ReviewSheet> {
             style: TextStyle(color: Colors.grey),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
+          const Text(
+            'KETUK UNTUK MEMBERI RATING',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+              color: AppColors.secondary,
+            ),
+          ),
+          const SizedBox(height: 16),
           StarRating(
             rating: _rating,
-            size: 45,
+            size: 48,
             onRatingChanged: (val) => setState(() => _rating = val),
           ),
           const SizedBox(height: 32),
           TextField(
             controller: _commentController,
             maxLines: 4,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
             decoration: InputDecoration(
-              hintText: 'Tulis ulasan Anda di sini...',
-              hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.5)),
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              hintText: 'Ceritakan pengalaman rasa Anda...',
+              hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6)),
+              fillColor: Colors.white,
               filled: true,
-              border: OutlineInputBorder(
+              enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
               ),
               contentPadding: const EdgeInsets.all(20),
             ),
