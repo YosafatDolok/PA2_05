@@ -257,7 +257,7 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
 
-        // 🛡️ Idempotency Check: Prevent double-counting the same transaction
+        // Cek Idempotensi: Mencegah penghitungan ganda untuk transaksi yang sama
         if ($request->external_id && \App\Models\ProcessedPayment::where('external_id', $request->external_id)->exists()) {
             Log::info("Duplicate payment signal received for External ID: {$request->external_id}. Ignoring.");
             return response()->json([
@@ -266,11 +266,11 @@ class OrderController extends Controller
             ]);
         }
 
-        // Accumulate payment amount if provided and status is Paid (5)
+        // Tambahkan jumlah pembayaran jika nominal dikirimkan dan statusnya Lunas (5)
         if ($request->status_id == 5 && $request->amount > 0) {
             $order->total_paid = (float)$order->total_paid + (float)$request->amount;
             
-            // Record this transaction ID
+            // Catat ID transaksi ini
             if ($request->external_id) {
                 \App\Models\ProcessedPayment::create([
                     'order_id' => $id,
@@ -283,10 +283,10 @@ class OrderController extends Controller
         }
 
         if ($request->status_id == 5) {
-            // Webhook payment notification
-            // We ONLY transition to status 5 (Paid) if:
-            // 1. Order is currently Delivered (4) AND remaining balance is <= 0
-            // 2. Or if the order is already Paid (5)
+            // Notifikasi pembayaran dari microservice
+            // Status pesanan hanya diubah ke Lunas (5) jika:
+            // 1. Pesanan saat ini sudah Dikirim (4) DAN sisa tagihan <= 0
+            // 2. Atau jika pesanan memang sudah Lunas (5)
             if (((int)$order->status_id === 4 && $order->remaining_balance <= 0) || (int)$order->status_id === 5) {
                 $order->status_id = 5;
                 Log::info("Order #{$id} status set/kept to PAID.");
@@ -294,7 +294,7 @@ class OrderController extends Controller
                 Log::info("Order #{$id} received payment, but status remains {$order->status_id} (not Delivered yet, or not fully paid).");
             }
         } else {
-            // For other status changes
+            // Untuk perubahan status lainnya
             $order->status_id = $request->status_id;
         }
 
@@ -302,6 +302,66 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Status updated successfully',
+            'order' => $order
+        ]);
+    }
+
+    public function getBillingDetails($id)
+    {
+        $order = Order::findOrFail($id);
+        return response()->json([
+            'order_id' => $order->order_id,
+            'user_id' => $order->user_id,
+            'remaining_balance' => (float)$order->remaining_balance,
+        ]);
+    }
+
+    public function receivePaymentNotification(Request $request, $id)
+    {
+        Log::info("Payment notification received for Order #{$id}", $request->all());
+
+        $request->validate([
+            'payment_status' => 'required|string',
+            'amount' => 'required|numeric',
+            'external_id' => 'required|string'
+        ]);
+
+        $order = Order::findOrFail($id);
+
+        // Cek Idempotensi: Mencegah pemrosesan ganda
+        if (\App\Models\ProcessedPayment::where('external_id', $request->external_id)->exists()) {
+            Log::info("Duplicate payment signal received for External ID: {$request->external_id}. Ignoring.");
+            return response()->json([
+                'message' => 'Pembayaran sudah diproses sebelumnya.',
+                'order' => $order
+            ]);
+        }
+
+        if ($request->payment_status === 'settled') {
+            // Tambahkan nominal pembayaran ke total yang dibayarkan
+            $order->total_paid = (float)$order->total_paid + (float)$request->amount;
+            
+            // Catat transaksi ke log pembayaran terproses
+            \App\Models\ProcessedPayment::create([
+                'order_id' => $id,
+                'external_id' => $request->external_id,
+                'amount' => $request->amount
+            ]);
+            
+            Log::info("Payment of {$request->amount} recorded for Order #{$id}. Total paid now: {$order->total_paid}");
+
+            // Tentukan status pesanan secara mandiri:
+            // Jika pesanan sudah Dikirim (4) dan sisa tagihan sudah lunas (<= 0), ubah ke Lunas (5)
+            if ((int)$order->status_id === 4 && $order->remaining_balance <= 0) {
+                $order->status_id = 5;
+                Log::info("Order #{$id} status set to PAID.");
+            }
+            
+            $order->save();
+        }
+
+        return response()->json([
+            'message' => 'Notifikasi pembayaran berhasil diproses.',
             'order' => $order
         ]);
     }

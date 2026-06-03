@@ -61,6 +61,24 @@ class AuthController {
     }
   }
 
+  // Register: Resend OTP
+  static Future<bool> resendRegisterOtp(BuildContext context, String email) async {
+    try {
+      final result = await AuthService.resendRegisterOtp(email);
+      if (result['success']) {
+        Helpers.showSnackBar(context, result['message'] ?? 'Kode verifikasi baru telah dikirim');
+        return true;
+      } else {
+        final msg = result['message']?.toString().replaceAll('Exception: ', '') ?? 'Gagal mengirim ulang OTP';
+        Helpers.showSnackBar(context, msg);
+        return false;
+      }
+    } catch (e) {
+      Helpers.showSnackBar(context, 'Error: $e');
+      return false;
+    }
+  }
+
   // Register Step 2: Verify & Finalize
   static Future<void> verifyOtpAndRegister(
       BuildContext context, String email, String otp) async {

@@ -83,4 +83,35 @@ class ProfileController extends Controller
 
         return response()->json(['message' => 'FCM token updated successfully']);
     }
+
+    public function updatePassword(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'current_password' => ['required', function ($attribute, $value, $fail) use ($user) {
+                if (!\Hash::check($value, $user->password)) {
+                    $fail('Password saat ini tidak cocok dengan data kami.');
+                }
+            }],
+            'new_password' => 'required|string|min:8|confirmed',
+        ], [
+            'current_password.required' => 'Password saat ini wajib diisi.',
+            'new_password.required' => 'Password baru wajib diisi.',
+            'new_password.min' => 'Password baru minimal harus terdiri dari 8 karakter.',
+            'new_password.confirmed' => 'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        $user->update([
+            'password' => \Hash::make($request->new_password)
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Password berhasil diperbarui!'
+            ]);
+        }
+
+        return back()->with('password_success', 'Password updated successfully!');
+    }
 }

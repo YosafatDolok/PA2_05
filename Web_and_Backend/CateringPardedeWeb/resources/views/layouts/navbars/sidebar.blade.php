@@ -63,11 +63,11 @@
             </a>
         </li>
 
-        {{-- Logistics --}}
+        {{-- Order's Locations --}}
         <li class="nav-item {{ request()->routeIs('admin.logistics.index') ? 'active' : '' }}">
             <a href="{{ route('admin.logistics.index') }}" class="nav-link">
                 <i class="fas fa-map-location-dot"></i>
-                <span>Logistics</span>
+                <span>Order's Locations</span>
             </a>
         </li>
 

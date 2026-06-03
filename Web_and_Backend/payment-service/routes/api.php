@@ -10,10 +10,13 @@ use App\Http\Controllers\PaymentHistoryController;
 |--------------------------------------------------------------------------
 */
 
-// Public/Mobile Endpoints
-Route::post('/payments', [PaymentController::class, 'store']);
-Route::get('/payments/order/{orderId}', [PaymentController::class, 'getByOrder']);
-Route::post('/payments/{id}/midtrans', [PaymentController::class, 'createTransaction']);
+// Endpoint Publik/Mobile (Wajib Autentikasi Pelanggan)
+Route::middleware('user.auth')->group(function () {
+    Route::post('/payments', [PaymentController::class, 'store']);
+    Route::get('/payments/order/{orderId}', [PaymentController::class, 'getByOrder']);
+    Route::post('/payments/{id}/midtrans', [PaymentController::class, 'createTransaction']);
+});
+
 Route::post('/payments/callback', [PaymentController::class, 'callback']);
 
 // Secure Internal Endpoints (Admin Bridge)

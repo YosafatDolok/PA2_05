@@ -27,18 +27,17 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     setState(() => isLoading = true);
 
     try {
-      // 1. CREATE PAYMENT (on port 8001)
+      // 1. Buat data pembayaran di microservice pembayaran
       final payment = await ApiService.post(
         ApiEndpoints.payments,
         {
           "order_id": widget.order.id,
-          "amount": widget.order.remainingBalance,
         },
       );
 
       final paymentId = payment['id'];
 
-      // 2. REQUEST MIDTRANS TOKEN (on port 8001)
+      // 2. Minta Snap Token Midtrans dari microservice pembayaran
       final res = await ApiService.post(
         "${ApiEndpoints.basePayment}/payments/$paymentId/midtrans",
         {},
@@ -46,7 +45,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
       final snapToken = res['snap_token'];
 
-      // 3. OPEN WEBVIEW MIDTRANS
+      // 3. Buka halaman pembayaran Midtrans di WebView
       if (mounted) {
         final result = await Navigator.push(
           context,
@@ -55,9 +54,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
           ),
         );
 
-        // Jika WebView mengembalikan true (pembayaran selesai)
+        // Jika WebView berhasil (pembayaran diselesaikan)
         if (result == true && mounted) {
-          Navigator.pop(context, true); // Kembali ke OrderDetail dengan sinyal refresh
+          Navigator.pop(context, true); // Kembali ke rincian pesanan dan segarkan halaman
         }
       }
 

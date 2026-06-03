@@ -113,8 +113,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
               const SizedBox(height: 24),
               _EntranceAnimation(delay: 5, child: _buildLabel("NOMOR TELEPON")),
               _EntranceAnimation(delay: 6, child: _buildBoutiqueField(_phoneController, "08123456789", Icons.phone_android_rounded, keyboardType: TextInputType.phone)),
-              const SizedBox(height: 60),
-              _EntranceAnimation(delay: 7, child: _buildSaveButton()),
+              const SizedBox(height: 24),
+              _EntranceAnimation(
+                delay: 7,
+                child: Center(
+                  child: TextButton.icon(
+                    onPressed: () => _showChangePasswordSheet(context),
+                    icon: const Icon(Icons.lock_reset_rounded, color: AppColors.secondary, size: 20),
+                    label: const Text(
+                      "GANTI PASSWORD",
+                      style: TextStyle(
+                        color: AppColors.secondary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 36),
+              _EntranceAnimation(delay: 8, child: _buildSaveButton()),
             ],
           ),
         ),
@@ -232,6 +251,185 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 "SIMPAN PERUBAHAN", 
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 1)
               ),
+      ),
+    );
+  }
+
+  void _showChangePasswordSheet(BuildContext context) {
+    final sheetFormKey = GlobalKey<FormState>();
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool isSheetLoading = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (BuildContext sheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext statefulContext, StateSetter setSheetState) {
+            Future<void> submitPasswordChange() async {
+              if (!sheetFormKey.currentState!.validate()) return;
+
+              setSheetState(() => isSheetLoading = true);
+              try {
+                await ApiService.post(
+                  ApiEndpoints.updatePassword,
+                  {
+                    'current_password': currentPasswordController.text,
+                    'new_password': newPasswordController.text,
+                    'new_password_confirmation': confirmPasswordController.text,
+                  },
+                );
+                if (context.mounted) {
+                  Navigator.pop(sheetContext);
+                  Helpers.showSnackBar(context, 'Password berhasil diperbarui!');
+                }
+              } catch (e) {
+                setSheetState(() => isSheetLoading = false);
+                if (context.mounted) {
+                  Helpers.showSnackBar(context, 'Gagal: $e');
+                }
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(statefulContext).viewInsets.bottom + 24,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: Form(
+                key: sheetFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Row(
+                      children: [
+                        Icon(Icons.lock_rounded, color: AppColors.primary, size: 24),
+                        SizedBox(width: 12),
+                        Text(
+                          "GANTI PASSWORD",
+                          style: TextStyle(
+                            color: Color(0xFF2D0A0A),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "PASSWORD SAAT INI",
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildPasswordField(currentPasswordController, "Masukkan password saat ini"),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "PASSWORD BARU",
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildPasswordField(newPasswordController, "Minimal 8 karakter"),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "KONFIRMASI PASSWORD BARU",
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildPasswordField(
+                      confirmPasswordController,
+                      "Ulangi password baru",
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return "Bidang ini tidak boleh kosong";
+                        if (value != newPasswordController.text) return "Konfirmasi password tidak cocok";
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    TapScale(
+                      onTap: isSheetLoading ? null : submitPasswordChange,
+                      child: Container(
+                        width: double.infinity,
+                        height: 56,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 6)),
+                          ],
+                        ),
+                        child: isSheetLoading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                            : const Text(
+                                "PERBARUI PASSWORD",
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.5),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        currentPasswordController.dispose();
+        newPasswordController.dispose();
+        confirmPasswordController.dispose();
+      });
+    });
+  }
+
+  Widget _buildPasswordField(TextEditingController controller, String hint, {FormFieldValidator<String>? validator}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: true,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF2D0A0A)),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13, fontWeight: FontWeight.w500),
+          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 18),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        ),
+        validator: validator ?? (value) {
+          if (value == null || value.isEmpty) return "Bidang ini tidak boleh kosong";
+          if (controller.text.length < 8) return "Password minimal terdiri dari 8 karakter";
+          return null;
+        },
       ),
     );
   }

@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $averageRating = \App\Models\Review::avg('rating') ?: 0;
         $totalReviews = \App\Models\Review::count();
 
-        // --- Chart Data & Real Stats from Payment Service ---
+        // --- Data Grafik & Statistik Asli dari Layanan Pembayaran ---
         $stats = [
             'total_revenue' => 0,
             'growth_percent' => 0,
@@ -39,7 +39,7 @@ class DashboardController extends Controller
                 $stats = $paymentResponse->json();
             }
         } catch (\Exception $e) {
-            // Log error but don't crash the app
+            // Catat log kesalahan tetapi jangan biarkan aplikasi terhenti
             \Illuminate\Support\Facades\Log::warning("Payment Microservice unavailable: " . $e->getMessage());
         }
 

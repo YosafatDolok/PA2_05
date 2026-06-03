@@ -118,92 +118,19 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
 
     if (!mounted) return;
 
-    // Custom Confirmation Dialog for payment status
-    final int? selectedStatusId = await showDialog<int>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Column(
-            children: [
-              Icon(Icons.monetization_on_rounded, color: AppColors.secondary, size: 48),
-              SizedBox(height: 12),
-              Text(
-                "Konfirmasi Pembayaran",
-                style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary, fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-          content: const Text(
-            "Apakah pelanggan sudah membayar pesanan ini secara lunas (Tunai / Transfer)?",
-            style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.5),
-            textAlign: TextAlign.center,
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
-                      ),
-                      onPressed: () => Navigator.pop(context, 5), // 5 is Paid
-                      child: const Text("YA, SUDAH LUNAS", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.grey),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      onPressed: () => Navigator.pop(context, 4), // 4 is Delivered
-                      child: const Text("BELUM LUNAS", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, null), // Cancel
-                    child: const Text("BATALKAN", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            )
-          ],
-        );
-      }
-    );
-
-    if (selectedStatusId == null) return;
-
     setState(() => isUpdating = true);
     try {
       await DriverOrderController.updateOrderStatus(
         orderId: _currentOrder['order_id'],
-        statusId: selectedStatusId,
+        statusId: 4, // 4 is Delivered
         proofImagePath: image.path,
       );
       LocationService.stopTracking();
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(selectedStatusId == 5
-                ? 'Pesanan Berhasil Diantar & Ditandai LUNAS!'
-                : 'Pesanan Berhasil Diantar (Menunggu Pembayaran)!'),
+          const SnackBar(
+            content: Text('Pesanan Berhasil Diantar!'),
           ),
         );
       }
@@ -216,6 +143,7 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -13,18 +13,53 @@ use Illuminate\Support\Str;
 class PaymentController extends Controller
 {
     /**
-     * 1. INITIALIZE PAYMENT (Called from Flutter)
+     * 1. Inisialisasi Pembayaran (Dipanggil dari Flutter)
      */
     public function store(Request $request)
     {
         $request->validate([
-            'order_id' => 'required',
-            'amount' => 'required|numeric'
+            'order_id' => 'required'
         ]);
 
+        $user = $request->attributes->get('authenticated_user');
+        if (!$user) {
+            return response()->json(['message' => 'User tidak terautentikasi.'], 401);
+        }
+
+        // Ambil info billing secara aman dari backend utama
+        try {
+            $mainAppUrl = env('MAIN_APP_URL', 'http://localhost:8000');
+            $response = Http::withHeaders([
+                'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key'),
+                'Accept' => 'application/json'
+            ])->timeout(3)->get($mainAppUrl . '/api/orders/' . $request->order_id . '/billing');
+
+            if (!$response->successful()) {
+                return response()->json(['message' => 'Gagal mendapatkan data tagihan pesanan.'], 400);
+            }
+
+            $billing = $response->json();
+        } catch (\Exception $e) {
+            Log::error('Gagal memanggil API billing internal: ' . $e->getMessage());
+            return response()->json(['message' => 'Kesalahan koneksi ke server utama.'], 500);
+        }
+
+        // Verifikasi kepemilikan pesanan
+        if ((int)$billing['user_id'] !== (int)$user['id']) {
+            return response()->json(['message' => 'Anda tidak memiliki hak untuk membayar pesanan ini.'], 403);
+        }
+
+        $remainingBalance = (float)$billing['remaining_balance'];
+
+        // Cek jika pesanan sudah lunas
+        if ($remainingBalance <= 0) {
+            return response()->json(['message' => 'Pesanan ini sudah lunas.'], 400);
+        }
+
+        // Buat rekaman pembayaran baru menggunakan nominal terverifikasi dari server
         $payment = Payment::create([
             'order_id' => $request->order_id,
-            'amount' => $request->amount,
+            'amount' => $remainingBalance,
             'payment_method' => 'midtrans',
             'status' => 'pending',
             'external_id' => 'ORD-' . $request->order_id . '-' . strtoupper(Str::random(5)) . '-' . time(),
@@ -34,23 +69,49 @@ class PaymentController extends Controller
     }
 
     /**
-     * 2. GENERATE MIDTRANS SNAP TOKEN
+     * 2. Buat Token Snap Midtrans
      */
     public function createTransaction(Request $request, $id)
     {
-        // Get existing payment or create if missing
+        // Ambil data pembayaran yang sudah ada
         $payment = Payment::find($id);
         if (!$payment) {
             return response()->json(['message' => 'Payment record not found'], 404);
         }
 
-        // Midtrans Config
+        $user = $request->attributes->get('authenticated_user');
+        if (!$user) {
+            return response()->json(['message' => 'User tidak terautentikasi.'], 401);
+        }
+
+        // Verifikasi kepemilikan pesanan dari backend utama
+        try {
+            $mainAppUrl = env('MAIN_APP_URL', 'http://localhost:8000');
+            $response = Http::withHeaders([
+                'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key'),
+                'Accept' => 'application/json'
+            ])->timeout(3)->get($mainAppUrl . '/api/orders/' . $payment->order_id . '/billing');
+
+            if (!$response->successful()) {
+                return response()->json(['message' => 'Gagal memverifikasi tagihan pesanan.'], 400);
+            }
+
+            $billing = $response->json();
+            if ((int)$billing['user_id'] !== (int)$user['id']) {
+                return response()->json(['message' => 'Anda tidak memiliki hak untuk mengakses pembayaran ini.'], 403);
+            }
+        } catch (\Exception $e) {
+            Log::error('Gagal memverifikasi kepemilikan pembayaran: ' . $e->getMessage());
+            return response()->json(['message' => 'Kesalahan koneksi ke server utama.'], 500);
+        }
+
+        // Konfigurasi Midtrans
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = false;
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
-        // Midtrans params
+        // Parameter Midtrans
         $params = [
             'transaction_details' => [
                 'order_id' => $payment->external_id,
@@ -58,11 +119,11 @@ class PaymentController extends Controller
             ],
         ];
 
-        // Generate Snap Token
+        // Buat Token Snap
         try {
             $snapToken = Snap::getSnapToken($params);
             
-            // Save token for future use
+            // Simpan token untuk digunakan nanti
             $payment->update(['snap_token' => $snapToken]);
 
             return response()->json([
@@ -74,7 +135,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * 3. GET PAYMENT BY ORDER ID
+     * 3. Ambil Data Pembayaran Berdasarkan ID Pesanan
      */
     public function getByOrder($orderId)
     {
@@ -86,7 +147,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * 4. MIDTRANS CALLBACK (Auto Update with Security)
+     * 4. Callback Midtrans (Proses Status Pembayaran & Notifikasi Backend)
      */
     public function callback(Request $request)
     {
@@ -99,7 +160,7 @@ class PaymentController extends Controller
         $serverKey = env('MIDTRANS_SERVER_KEY');
         $signatureKey = $data['signature_key'] ?? '';
 
-        // 🛡️ SECURITY STEP 1: Verify Signature
+        // Langkah Keamanan 1: Verifikasi Tanda Tangan (Signature)
         $signature = hash('sha512', $externalId . $statusCode . $grossAmount . $serverKey);
 
         if ($signature !== $signatureKey) {
@@ -107,7 +168,7 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        // 🛡️ SECURITY STEP 2: Find Payment and Verify Amount
+        // Langkah Keamanan 2: Cari Pembayaran dan Verifikasi Jumlah Nominal
         $payment = Payment::where('external_id', $externalId)->first();
         if (!$payment) {
             return response()->json(['message' => 'Payment not found'], 404);
@@ -121,61 +182,36 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Amount mismatch'], 400);
         }
 
-        // Capture rich data from Midtrans
+        // Ambil data lengkap transaksi dari Midtrans
         $payment->midtrans_id = $data['transaction_id'] ?? null;
         $payment->payment_type = $data['payment_type'] ?? null;
         $payment->transaction_time = $data['transaction_time'] ?? null;
 
         $transactionStatus = $data['transaction_status'];
-        $newOrderStatus = null;
+        $paymentStatus = null;
 
         if ($transactionStatus == 'settlement' || $transactionStatus == 'capture') {
             $payment->status = 'paid';
-            $newOrderStatus = 5; // Paid
+            $paymentStatus = 'settled';
         } elseif ($transactionStatus == 'pending') {
             $payment->status = 'pending';
         } elseif ($transactionStatus == 'deny' || $transactionStatus == 'expire' || $transactionStatus == 'cancel') {
             $payment->status = 'failed';
-            $newOrderStatus = 9; // Cancelled
+            // Jangan batalkan pesanan secara otomatis jika pembayaran gagal (biarkan pelanggan mencoba lagi)
         }
 
         $payment->save();
 
-        // Notify Main Backend
-        if ($newOrderStatus) {
-            $this->notifyOrderService($payment->order_id, $newOrderStatus);
+        // Kirim notifikasi ke backend utama secara asinkron
+        if ($paymentStatus) {
+            \App\Jobs\NotifyOrderServiceJob::dispatch(
+                (int)$payment->order_id,
+                $paymentStatus,
+                (float)$payment->amount,
+                (string)$payment->external_id
+            );
         }
 
         return response()->json(['message' => 'Callback handled']);
-    }
-
-    private function notifyOrderService($orderId, $statusId)
-    {
-        try {
-            // Find the last payment for this order to get the amount
-            $payment = Payment::where('order_id', $orderId)->latest()->first();
-            
-            if (!$payment) return;
-
-            $response = Http::withHeaders([
-                'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key')
-            ])->patch(
-                env('MAIN_APP_URL', 'http://localhost:8000') . "/api/orders/" . $orderId . "/status",
-                [
-                    'status_id' => $statusId,
-                    'amount' => $payment->amount,
-                    'external_id' => $payment->external_id
-                ]
-            );
-
-            Log::info('ORDER SERVICE NOTIFIED', [
-                'status' => $response->status(),
-                'response' => $response->body(),
-                'order_id' => $orderId,
-                'new_status' => $statusId
-            ]);
-        } catch (\Exception $e) {
-            Log::error('FAILED TO NOTIFY ORDER SERVICE', ['error' => $e->getMessage()]);
-        }
     }
 }

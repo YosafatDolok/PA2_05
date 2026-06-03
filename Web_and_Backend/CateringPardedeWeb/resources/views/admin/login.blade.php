@@ -49,11 +49,6 @@
                 @error('password')
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror
-                @if (Route::has('password.request'))
-                    <div class="text-end">
-                        <a href="{{ route('password.request') }}" class="text-danger small text-decoration-none">Reset Password?</a>
-                    </div>
-                @endif
             </div>
 
             <button type="submit" class="btn btn-aura">

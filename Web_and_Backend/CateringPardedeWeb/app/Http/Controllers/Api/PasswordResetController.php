@@ -25,6 +25,18 @@ class PasswordResetController extends Controller
         }
 
         $email = $request->email;
+        $rateLimitKey = 'otp-send-reset-api:' . $email;
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
+            $minutes = ceil($seconds / 60);
+            return response()->json([
+                'message' => "Terlalu banyak permintaan OTP. Silakan coba lagi dalam {$minutes} menit."
+            ], 429);
+        }
+
+        \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 300);
+
         $user = User::where('email', $email)->first();
         
         // Generate 6-digit OTP

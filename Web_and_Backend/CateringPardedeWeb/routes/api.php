@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\AdminDashboardController;
 
 
 Route::post('/register/otp', [AuthController::class, 'requestRegistrationOtp']);
+Route::post('/register/resend-otp', [AuthController::class, 'resendRegistrationOtp']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/user/update', [ProfileController::class, 'update']); 
     Route::post('/user/fcm-token', [ProfileController::class, 'updateFcmToken']); 
+    Route::post('/user/password', [ProfileController::class, 'updatePassword']); 
     
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -80,4 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('internal.service')->group(function () {
     Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+    Route::get('/orders/{id}/billing', [OrderController::class, 'getBillingDetails']);
+    Route::post('/orders/{id}/payments', [OrderController::class, 'receivePaymentNotification']);
 });

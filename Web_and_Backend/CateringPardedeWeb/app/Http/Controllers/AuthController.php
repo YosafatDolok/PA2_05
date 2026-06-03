@@ -18,6 +18,19 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
+        $email = $validated['email'];
+        $rateLimitKey = 'otp-send-register:' . $email;
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
+            $minutes = ceil($seconds / 60);
+            return response()->json([
+                'message' => "Terlalu banyak permintaan OTP. Silakan coba lagi dalam {$minutes} menit."
+            ], 429);
+        }
+
+        \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 300);
+
         $otp = rand(100000, 999999);
 
         \Illuminate\Support\Facades\DB::table('pending_registrations')->updateOrInsert(
@@ -37,6 +50,54 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Kode verifikasi telah dikirim ke email Anda.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal mengirim email verifikasi.'], 500);
+        }
+    }
+
+    public function resendRegistrationOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|email',
+        ]);
+
+        $email = $validated['email'];
+        $pending = \Illuminate\Support\Facades\DB::table('pending_registrations')
+            ->where('email', $email)
+            ->first();
+
+        if (!$pending) {
+            return response()->json(['message' => 'Registrasi tidak ditemukan. Silakan isi form pendaftaran lagi.'], 404);
+        }
+
+        $rateLimitKey = 'otp-send-register:' . $email;
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
+            $minutes = ceil($seconds / 60);
+            return response()->json([
+                'message' => "Terlalu banyak permintaan OTP. Silakan coba lagi dalam {$minutes} menit."
+            ], 429);
+        }
+
+        \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 300);
+
+        $otp = rand(100000, 999999);
+
+        \Illuminate\Support\Facades\DB::table('pending_registrations')
+            ->where('email', $email)
+            ->update([
+                'otp_code' => $otp,
+                'expires_at' => \Carbon\Carbon::now()->addMinutes(5),
+                'updated_at' => \Carbon\Carbon::now(),
+            ]);
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\RegistrationOtpMail($otp, $pending->name));
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode verifikasi baru telah dikirim ke email Anda.'
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Gagal mengirim email verifikasi.'], 500);

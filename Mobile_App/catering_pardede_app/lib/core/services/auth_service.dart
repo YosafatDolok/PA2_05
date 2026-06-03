@@ -24,6 +24,24 @@ class AuthService {
     }
   }
 
+  static Future<Map<String, dynamic>> resendRegisterOtp(String email) async {
+    try {
+      final data = await ApiService.post(ApiEndpoints.registerResendOtp, {
+        'email': email,
+      });
+
+      return {
+        'success': true,
+        'message': data['message'],
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
   static Future<Map<String, dynamic>> register(
       String email, String otp) async {
     try {

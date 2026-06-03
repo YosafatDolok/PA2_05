@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../../core/utils/helpers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/tap_scale.dart';
@@ -17,9 +18,19 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   final List<TextEditingController> _controllers = List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
   bool _isLoading = false;
+  Timer? _timer;
+  int _secondsRemaining = 300;
+  bool _isResending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -27,6 +38,48 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       node.dispose();
     }
     super.dispose();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    setState(() {
+      _secondsRemaining = 300;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        setState(() {
+          _secondsRemaining--;
+        });
+      } else {
+        _timer?.cancel();
+      }
+    });
+  }
+
+  String _formatTime(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _resendOtp() async {
+    setState(() => _isResending = true);
+    try {
+      final data = await ApiService.post(ApiEndpoints.forgotPassword, {
+        'email': widget.email,
+      });
+      Helpers.showSnackBar(context, data['message'] ?? 'Kode verifikasi baru telah dikirim');
+      _startTimer();
+      for (var controller in _controllers) {
+        controller.clear();
+      }
+      _focusNodes[0].requestFocus();
+    } catch (e) {
+      final msg = e.toString().replaceAll('Exception: ', '');
+      Helpers.showSnackBar(context, msg);
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
   }
 
   Future<void> _verifyOtp() async {
@@ -86,7 +139,34 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
               children: List.generate(6, (index) => _otpBox(index)),
             ),
             
-            const SizedBox(height: 40),
+            const SizedBox(height: 25),
+            
+            Center(
+              child: _secondsRemaining > 0
+                  ? Text(
+                      "Kirim ulang kode dalam ${_formatTime(_secondsRemaining)}",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 15, fontWeight: FontWeight.w500),
+                    )
+                  : _isResending
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        )
+                      : TextButton(
+                          onPressed: _resendOtp,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          ),
+                          child: const Text(
+                            "Kirim Ulang OTP",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+            ),
+            
+            const SizedBox(height: 25),
             
             TapScale(
               onTap: _isLoading ? () {} : _verifyOtp,

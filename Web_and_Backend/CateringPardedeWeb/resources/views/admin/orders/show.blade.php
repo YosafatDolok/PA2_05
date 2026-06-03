@@ -253,9 +253,19 @@
                                 <p class="small text-muted mb-0 mt-2">Tidak ada tindakan lebih lanjut yang diperlukan.</p>
                             </div>
                         @elseif($order->status_id == 1) {{-- Pending --}}
-                            <button type="button" onclick="submitStatus(2)" class="btn btn-primary w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
-                                <i class="fas fa-check-circle mr-2"></i> KONFIRMASI & PROSES
-                            </button>
+                            @if($order->remaining_balance <= 0)
+                                <button type="button" onclick="submitStatus(2)" class="btn btn-primary w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
+                                    <i class="fas fa-check-circle mr-2"></i> KONFIRMASI & PROSES
+                                </button>
+                            @else
+                                <div class="alert alert-danger border-0 small text-center p-3 mb-3 rounded-3 shadow-sm" style="background: rgba(244, 67, 54, 0.1); border-left: 4px solid #f44336; color: #f44336;">
+                                    <i class="fas fa-lock mr-2 font-weight-bold"></i> <span class="font-weight-bold uppercase">MENUNGGU PEMBAYARAN ONLINE</span>
+                                    <p class="small text-muted mb-0 mt-1">Pelanggan belum menyelesaikan pembayaran. Proses dapur dan pengiriman terkunci.</p>
+                                </div>
+                                <button type="button" class="btn btn-secondary w-100 rounded-pill font-weight-bold py-3 mb-3" disabled title="Menunggu pembayaran online diselesaikan">
+                                    BELUM DIBAYAR
+                                </button>
+                            @endif
                             <button type="button" onclick="submitStatus(9)" class="btn btn-outline-danger w-100 rounded-pill btn-sm">
                                 <i class="fas fa-times-circle mr-1"></i> Batalkan Pesanan
                             </button>

@@ -29,9 +29,9 @@ class _PaymentWebViewState extends State<PaymentWebView> {
           onPageFinished: (url) {
             debugPrint("URL: $url");
 
-            // 🔥 DETEKSI JIKA PEMBAYARAN SELESAI
+            // Deteksi jika pembayaran berhasil diselesaikan
             if (url.contains("finish") || url.contains("success")) {
-              Navigator.pop(context, true); // kembali ke halaman sebelumnya dengan hasil true
+              Navigator.pop(context, true); // Kembali ke halaman sebelumnya dengan status berhasil
               
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Pembayaran sedang diproses...")),

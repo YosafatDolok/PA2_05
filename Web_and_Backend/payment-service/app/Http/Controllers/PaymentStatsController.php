@@ -11,10 +11,10 @@ class PaymentStatsController extends Controller
 {
     public function getSummary()
     {
-        // 1. Total Revenue (Lifetime)
+        // 1. Total Pendapatan (Sepanjang Masa)
         $totalRevenue = Payment::where('status', 'paid')->sum('amount');
 
-        // 2. Revenue Growth (This Month vs Last Month)
+        // 2. Pertumbuhan Pendapatan (Bulan Ini vs Bulan Lalu)
         $thisMonth = Carbon::now()->startOfMonth();
         $lastMonth = Carbon::now()->subMonth()->startOfMonth();
 
@@ -34,11 +34,10 @@ class PaymentStatsController extends Controller
             $growth = 100;
         }
 
-        // 3. Monthly Data (Last 12 Months)
+        // 3. Data Bulanan (12 Bulan Terakhir)
         $monthlyData = Payment::select(
             DB::raw('SUM(amount) as total'),
-            DB::raw("strftime('%m', created_at) as month_num"),
-            DB::raw("strftime('%M', created_at) as month_name") // This is for SQLite
+            DB::raw("strftime('%m', created_at) as month_num")
         )
             ->where('status', 'paid')
             ->where('created_at', '>=', Carbon::now()->subMonths(11)->startOfMonth())
@@ -46,8 +45,8 @@ class PaymentStatsController extends Controller
             ->orderBy('month_num')
             ->get()
             ->map(function($item) {
-                // Convert month number to Name
-                $monthName = Carbon::create()->month($item->month_num)->format('F');
+                // Ubah angka bulan menjadi nama bulan
+                $monthName = Carbon::create()->month((int)$item->month_num)->format('F');
                 return [
                     'month' => $monthName,
                     'total' => (float)$item->total
