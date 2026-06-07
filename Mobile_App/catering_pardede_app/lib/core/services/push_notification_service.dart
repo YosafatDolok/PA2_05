@@ -11,10 +11,12 @@ class PushNotificationService {
   
   // Single source of truth for notification count
   static final ValueNotifier<int> unreadCount = ValueNotifier<int>(0);
+  static final ValueNotifier<int> unreadChatCount = ValueNotifier<int>(0);
 
   static Future<void> initialize() async {
     // Fetch initial count
     updateUnreadCount();
+    updateUnreadChatCount();
 
     // Request permission for Android 13+ and iOS
     NotificationSettings settings = await _fcm.requestPermission(
@@ -53,6 +55,7 @@ class PushNotificationService {
 
       // Always update count when message arrives
       updateUnreadCount();
+      updateUnreadChatCount();
 
       if (message.notification != null) {
         final context = navigatorKey.currentContext;
@@ -66,16 +69,29 @@ class PushNotificationService {
                   final orderId = message.data['order_id'];
                   
                   if (orderId != null) {
-                    if (type == 'driver_assignment') {
-                      navigatorKey.currentState?.pushNamed(
-                        '/driver-order-detail',
-                        arguments: int.parse(orderId.toString()),
-                      );
-                    } else if (type == 'order_status' || type == 'order_price') {
-                      navigatorKey.currentState?.pushNamed(
-                        '/order-detail',
-                        arguments: int.parse(orderId.toString()),
-                      );
+                    final parsedId = int.tryParse(orderId.toString());
+                    if (parsedId != null) {
+                      if (type == 'driver_assignment') {
+                        navigatorKey.currentState?.pushNamed(
+                          '/driver-order-detail',
+                          arguments: parsedId,
+                        );
+                      } else if (type == 'order_status' || type == 'order_price') {
+                        navigatorKey.currentState?.pushNamed(
+                          '/order-detail',
+                          arguments: parsedId,
+                        );
+                      } else if (type == 'order_chat') {
+                        navigatorKey.currentState?.pushNamed(
+                          '/order-chat',
+                          arguments: parsedId,
+                        );
+                      } else if (type == 'delivery_chat') {
+                        navigatorKey.currentState?.pushNamed(
+                          '/delivery-chat',
+                          arguments: parsedId,
+                        );
+                      }
                     }
                   }
                 },
@@ -124,16 +140,65 @@ class PushNotificationService {
       final orderId = message.data['order_id'];
 
       if (orderId != null) {
-        if (type == 'driver_assignment') {
-          navigatorKey.currentState?.pushNamed(
-            '/driver-order-detail',
-            arguments: int.parse(orderId.toString()),
-          );
-        } else if (type == 'order_status') {
-          navigatorKey.currentState?.pushNamed(
-            '/order-detail',
-            arguments: int.parse(orderId.toString()),
-          );
+        final parsedId = int.tryParse(orderId.toString());
+        if (parsedId != null) {
+          if (type == 'driver_assignment') {
+            navigatorKey.currentState?.pushNamed(
+              '/driver-order-detail',
+              arguments: parsedId,
+            );
+          } else if (type == 'order_status' || type == 'order_price') {
+            navigatorKey.currentState?.pushNamed(
+              '/order-detail',
+              arguments: parsedId,
+            );
+          } else if (type == 'order_chat') {
+            navigatorKey.currentState?.pushNamed(
+              '/order-chat',
+              arguments: parsedId,
+            );
+          } else if (type == 'delivery_chat') {
+            navigatorKey.currentState?.pushNamed(
+              '/delivery-chat',
+              arguments: parsedId,
+            );
+          }
+        }
+      }
+    });
+
+    // Handle notification click when app is terminated
+    _fcm.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        debugPrint('Terminated app launched from notification: ${message.data}');
+        final type = message.data['type'];
+        final orderId = message.data['order_id'];
+
+        if (orderId != null) {
+          final parsedId = int.tryParse(orderId.toString());
+          if (parsedId != null) {
+            if (type == 'driver_assignment') {
+              navigatorKey.currentState?.pushNamed(
+                '/driver-order-detail',
+                arguments: parsedId,
+              );
+            } else if (type == 'order_status' || type == 'order_price') {
+              navigatorKey.currentState?.pushNamed(
+                '/order-detail',
+                arguments: parsedId,
+              );
+            } else if (type == 'order_chat') {
+              navigatorKey.currentState?.pushNamed(
+                '/order-chat',
+                arguments: parsedId,
+              );
+            } else if (type == 'delivery_chat') {
+              navigatorKey.currentState?.pushNamed(
+                '/delivery-chat',
+                arguments: parsedId,
+              );
+            }
+          }
         }
       }
     });
@@ -169,6 +234,17 @@ class PushNotificationService {
       unreadCount.value = data['unread_count'] ?? 0;
     } catch (e) {
       debugPrint('Error updating unread count: $e');
+    }
+  }
+  static Future<void> updateUnreadChatCount() async {
+    try {
+      final token = await LocalStorage.getToken();
+      if (token == null) return;
+
+      final data = await ApiService.get(ApiEndpoints.unreadChatCount);
+      unreadChatCount.value = data['unread_count'] ?? 0;
+    } catch (e) {
+      debugPrint('Error updating unread chat count: $e');
     }
   }
 }

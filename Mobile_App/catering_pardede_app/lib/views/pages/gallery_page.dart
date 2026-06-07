@@ -6,6 +6,7 @@ import '/core/services/api_service.dart';
 import '/core/constants/api_endpoints.dart';
 import '/models/gallery_model.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/helpers.dart';
 
 class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key});
@@ -164,7 +165,8 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   void _openLightbox(BuildContext context, String imageUrl, String? description, int id) {
-    Navigator.of(context).push(
+    Helpers.pushSafe(
+      context,
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.black.withValues(alpha: 0.95),

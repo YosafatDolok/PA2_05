@@ -12,6 +12,7 @@ import '../../core/storage/local_storage.dart';
 import '../../models/menu_model.dart';
 import '../widgets/order_form_sheet.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/utils/helpers.dart';
 
 class OrderPage extends StatefulWidget {
   final VoidCallback? onMenuRequested;
@@ -192,7 +193,7 @@ class OrderPageState extends State<OrderPage> {
     
     return TapScale(
       onTap: () async {
-        await Navigator.pushNamed(context, '/order-detail', arguments: order);
+        await Helpers.pushNamedSafe(context, '/order-detail', arguments: order);
         _fetchOrders();
       },
       child: Container(
@@ -432,7 +433,7 @@ class OrderPageState extends State<OrderPage> {
             Text('Masuk untuk melihat riwayat perjalanan kuliner Anda bersama kami.', textAlign: TextAlign.center, style: TextStyle(color: Colors.brown[300], fontSize: 14, height: 1.5)),
             const SizedBox(height: 40),
             TapScale(
-              onTap: () => Navigator.pushNamed(context, '/login'),
+              onTap: () => Helpers.pushNamedSafe(context, '/login'),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                 decoration: BoxDecoration(

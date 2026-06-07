@@ -31,7 +31,7 @@
                                     $lastMessage = $order->messages->first();
                                     $isUnread = $order->unread_messages_count > 0;
                                 @endphp
-                                <tr class="inbox-row {{ $isUnread ? 'unread-thread' : '' }}">
+                                <tr class="inbox-row {{ $isUnread ? 'unread-thread' : '' }}" id="order-row-{{ $order->order_id }}">
                                     <td class="ps-4 py-4 rounded-start">
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-container position-relative" style="margin-right: 35px;">
@@ -42,13 +42,13 @@
                                             <div class="lh-sm">
                                                 <div class="font-weight-bold text-white fs-6 mb-1">{{ $order->user->name }}</div>
                                                 <div class="text-muted extra-small d-flex align-items-center">
-                                                    <i class="far fa-clock mr-2 opacity-70"></i> {{ $lastMessage->created_at->diffForHumans() }}
+                                                    <i class="far fa-clock mr-2 opacity-70"></i> <span id="time-diff-{{ $order->order_id }}">{{ $lastMessage->created_at->diffForHumans() }}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="py-4">
-                                        <div class="message-preview">
+                                        <div class="message-preview" id="preview-text-{{ $order->order_id }}">
                                             @if($lastMessage->sender_id == auth()->id())
                                                 <span class="text-secondary-light font-weight-bold">You: </span>
                                             @endif
@@ -59,16 +59,17 @@
                                         <div class="text-white small font-weight-bold">#ORD-{{ str_pad($order->order_id, 5, '0', STR_PAD_LEFT) }}</div>
                                         <div class="text-muted extra-small">{{ $order->items->count() }} items ordered</div>
                                     </td>
-                                    <td class="py-4">
+                                    <td class="py-4" id="status-cell-{{ $order->order_id }}">
                                         <div class="d-flex align-items-center">
                                             <span class="badge badge-aura-status {{ strtolower(str_replace(' ', '-', $order->status->status_name)) }}">
                                                 {{ strtoupper($order->status->status_name) }}
                                             </span>
                                             @if($isUnread)
-                                                <span class="badge bg-crimson pulse-mini ms-2">NEW</span>
+                                                <span class="badge bg-crimson pulse-mini ms-2 unread-badge">NEW</span>
                                             @endif
                                         </div>
                                     </td>
+
                                     <td class="text-center py-4 rounded-end">
                                         <a href="{{ route('orders.chat', $order->order_id) }}" class="btn btn-primary btn-sm rounded-pill px-4 shadow-crimson-sm hover-scale">
                                             <i class="fas fa-comment-dots mr-2"></i> OPEN CHAT
@@ -178,4 +179,72 @@
         box-shadow: 0 4px 15px rgba(255, 51, 75, 0.2);
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderRows = document.querySelectorAll('.inbox-row');
+        const orderIds = Array.from(orderRows).map(row => row.id.replace('order-row-', ''));
+
+        const initEchoInbox = () => {
+            if (typeof window.Echo === 'undefined') {
+                console.warn('Echo is not initialized yet. Retrying...');
+                setTimeout(initEchoInbox, 500);
+                return;
+            }
+
+            console.log('Subscribing to inbox channels for orders:', orderIds);
+            orderIds.forEach(orderId => {
+                window.Echo.private(`order.${orderId}`)
+                    .listen('.message.sent', (data) => {
+                        console.log('Inbox update for order ' + orderId + ':', data);
+                        
+                        const row = document.getElementById(`order-row-${orderId}`);
+                        if (!row) return;
+
+                        // 1. Update latest message text
+                        const previewDiv = document.getElementById(`preview-text-${orderId}`);
+                        if (previewDiv) {
+                            const isMe = data.sender_id == {{ auth()->id() }};
+                            previewDiv.innerHTML = `
+                                ${isMe ? '<span class="text-secondary-light font-weight-bold">You: </span>' : ''}
+                                ${data.message}
+                            `;
+                        }
+
+                        // 2. Update time difference
+                        const timeSpan = document.getElementById(`time-diff-${orderId}`);
+                        if (timeSpan) {
+                            timeSpan.textContent = 'Just now';
+                        }
+
+                        // 3. Mark thread as unread (if message from client)
+                        const isMe = data.sender_id == {{ auth()->id() }};
+                        if (!isMe) {
+                            row.classList.add('unread-thread');
+                            
+                            // Check if unread badge exists, otherwise create it
+                            const statusCell = document.getElementById(`status-cell-${orderId}`);
+                            if (statusCell) {
+                                const container = statusCell.querySelector('.d-flex');
+                                if (container && !container.querySelector('.unread-badge')) {
+                                    container.insertAdjacentHTML('beforeend', '<span class="badge bg-crimson pulse-mini ms-2 unread-badge">NEW</span>');
+                                }
+                            }
+                        }
+
+                        // 4. Move row to the top of the table list
+                        const tbody = row.closest('tbody');
+                        if (tbody) {
+                            tbody.prepend(row);
+                        }
+                    });
+            });
+        };
+
+        if (orderIds.length > 0) {
+            initEchoInbox();
+        }
+    });
+</script>
 @endpush
+

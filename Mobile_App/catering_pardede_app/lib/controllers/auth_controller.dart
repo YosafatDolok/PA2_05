@@ -22,7 +22,9 @@ class AuthController {
         PushNotificationService.syncToken();
 
         if (role == 'admin') {
-          Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+          await AuthService.logout();
+          Helpers.showSnackBar(context, 'Login admin via aplikasi dinonaktifkan sementara.');
+          return;
         } else if (role == 'driver') {
           Navigator.pushNamedAndRemoveUntil(context, '/driver-dashboard', (route) => false);
         } else {
@@ -51,7 +53,7 @@ class AuthController {
     if (result['success']) {
       Helpers.showSnackBar(context, result['message'] ?? 'Kode verifikasi telah dikirim');
       if (context.mounted) {
-        Navigator.pushNamed(context, '/registration-otp', arguments: {
+        Helpers.pushNamedSafe(context, '/registration-otp', arguments: {
           'email': email,
         });
       }
@@ -94,7 +96,9 @@ class AuthController {
       PushNotificationService.syncToken();
 
       if (role == 'admin') {
-        Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+        await AuthService.logout();
+        Helpers.showSnackBar(context, 'Akses admin via aplikasi dinonaktifkan.');
+        return;
       } else if (role == 'driver') {
         Navigator.pushNamedAndRemoveUntil(context, '/driver-dashboard', (route) => false);
       } else {

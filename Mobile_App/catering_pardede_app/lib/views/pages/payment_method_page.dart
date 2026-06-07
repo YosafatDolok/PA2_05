@@ -47,7 +47,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
       // 3. Buka halaman pembayaran Midtrans di WebView
       if (mounted) {
-        final result = await Navigator.push(
+        final result = await Helpers.pushSafe(
           context,
           MaterialPageRoute(
             builder: (_) => PaymentWebView(snapToken: snapToken),
@@ -59,11 +59,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
           Navigator.pop(context, true); // Kembali ke rincian pesanan dan segarkan halaman
         }
       }
-
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Gagal bayar: $e")),
-      );
+      Helpers.showSnackBar(context, "Gagal bayar: $e");
     }
 
     setState(() => isLoading = false);
@@ -157,7 +154,6 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                   ),
                   const SizedBox(height: 16),
                   _buildMethod("Midtrans (All Payment)", "midtrans", Icons.payments_rounded),
-                  _buildMethod("E-Wallet", "ewallet", Icons.account_balance_wallet_rounded),
                   
                   const SizedBox(height: 40),
                   

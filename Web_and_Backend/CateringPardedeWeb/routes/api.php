@@ -44,18 +44,31 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    // Pusher/Reverb Auth for API
+    Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
+        return \Illuminate\Support\Facades\Broadcast::auth($request);
+    });
+
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/orders/{id}/request-cancel', [OrderController::class, 'requestCancel']);
     Route::post('/orders/{id}/review', [ReviewController::class, 'store']);
+    Route::patch('/orders/{id}/review', [ReviewController::class, 'update']);
+    Route::delete('/orders/{id}/review', [ReviewController::class, 'destroy']);
 
     // Order Messaging
+    Route::get('/messages/unread-count', [OrderMessageController::class, 'unreadCount']);
     Route::get('/orders/{order}/messages', [OrderMessageController::class, 'index']);
     Route::post('/orders/{order}/messages', [OrderMessageController::class, 'store']);
     Route::post('/orders/{order}/messages/read', [OrderMessageController::class, 'markAsRead']);
     Route::post('/orders/{order}/messages/{message}/accept', [OrderMessageController::class, 'acceptProposal']);
+
+    // Delivery Messaging
+    Route::get('/orders/{order}/delivery-messages', [\App\Http\Controllers\Api\DeliveryChatController::class, 'index']);
+    Route::post('/orders/{order}/delivery-messages', [\App\Http\Controllers\Api\DeliveryChatController::class, 'store']);
+    Route::post('/orders/{order}/delivery-messages/read', [\App\Http\Controllers\Api\DeliveryChatController::class, 'markAsRead']);
     
     // Admin Inbox
     Route::get('/admin/inbox', [\App\Http\Controllers\Api\AdminChatController::class, 'inbox']);

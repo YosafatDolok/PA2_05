@@ -77,7 +77,7 @@ class _NotificationPageState extends State<NotificationPage> {
         final response = await ApiService.get("${ApiEndpoints.orders}/${notification.relatedId}");
         final order = OrderModel.fromJson(response);
         if (mounted) {
-          Navigator.pushNamed(context, '/order-detail', arguments: order);
+          Helpers.pushNamedSafe(context, '/order-detail', arguments: order);
         }
       } catch (e) {
         if (mounted) {
@@ -135,34 +135,89 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
+  Map<String, dynamic> _getSemanticStyle(NotificationModel notification) {
+    final title = notification.title.toLowerCase();
+    final message = (notification.message ?? '').toLowerCase();
+    final bool unread = !notification.isRead;
+
+    IconData iconData = Icons.notifications_rounded;
+    Color iconColor = AppColors.primary;
+    Color bgColor = AppColors.primary.withValues(alpha: 0.1);
+
+    if (title.contains('harga') || message.contains('harga') || message.contains('rp')) {
+      iconData = Icons.request_quote_rounded;
+      iconColor = AppColors.secondary;
+      bgColor = AppColors.secondary.withValues(alpha: 0.15);
+    } else if (title.contains('batal') || message.contains('batal')) {
+      iconData = Icons.cancel_rounded;
+      iconColor = const Color(0xFFE53935); // Crimson Red
+      bgColor = const Color(0xFFFFEBEE);
+    } else if (message.contains('paid') || message.contains('bayar') || message.contains('lunas')) {
+      iconData = Icons.payments_rounded;
+      iconColor = const Color(0xFF2E7D32); // Emerald Green
+      bgColor = const Color(0xFFE8F5E9);
+    } else if (message.contains('delivery') || message.contains('kirim') || message.contains('jalan')) {
+      iconData = Icons.local_shipping_rounded;
+      iconColor = const Color(0xFF1565C0); // Royal Blue
+      bgColor = const Color(0xFFE3F2FD);
+    } else if (message.contains('preparing') || message.contains('masak') || message.contains('proses') || message.contains('siap')) {
+      iconData = Icons.restaurant_rounded;
+      iconColor = const Color(0xFFEF6C00); // Orange
+      bgColor = const Color(0xFFFFF3E0);
+    } else if (notification.type == 'order_status') {
+      iconData = Icons.shopping_bag_rounded;
+      iconColor = AppColors.primary;
+      bgColor = AppColors.primary.withValues(alpha: 0.1);
+    }
+
+    if (!unread) {
+      iconColor = iconColor.withValues(alpha: 0.6);
+      bgColor = bgColor.withValues(alpha: 0.4);
+    }
+
+    return {
+      'icon': iconData,
+      'color': iconColor,
+      'bg': bgColor,
+    };
+  }
+
   Widget _notificationCard(NotificationModel notification) {
     final bool unread = !notification.isRead;
+    final semantic = _getSemanticStyle(notification);
 
     return TapScale(
       onTap: () => _handleTap(notification),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: unread ? Colors.white : Colors.white.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: unread ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent),
+          color: unread ? Colors.white : const Color(0xFFFCFAF7),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: unread ? AppColors.primary.withValues(alpha: 0.15) : const Color(0xFFEFEFEF),
+            width: 1.5,
+          ),
           boxShadow: [
-            if (unread) BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: unread ? 0.05 : 0.02),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: unread ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey[100],
+                color: semantic['bg'],
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                notification.type == 'order_status' ? Icons.shopping_bag_rounded : Icons.info_rounded,
-                color: unread ? AppColors.primary : Colors.grey,
-                size: 20,
+                semantic['icon'],
+                color: semantic['color'],
+                size: 22,
               ),
             ),
             const SizedBox(width: 16),
@@ -171,41 +226,60 @@ class _NotificationPageState extends State<NotificationPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        notification.title,
-                        style: TextStyle(
-                          fontWeight: unread ? FontWeight.w900 : FontWeight.bold,
-                          fontSize: 14,
-                          color: unread ? AppColors.primary : Colors.black87,
+                      Expanded(
+                        child: Text(
+                          notification.title,
+                          style: TextStyle(
+                            fontWeight: unread ? FontWeight.w900 : FontWeight.bold,
+                            fontSize: 15,
+                            color: unread ? AppColors.primary : const Color(0xFF2D0A0A),
+                          ),
                         ),
                       ),
-                      Text(
-                        "${notification.createdAt.hour}:${notification.createdAt.minute.toString().padLeft(2, '0')}",
-                        style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: unread ? AppColors.primary.withValues(alpha: 0.08) : const Color(0xFFF1F1F1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          "${notification.createdAt.hour.toString().padLeft(2, '0')}:${notification.createdAt.minute.toString().padLeft(2, '0')}",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: unread ? AppColors.primary : Colors.grey.shade600,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     notification.message ?? "",
                     style: TextStyle(
-                      fontSize: 12,
-                      color: unread ? Colors.black54 : Colors.grey,
-                      height: 1.4,
+                      fontSize: 13,
+                      color: unread ? Colors.black87 : Colors.grey.shade600,
+                      height: 1.5,
                     ),
                   ),
                 ],
               ),
             ),
-            if (unread)
+            if (unread) ...[
+              const SizedBox(width: 12),
               Container(
-                margin: const EdgeInsets.only(left: 8, top: 4),
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                margin: const EdgeInsets.only(top: 6),
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: AppColors.secondary,
+                  shape: BoxShape.circle,
+                ),
               ),
+            ],
           ],
         ),
       ),

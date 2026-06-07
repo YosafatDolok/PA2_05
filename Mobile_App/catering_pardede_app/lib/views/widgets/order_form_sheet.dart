@@ -28,9 +28,10 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   double? _latitude;
   double? _longitude;
   bool _isSubmitting = false;
+  String? _peopleWarning;
 
   Future<void> _pickOnMap() async {
-    final result = await Navigator.pushNamed(context, '/map-picker');
+    final result = await Helpers.pushNamedSafe(context, '/map-picker');
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _addressController.text = result['address'];
@@ -148,7 +149,38 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildLabel("Jumlah Orang"),
-                      _buildTextField(_peopleController, "Contoh: 100", keyboardType: TextInputType.number),
+                      _buildTextField(
+                        _peopleController, 
+                        "Contoh: 100", 
+                        keyboardType: TextInputType.number,
+                        hasError: _peopleWarning != null,
+                        onChanged: (val) {
+                          final int? count = int.tryParse(val);
+                          setState(() {
+                            if (val.isEmpty) {
+                              _peopleWarning = null;
+                            } else if (count == null) {
+                              _peopleWarning = "Masukkan angka";
+                            } else if (count < 20) {
+                              _peopleWarning = "Min. 20 pax";
+                            } else if (count > 1000) {
+                              _peopleWarning = "Maks. 1000 pax";
+                            } else {
+                              _peopleWarning = null;
+                            }
+                          });
+                        },
+                      ),
+                      if (_peopleWarning != null) ...[
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            _peopleWarning!,
+                            style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -193,25 +225,42 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   }
 
   Widget _buildTextField(TextEditingController controller, String hint,
-      {int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+      {int maxLines = 1, TextInputType keyboardType = TextInputType.text, ValueChanged<String>? onChanged, bool hasError = false}) {
+    final borderColor = hasError ? Colors.red : Colors.grey.shade300;
+    final focusedBorderColor = hasError ? Colors.red : AppColors.primary;
     return TextField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
         contentPadding: const EdgeInsets.all(16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: borderColor)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: focusedBorderColor, width: hasError ? 2 : 1)),
       ),
     );
   }
 
   Future<void> _submitOrder() async {
-    if (_addressController.text.isEmpty || _selectedDate == null || _peopleController.text.isEmpty || _latitude == null) {
+    if (_addressController.text.isEmpty || _latitude == null) {
       Helpers.showSnackBar(context, 'Mohon pilih lokasi di peta');
+      return;
+    }
+    if (_selectedDate == null) {
+      Helpers.showSnackBar(context, 'Mohon pilih tanggal acara');
+      return;
+    }
+    if (_peopleController.text.isEmpty) {
+      Helpers.showSnackBar(context, 'Mohon masukkan jumlah orang');
+      return;
+    }
+    
+    final int? people = int.tryParse(_peopleController.text);
+    if (people == null || people < 20 || people > 1000) {
+      Helpers.showSnackBar(context, 'Jumlah orang harus di antara 20 dan 1000 pax');
       return;
     }
 
@@ -259,7 +308,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
             if (shellState != null) {
               shellState.setIndex(2);
             } else {
-              Navigator.pushNamed(context, '/order');
+              Helpers.pushNamedSafe(context, '/order');
             }
           }
         );

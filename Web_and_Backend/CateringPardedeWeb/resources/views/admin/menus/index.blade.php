@@ -9,12 +9,12 @@
             <h2 class="m-0 font-weight-bold">Menu List</h2>
             <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage your dishes and items</p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('menus.trashed') }}" class="btn btn-outline-secondary rounded-pill px-4">
-                <i class="fas fa-trash-arrow-up me-2"></i> VIEW TRASH
+        <div class="d-flex align-items-center">
+            <a href="{{ route('menus.trashed') }}" class="btn btn-outline-primary rounded-pill px-4 mr-2">
+                <i class="fas fa-trash-arrow-up mr-2"></i> VIEW TRASH
             </a>
             <a href="{{ route('menus.create') }}" class="btn btn-primary rounded-pill px-4">
-                <i class="fas fa-plus me-2"></i> ADD NEW MENU
+                <i class="fas fa-plus mr-2"></i> ADD NEW MENU
             </a>
         </div>
     </div>

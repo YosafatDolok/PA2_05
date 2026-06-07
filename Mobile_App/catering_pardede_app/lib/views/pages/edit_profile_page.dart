@@ -8,6 +8,7 @@ import '../widgets/tap_scale.dart';
 import '../../core/utils/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../widgets/custom_header.dart';
 
 class EditProfilePage extends StatefulWidget {
   final UserModel user;
@@ -83,60 +84,57 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Edit Profil", 
-          style: TextStyle(color: Color(0xFF2D0A0A), fontWeight: FontWeight.w900, fontSize: 18)
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _EntranceAnimation(delay: 0, child: _buildAvatarSection()),
-              const SizedBox(height: 48),
-              _EntranceAnimation(delay: 1, child: _buildLabel("NAMA LENGKAP")),
-              _EntranceAnimation(delay: 2, child: _buildBoutiqueField(_nameController, "Contoh: Budi Santoso", Icons.person_rounded)),
-              const SizedBox(height: 24),
-              _EntranceAnimation(delay: 3, child: _buildLabel("ALAMAT EMAIL")),
-              _EntranceAnimation(delay: 4, child: _buildBoutiqueField(_emailController, "budi@example.com", Icons.email_rounded, keyboardType: TextInputType.emailAddress, isVerified: true)),
-              const SizedBox(height: 24),
-              _EntranceAnimation(delay: 5, child: _buildLabel("NOMOR TELEPON")),
-              _EntranceAnimation(delay: 6, child: _buildBoutiqueField(_phoneController, "08123456789", Icons.phone_android_rounded, keyboardType: TextInputType.phone)),
-              const SizedBox(height: 24),
-              _EntranceAnimation(
-                delay: 7,
-                child: Center(
-                  child: TextButton.icon(
-                    onPressed: () => _showChangePasswordSheet(context),
-                    icon: const Icon(Icons.lock_reset_rounded, color: AppColors.secondary, size: 20),
-                    label: const Text(
-                      "GANTI PASSWORD",
-                      style: TextStyle(
-                        color: AppColors.secondary,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        letterSpacing: 1,
+      body: Column(
+        children: [
+          const CustomHeader(
+            title: "EDIT PROFIL",
+            showIcons: false,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _EntranceAnimation(delay: 0, child: _buildAvatarSection()),
+                    const SizedBox(height: 48),
+                    _EntranceAnimation(delay: 1, child: _buildLabel("NAMA LENGKAP")),
+                    _EntranceAnimation(delay: 2, child: _buildBoutiqueField(_nameController, "Contoh: Budi Santoso", Icons.person_rounded)),
+                    const SizedBox(height: 24),
+                    _EntranceAnimation(delay: 3, child: _buildLabel("ALAMAT EMAIL")),
+                    _EntranceAnimation(delay: 4, child: _buildBoutiqueField(_emailController, "budi@example.com", Icons.email_rounded, keyboardType: TextInputType.emailAddress, isVerified: true)),
+                    const SizedBox(height: 24),
+                    _EntranceAnimation(delay: 5, child: _buildLabel("NOMOR TELEPON")),
+                    _EntranceAnimation(delay: 6, child: _buildBoutiqueField(_phoneController, "08123456789", Icons.phone_android_rounded, keyboardType: TextInputType.phone)),
+                    const SizedBox(height: 24),
+                    _EntranceAnimation(
+                      delay: 7,
+                      child: Center(
+                        child: TextButton.icon(
+                          onPressed: () => _showChangePasswordSheet(context),
+                          icon: const Icon(Icons.lock_reset_rounded, color: AppColors.secondary, size: 20),
+                          label: const Text(
+                            "GANTI PASSWORD",
+                            style: TextStyle(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 36),
+                    _EntranceAnimation(delay: 8, child: _buildSaveButton()),
+                  ],
                 ),
               ),
-              const SizedBox(height: 36),
-              _EntranceAnimation(delay: 8, child: _buildSaveButton()),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

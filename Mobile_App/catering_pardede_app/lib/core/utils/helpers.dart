@@ -28,27 +28,52 @@ class Helpers {
   static void showSnackBar(
     BuildContext context, 
     String message, {
+    bool? isError,
     String? actionLabel,
     VoidCallback? onAction,
   }) {
+    // Clean up technical exception messages
+    final cleanMessage = message
+        .replaceAll('Exception: ', '')
+        .replaceAll('exception: ', '')
+        .replaceAll('Exception', '')
+        .replaceAll('exception', '');
+
     // Smart detection for colors
-    final isSuccess = message.toLowerCase().contains('berhasil') || 
-                      message.toLowerCase().contains('sukses') ||
-                      message.toLowerCase().contains('ditambahkan');
+    final lowercaseMessage = cleanMessage.toLowerCase();
+    final errorState = isError ?? !(
+      lowercaseMessage.contains('berhasil') || 
+      lowercaseMessage.contains('sukses') ||
+      lowercaseMessage.contains('ditambahkan') ||
+      lowercaseMessage.contains('dikirim') ||
+      lowercaseMessage.contains('diperbarui') ||
+      lowercaseMessage.contains('diterima') ||
+      lowercaseMessage.contains('dihapus') ||
+      lowercaseMessage.contains('dibatalkan') ||
+      lowercaseMessage.contains('ditunjuk') ||
+      lowercaseMessage.contains('aktif') ||
+      lowercaseMessage.contains('dibuat')
+    );
     
-    if (isSuccess) {
-      AppAlerts.showSuccess(context, message, actionLabel: actionLabel, onAction: onAction);
+    if (!errorState) {
+      AppAlerts.showSuccess(context, cleanMessage, actionLabel: actionLabel, onAction: onAction);
     } else {
-      AppAlerts.showToast(context, message, isError: true, actionLabel: actionLabel, onAction: onAction);
+      AppAlerts.showToast(context, cleanMessage, isError: true, actionLabel: actionLabel, onAction: onAction);
     }
   }
 
   /// Use this for critical errors that need user attention
   static void showErrorDialog(BuildContext context, String title, String message, {VoidCallback? onConfirm}) {
+    final cleanMessage = message
+        .replaceAll('Exception: ', '')
+        .replaceAll('exception: ', '')
+        .replaceAll('Exception', '')
+        .replaceAll('exception', '');
+
     AppAlerts.showDialogError(
       context: context,
       title: title,
-      message: message,
+      message: cleanMessage,
       onConfirm: onConfirm,
     );
   }
@@ -78,5 +103,33 @@ class Helpers {
       confirmText: confirmText,
       onConfirm: onConfirm,
     );
+  }
+
+  static DateTime? _lastNavigatedTime;
+
+  /// Safely pushes a named route, debouncing rapid taps within 500ms.
+  static Future<T?> pushNamedSafe<T>(
+    BuildContext context, 
+    String routeName, {
+    Object? arguments,
+  }) async {
+    final now = DateTime.now();
+    if (_lastNavigatedTime != null && 
+        now.difference(_lastNavigatedTime!).inMilliseconds < 500) {
+      return null;
+    }
+    _lastNavigatedTime = now;
+    return Navigator.pushNamed<T>(context, routeName, arguments: arguments);
+  }
+
+  /// Safely pushes a direct Route route, debouncing rapid taps within 500ms.
+  static Future<T?> pushSafe<T>(BuildContext context, Route<T> route) async {
+    final now = DateTime.now();
+    if (_lastNavigatedTime != null && 
+        now.difference(_lastNavigatedTime!).inMilliseconds < 500) {
+      return null;
+    }
+    _lastNavigatedTime = now;
+    return Navigator.push<T>(context, route);
   }
 }

@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/services/order_service.dart';
+import '../../../models/review_model.dart';
 import '../../core/utils/helpers.dart';
 import 'star_rating.dart';
 import 'tap_scale.dart';
 
 class ReviewSheet extends StatefulWidget {
   final int orderId;
-  const ReviewSheet({super.key, required this.orderId});
+  final ReviewModel? existingReview;
+  const ReviewSheet({super.key, required this.orderId, this.existingReview});
 
   @override
   State<ReviewSheet> createState() => _ReviewSheetState();
@@ -19,6 +21,15 @@ class _ReviewSheetState extends State<ReviewSheet> {
   final TextEditingController _commentController = TextEditingController();
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingReview != null) {
+      _rating = widget.existingReview!.rating;
+      _commentController.text = widget.existingReview!.comment ?? '';
+    }
+  }
+
   Future<void> _submitReview() async {
     if (_rating == 0) {
       Helpers.showSnackBar(context, 'Pilih bintang terlebih dahulu');
@@ -27,18 +38,25 @@ class _ReviewSheetState extends State<ReviewSheet> {
 
     setState(() => _isLoading = true);
     try {
-      final result = await OrderService.submitReview(
-        widget.orderId,
-        _rating,
-        _commentController.text,
-      );
+      final isEditing = widget.existingReview != null;
+      final result = isEditing
+          ? await OrderService.editReview(
+              widget.orderId,
+              _rating,
+              _commentController.text,
+            )
+          : await OrderService.submitReview(
+              widget.orderId,
+              _rating,
+              _commentController.text,
+            );
 
       if (mounted) {
         if (result['success']) {
           Navigator.pop(context, true); // Return true to refresh UI
-          Helpers.showSnackBar(context, result['message'] ?? 'Ulasan dikirim');
+          Helpers.showSnackBar(context, result['message'] ?? (isEditing ? 'Ulasan diperbarui' : 'Ulasan dikirim'));
         } else {
-          Helpers.showSnackBar(context, result['message'] ?? 'Gagal mengirim ulasan');
+          Helpers.showSnackBar(context, result['message'] ?? 'Gagal memproses ulasan');
         }
       }
     } catch (e) {
@@ -154,10 +172,10 @@ class _ReviewSheetState extends State<ReviewSheet> {
                         ),
                       ),
                     )
-                  : const Text(
-                      'KIRIM ULASAN',
+                  : Text(
+                      widget.existingReview != null ? 'SIMPAN PERUBAHAN' : 'KIRIM ULASAN',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1,

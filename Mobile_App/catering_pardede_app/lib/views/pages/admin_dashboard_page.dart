@@ -6,6 +6,7 @@ import '/core/theme/app_colors.dart';
 import '/core/theme/app_text_styles.dart';
 import '/views/widgets/tap_scale.dart';
 import 'package:intl/intl.dart';
+import '../../core/utils/helpers.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -81,7 +82,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         count: stats?.pendingProposals ?? 0,
                         icon: Icons.request_quote,
                         color: AppColors.primary,
-                        onTap: () => Navigator.pushNamed(context, '/orders', arguments: {'filter': 'pending_proposal'}),
+                        onTap: () => Helpers.pushNamedSafe(context, '/orders', arguments: {'filter': 'pending_proposal'}),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -91,7 +92,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         count: stats?.unreadMessages ?? 0,
                         icon: Icons.chat_bubble,
                         color: AppColors.secondary,
-                        onTap: () => Navigator.pushNamed(context, '/orders', arguments: {'filter': 'unread_chat'}),
+                        onTap: () => Helpers.pushNamedSafe(context, '/orders', arguments: {'filter': 'unread_chat'}),
                       ),
                     ),
                   ],
@@ -102,7 +103,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   count: stats?.todayOrders ?? 0,
                   icon: Icons.delivery_dining,
                   color: Colors.blue.shade800,
-                  onTap: () => Navigator.pushNamed(context, '/orders'),
+                  onTap: () => Helpers.pushNamedSafe(context, '/orders'),
                   isWide: true,
                 ),
 
@@ -201,7 +202,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   Widget _buildActionItem(IconData icon, String label, String route) {
     return TapScale(
-      onTap: () => Navigator.pushNamed(context, route),
+      onTap: () => Helpers.pushNamedSafe(context, route),
       child: Column(
         children: [
           Container(

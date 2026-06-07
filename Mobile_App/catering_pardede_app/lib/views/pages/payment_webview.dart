@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../../core/utils/helpers.dart';
 
 class PaymentWebView extends StatefulWidget {
   final String snapToken;
@@ -33,8 +34,10 @@ class _PaymentWebViewState extends State<PaymentWebView> {
             if (url.contains("finish") || url.contains("success")) {
               Navigator.pop(context, true); // Kembali ke halaman sebelumnya dengan status berhasil
               
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Pembayaran sedang diproses...")),
+              Helpers.showSnackBar(
+                context,
+                "Pembayaran sedang diproses...",
+                isError: false,
               );
             }
           },

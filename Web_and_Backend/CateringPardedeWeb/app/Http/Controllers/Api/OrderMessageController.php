@@ -86,17 +86,12 @@ class OrderMessageController extends Controller
         $recipient = $recipientId ? \App\Models\User::find($recipientId) : null;
 
         if ($recipient && $recipient->fcm_token) {
-            try {
-                $fcmService = new \App\Services\FirebaseService();
-                $fcmService->sendNotification(
-                    $recipient->fcm_token,
-                    'Pesan Baru: Order #' . $order->order_id,
-                    Auth::user()->name . ': ' . $request->message,
-                    ['order_id' => (string)$order->order_id]
-                );
-            } catch (\Exception $e) {
-                \Log::error('FCM Notification Error: ' . $e->getMessage());
-            }
+            dispatch(new \App\Jobs\SendPushNotification(
+                $recipient->fcm_token,
+                'Pesan Baru: Order #' . $order->order_id,
+                Auth::user()->name . ': ' . $request->message,
+                ['order_id' => (string)$order->order_id, 'type' => 'order_chat']
+            ))->afterResponse();
         }
 
         return response()->json($message->load('sender:user_id,name,profile_picture'), 201);
@@ -114,6 +109,10 @@ class OrderMessageController extends Controller
 
         if ($message->type !== 'proposal' || $message->proposal_status !== 'pending') {
             return response()->json(['message' => 'Invalid proposal'], 400);
+        }
+
+        if ((int)$message->sender_id === (int)Auth::id()) {
+            return response()->json(['message' => 'Anda tidak bisa menyetujui proposal Anda sendiri.'], 403);
         }
 
         $message->update(['proposal_status' => 'accepted']);
@@ -138,5 +137,26 @@ class OrderMessageController extends Controller
             ->update(['is_read' => true]);
 
         return response()->json(['message' => 'Messages marked as read']);
+    }
+
+    public function unreadCount(Request $request)
+    {
+        $userId = Auth::id();
+        $isAdmin = (int)Auth::user()->role_id === 1;
+
+        if ($isAdmin) {
+            $count = OrderMessage::where('is_read', false)
+                ->where('sender_id', '!=', $userId)
+                ->count();
+        } else {
+            $count = OrderMessage::where('is_read', false)
+                ->where('sender_id', '!=', $userId)
+                ->whereHas('order', function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                })
+                ->count();
+        }
+
+        return response()->json(['unread_count' => $count]);
     }
 }

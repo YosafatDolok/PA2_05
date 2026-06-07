@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../widgets/tap_scale.dart';
+import '../../core/utils/helpers.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -138,7 +139,7 @@ class _LandingPageState extends State<LandingPage> with SingleTickerProviderStat
                     child: Column(
                       children: [
                         TapScale(
-                          onTap: () => Navigator.pushNamed(context, '/login'),
+                          onTap: () => Helpers.pushNamedSafe(context, '/login'),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 20),

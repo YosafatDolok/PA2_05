@@ -189,6 +189,14 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
                     actionIcon: Icons.call
                   ),
                   const SizedBox(height: 12),
+                  _buildInfoCard(
+                    "Chat", 
+                    "Diskusi & Koordinasi", 
+                    Icons.chat_bubble_outline, 
+                    onAction: () => Navigator.pushNamed(context, '/delivery-chat', arguments: order['order_id']), 
+                    actionIcon: Icons.chevron_right
+                  ),
+                  const SizedBox(height: 12),
                   _buildPaymentCard(remainingBalance, totalPayable),
                   
                   const SizedBox(height: 32),

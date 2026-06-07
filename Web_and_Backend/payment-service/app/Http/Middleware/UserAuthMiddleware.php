@@ -17,6 +17,7 @@ class UserAuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $token = $request->header('Authorization');
+        \Illuminate\Support\Facades\Log::debug('UserAuthMiddleware: Header Authorization present: ' . ($token ? 'YES' : 'NO') . ', value length: ' . ($token ? strlen($token) : 0));
 
         if (!$token) {
             return response()->json([
@@ -27,10 +28,15 @@ class UserAuthMiddleware
         // Panggil endpoint /api/user di Backend utama untuk validasi token
         try {
             $mainAppUrl = env('MAIN_APP_URL', 'http://localhost:8000');
+            $targetUrl = $mainAppUrl . '/api/user';
+            \Illuminate\Support\Facades\Log::debug('UserAuthMiddleware: Sending request to ' . $targetUrl);
+            
             $response = Http::withHeaders([
                 'Authorization' => $token,
                 'Accept' => 'application/json'
-            ])->timeout(3)->get($mainAppUrl . '/api/user');
+            ])->timeout(3)->get($targetUrl);
+
+            \Illuminate\Support\Facades\Log::debug('UserAuthMiddleware: Response code: ' . $response->status() . ', body: ' . $response->body());
 
             if ($response->successful()) {
                 $userProfile = $response->json();

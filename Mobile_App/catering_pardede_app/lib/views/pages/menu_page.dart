@@ -82,7 +82,7 @@ class _MenuPageState extends State<MenuPage> {
   Future<void> handleAddToCart(MenuModel menu) async {
     final token = await LocalStorage.getToken();
     if (token == null) {
-      Navigator.pushNamed(context, '/login');
+      Helpers.pushNamedSafe(context, '/login');
       return;
     }
 
@@ -106,7 +106,7 @@ class _MenuPageState extends State<MenuPage> {
           CustomHeader(
             showIcons: true,
             showSearch: true,
-            searchHint: "Cari hidangan favoritmu...",
+            searchHint: "Cari hidangan...",
             onSearchChanged: (val) {
               searchQuery = val;
               _filterMenus();
@@ -220,7 +220,7 @@ class _MenuPageState extends State<MenuPage> {
         : null;
 
     return TapScale(
-      onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
+      onTap: () => Helpers.pushNamedSafe(context, '/menu-detail', arguments: menu),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,

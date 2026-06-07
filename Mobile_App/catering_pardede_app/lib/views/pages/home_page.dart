@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:convert';
 import '/core/storage/local_storage.dart';
 import '/models/user_model.dart';
@@ -13,6 +14,8 @@ import '../../models/menu_model.dart';
 import '../../models/category_model.dart';
 import '../../models/review_model.dart';
 import '../widgets/star_rating.dart';
+import 'review_page.dart';
+import '../../core/utils/helpers.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,11 +27,18 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<CategoryModel> categories = [];
   List<MenuModel> menus = [];
+  List<MenuModel> popularMenus = [];
+  List<MenuModel> bestSellerMenus = [];
   List<ReviewModel> reviews = [];
   List<MenuModel> recentlyViewed = [];
   UserModel? user;
   bool isLoading = true;
   String? errorMessage;
+  int selectedCategoryId = 0; // 0 for "All"
+  String searchQuery = "";
+  List<MenuModel> filteredMenus = [];
+  List<MenuModel> filteredPopularMenus = [];
+  List<MenuModel> filteredBestSellerMenus = [];
 
   @override
   void initState() {
@@ -44,6 +54,8 @@ class _HomePageState extends State<HomePage> {
     try {
       final categoryData = await ApiService.get(ApiEndpoints.categories);
       final menuData = await ApiService.get(ApiEndpoints.menus);
+      final popularData = await ApiService.get(ApiEndpoints.menus, queryParameters: {'sort': 'popular'});
+      final bestSellerData = await ApiService.get(ApiEndpoints.menus, queryParameters: {'sort': 'best_seller'});
       final reviewData = await OrderService.getLatestReviews();
       
       // Fetch User & Recently Viewed
@@ -60,6 +72,11 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           categories = (categoryData as List).map((json) => CategoryModel.fromJson(json)).toList();
           menus = (menuData as List).map((json) => MenuModel.fromJson(json)).toList();
+          popularMenus = (popularData as List).map((json) => MenuModel.fromJson(json)).toList();
+          bestSellerMenus = (bestSellerData as List).map((json) => MenuModel.fromJson(json)).toList();
+          filteredMenus = menus;
+          filteredPopularMenus = popularMenus;
+          filteredBestSellerMenus = bestSellerMenus;
           reviews = (reviewData as List).map((json) => ReviewModel.fromJson(json)).toList();
           recentlyViewed = history;
           user = fetchedUser;
@@ -76,12 +93,40 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _filterMenus() {
+    setState(() {
+      filteredMenus = menus.where((menu) {
+        final matchesCategory = selectedCategoryId == 0 || menu.category?.id == selectedCategoryId;
+        final matchesSearch = menu.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+            (menu.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false);
+        return matchesCategory && matchesSearch;
+      }).toList();
+
+      filteredPopularMenus = popularMenus.where((menu) {
+        final matchesCategory = selectedCategoryId == 0 || menu.category?.id == selectedCategoryId;
+        final matchesSearch = menu.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+            (menu.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false);
+        return matchesCategory && matchesSearch;
+      }).toList();
+
+      filteredBestSellerMenus = bestSellerMenus.where((menu) {
+        final matchesCategory = selectedCategoryId == 0 || menu.category?.id == selectedCategoryId;
+        final matchesSearch = menu.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+            (menu.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false);
+        return matchesCategory && matchesSearch;
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: RefreshIndicator(
-        onRefresh: _fetchData,
+        onRefresh: () async {
+          await _fetchData();
+          _filterMenus();
+        },
         color: AppColors.primary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -90,11 +135,10 @@ class _HomePageState extends State<HomePage> {
             children: [
               CustomHeader(
                 showIcons: true,
-                showSearch: true,
-                searchHint: 'Cari hidangan favoritmu...',
-                onSearchChanged: (q) {},
+                showSearch: false,
               ),
-              const SizedBox(height: 32),
+              _buildCategoryBar(),
+              const SizedBox(height: 20),
 
               // Personalized Greeting (Now inside a subtle fade animation)
               _EntranceAnimation(
@@ -105,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user != null ? "Halo, ${user!.name.split(' ')[0]}! 👋" : "Halo, Selamat Datang! 👋",
+                        user != null ? "Halo, ${user!.name.split(' ')[0]}! " : "Halo, Selamat Datang! ",
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
@@ -130,30 +174,60 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 40),
               
               // Menu Populer (Carousel)
-              _SectionHeader(title: 'Menu Populer', onSeeAll: () {}),
-              const SizedBox(height: 20),
-              isLoading 
-                  ? _buildFeaturedShimmer() 
-                  : _FeaturedCarousel(menus: menus.take(5).toList()),
-                  
-              const SizedBox(height: 40),
+              if (filteredPopularMenus.isNotEmpty) ...[
+                _SectionHeader(title: 'Menu Populer'),
+                const SizedBox(height: 20),
+                isLoading 
+                    ? _buildFeaturedShimmer() 
+                    : _FeaturedCarousel(menus: filteredPopularMenus.take(5).toList()),
+                const SizedBox(height: 40),
+              ],
               
               // Menu Terlaris
-              _SectionHeader(title: 'Menu Terlaris', onSeeAll: () {}),
-              const SizedBox(height: 20),
-              isLoading ? _buildGridShimmer() : _MenuGrid(menus: menus),
-              
-              const SizedBox(height: 40),
+              if (filteredBestSellerMenus.isNotEmpty) ...[
+                _SectionHeader(title: 'Menu Terlaris'),
+                const SizedBox(height: 20),
+                isLoading ? _buildGridShimmer() : _MenuGrid(menus: filteredBestSellerMenus),
+                const SizedBox(height: 40),
+              ],
+
+              if (filteredPopularMenus.isEmpty && filteredBestSellerMenus.isEmpty && !isLoading) ...[
+                const SizedBox(height: 20),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off_rounded, size: 80, color: Colors.brown[100]),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Hidangan tidak ditemukan",
+                        style: TextStyle(
+                          color: Colors.brown[300],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
 
               if (reviews.isNotEmpty) ...[
-                _SectionHeader(title: 'Apa Kata Mereka?', onSeeAll: () {}),
+                _SectionHeader(
+                  title: 'Apa Kata Mereka?',
+                  onSeeAll: () => Helpers.pushSafe(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReviewPage()),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 _ReviewCarousel(reviews: reviews),
                 const SizedBox(height: 40),
               ],
               
               if (recentlyViewed.isNotEmpty) ...[
-                _SectionHeader(title: 'Terakhir Dilihat', onSeeAll: () {}),
+                _SectionHeader(title: 'Terakhir Dilihat'),
                 const SizedBox(height: 20),
                 _RecentlyViewedList(items: recentlyViewed),
                 const SizedBox(height: 40),
@@ -163,6 +237,63 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryBar() {
+    if (isLoading) return const SizedBox(height: 70);
+
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.only(top: 10, bottom: 10),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: categories.length + 1,
+        itemBuilder: (context, index) {
+          final isAll = index == 0;
+          final category = isAll ? null : categories[index - 1];
+          final categoryId = isAll ? 0 : category!.id;
+          final isSelected = selectedCategoryId == categoryId;
+          final name = isAll ? "Semua" : category!.name;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TapScale(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => selectedCategoryId = categoryId);
+                _filterMenus();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutQuint,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? const LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark]
+                  ) : null,
+                  color: isSelected ? null : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: isSelected
+                      ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 6))]
+                      : [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                ),
+                child: Center(
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : const Color(0xFF2D0A0A),
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -267,7 +398,7 @@ class _FeaturedItem extends StatelessWidget {
         : null;
 
     return TapScale(
-      onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
+      onTap: () => Helpers.pushNamedSafe(context, '/menu-detail', arguments: menu),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
@@ -351,7 +482,7 @@ class _MenuCard extends StatelessWidget {
         : null;
 
     return TapScale(
-      onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
+      onTap: () => Helpers.pushNamedSafe(context, '/menu-detail', arguments: menu),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -454,7 +585,7 @@ class _RecentlyViewedList extends StatelessWidget {
               : null;
 
           return TapScale(
-            onTap: () => Navigator.pushNamed(context, '/menu-detail', arguments: menu),
+            onTap: () => Helpers.pushNamedSafe(context, '/menu-detail', arguments: menu),
             child: Container(
               width: 100,
               decoration: BoxDecoration(
@@ -480,8 +611,8 @@ class _RecentlyViewedList extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final VoidCallback onSeeAll;
-  const _SectionHeader({required this.title, required this.onSeeAll});
+  final VoidCallback? onSeeAll;
+  const _SectionHeader({required this.title, this.onSeeAll});
 
   @override
   Widget build(BuildContext context) {
@@ -513,27 +644,28 @@ class _SectionHeader extends StatelessWidget {
               )),
             ],
           ),
-          TapScale(
-            onTap: onSeeAll,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: const [
-                  Text('Lihat', style: TextStyle(
-                    color: AppColors.secondary, 
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12
-                  )),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_ios_rounded, color: AppColors.secondary, size: 10),
-                ],
+          if (onSeeAll != null)
+            TapScale(
+              onTap: onSeeAll!,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: const [
+                    Text('Lihat', style: TextStyle(
+                      color: AppColors.secondary, 
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12
+                    )),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_ios_rounded, color: AppColors.secondary, size: 10),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -594,7 +726,7 @@ class _ReviewCarousel extends StatelessWidget {
                         ],
                       ),
                     ),
-                    StarRating(rating: review.rating, isInteractive: false, size: 14),
+                    StarRating(rating: review.rating, isInteractive: false, size: 18),
                   ],
                 ),
                 const SizedBox(height: 18),
@@ -621,21 +753,50 @@ class _MenuGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (menus.length < 2) return const SizedBox();
-    final gridItems = menus.skip(1).take(2).toList();
+    if (menus.isEmpty) return const SizedBox();
+    // Show up to 6 menus
+    final gridItems = menus.take(6).toList();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: gridItems.map((menu) => Expanded(
+    final List<Widget> rows = [];
+    for (int i = 0; i < gridItems.length; i += 2) {
+      final List<Widget> rowItems = [];
+      rowItems.add(Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: _EntranceAnimation(
+            delay: i + 2,
+            child: _MenuCard(menu: gridItems[i]),
+          ),
+        ),
+      ));
+      
+      if (i + 1 < gridItems.length) {
+        rowItems.add(Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: _EntranceAnimation(
-              delay: 2,
-              child: _MenuCard(menu: menu),
+              delay: i + 3,
+              child: _MenuCard(menu: gridItems[i + 1]),
             ),
           ),
-        )).toList(),
+        ));
+      } else {
+        rowItems.add(const Expanded(child: SizedBox()));
+      }
+      
+      rows.add(Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: rowItems,
+        ),
+      ));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: rows,
       ),
     );
   }

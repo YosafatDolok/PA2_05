@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/order_model.dart';
 import '../../models/addition_model.dart';
 import '../../models/menu_model.dart';
+import '../../models/review_model.dart';
+import '../../core/services/order_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../widgets/custom_header.dart';
@@ -407,6 +409,74 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     });
   }
 
+  void _showEditReviewSheet(ReviewModel review) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ReviewSheet(
+        orderId: _currentOrder!.id,
+        existingReview: review,
+      ),
+    ).then((value) {
+      if (value == true) {
+        _fetchOrderDetails();
+      }
+    });
+  }
+
+  void _confirmDeleteReview() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Hapus Ulasan',
+          style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary),
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin menghapus ulasan ini?',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('BATAL', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              _deleteReview();
+            },
+            child: const Text('HAPUS', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteReview() async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await OrderService.deleteReview(_currentOrder!.id);
+      if (mounted) {
+        if (result['success']) {
+          Helpers.showSnackBar(context, result['message'] ?? 'Ulasan dihapus');
+          _fetchOrderDetails();
+        } else {
+          Helpers.showSnackBar(context, result['message'] ?? 'Gagal menghapus ulasan');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Helpers.showSnackBar(context, e.toString().replaceAll('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _currentOrder == null) {
@@ -736,13 +806,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           // Total Section
           Container(
             padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.white, AppColors.primary.withValues(alpha: 0.03)],
-              ),
-              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF9F7F2),
+              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
             ),
             child: Column(
               children: [
@@ -922,8 +988,18 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           _isAdmin ? "DISKUSI DENGAN PELANGGAN" : "DISKUSI DENGAN ADMIN",
           Icons.chat_bubble_rounded,
           AppColors.primary,
-          () => Navigator.push(context, MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder!.id))),
+          () => Helpers.pushSafe(context, MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder!.id))),
+          unreadCount: _currentOrder!.unreadMessagesCount,
         ),
+        if (!_isAdmin && _currentOrder!.driverId != null) ...[
+          const SizedBox(height: 12),
+          _buildReceiptActionButton(
+            "KOORDINASI PENGIRIMAN",
+            Icons.local_shipping_rounded,
+            Colors.blue,
+            () => Helpers.pushNamedSafe(context, '/delivery-chat', arguments: _currentOrder!.id),
+          ),
+        ],
         if (_currentOrder!.remainingBalance > 0 && !_isAdmin && _currentOrder!.statusId != 9 && _currentOrder!.totalPayable > 0) ...[
           const SizedBox(height: 12),
           _buildReceiptActionButton(
@@ -931,7 +1007,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             Icons.payments_rounded,
             const Color(0xFF8B0000),
             () async {
-              final result = await Navigator.push(
+              final result = await Helpers.pushSafe(
                 context,
                 MaterialPageRoute(builder: (_) => PaymentMethodPage(order: _currentOrder!)),
               );
@@ -966,7 +1042,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
   }
 
-  Widget _buildReceiptActionButton(String label, IconData icon, Color color, VoidCallback onTap, {bool isFilled = false}) {
+  Widget _buildReceiptActionButton(String label, IconData icon, Color color, VoidCallback onTap, {bool isFilled = false, int unreadCount = 0}) {
     return TapScale(
       onTap: onTap,
       child: Container(
@@ -981,7 +1057,25 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: isFilled ? Colors.white : color),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, size: 16, color: isFilled ? Colors.white : color),
+                if (unreadCount > 0)
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(width: 8),
             Text(
               label,
@@ -1285,28 +1379,94 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       onTap: _showReviewSheet,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        child: const Column(
+        child: Column(
           children: [
-            StarRating(rating: 0, isInteractive: false, size: 24),
-            SizedBox(height: 12),
-            Text(
-              "ULAS PESANAN ANDA",
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF9F7F2),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.rate_review_rounded, color: AppColors.primary, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    "ULAS PESANAN ANDA",
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 4),
-            Text(
-              "Bagikan pengalaman Anda bersama kami",
-              style: TextStyle(color: Colors.grey, fontSize: 11),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  const StarRating(rating: 0, isInteractive: false, size: 28),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Bagikan pengalaman Anda bersama kami",
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "TULIS ULASAN",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -1316,41 +1476,171 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   Widget _buildReviewCard() {
     final review = _currentOrder!.review!;
+    final hasBeenEdited = review.updatedAt != null &&
+        review.createdAt != null &&
+        review.updatedAt!.difference(review.createdAt!).inSeconds.abs() > 1;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.05),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              StarRating(rating: review.rating, isInteractive: false, size: 20),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            review.comment ?? "Tidak ada komentar",
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontStyle: FontStyle.italic,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF9F7F2),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.rate_review_rounded, color: AppColors.primary, size: 18),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "ULASAN ANDA",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const Spacer(),
+                if (hasBeenEdited)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "edited: ${review.updatedAt!.day}/${review.updatedAt!.month}/${review.updatedAt!.year}",
+                      style: const TextStyle(
+                        color: AppColors.secondary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            "TERIMA KASIH ATAS ULASAN ANDA!",
-            style: TextStyle(
-              color: Colors.amber,
-              fontWeight: FontWeight.w900,
-              fontSize: 10,
-              letterSpacing: 1,
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    StarRating(rating: review.rating, isInteractive: false, size: 24),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9F9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF0F0F0)),
+                  ),
+                  child: Text(
+                    review.comment != null && review.comment!.isNotEmpty
+                        ? "\"${review.comment}\""
+                        : "\"Tidak ada komentar\"",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF4A4A4A),
+                      fontStyle: FontStyle.italic,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TapScale(
+                        onTap: () => _showEditReviewSheet(review),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.edit_rounded, size: 16, color: AppColors.secondary),
+                              SizedBox(width: 8),
+                              Text(
+                                "UBAH",
+                                style: TextStyle(
+                                  color: AppColors.secondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TapScale(
+                        onTap: _confirmDeleteReview,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red),
+                              SizedBox(width: 8),
+                              Text(
+                                "HAPUS",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],

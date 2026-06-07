@@ -163,6 +163,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Password atau email salah'], 401);
         }
 
+        if ((int)$user->role_id === 1) {
+            return response()->json(['message' => 'Admin tidak diizinkan masuk ke aplikasi seluler.'], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

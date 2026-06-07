@@ -45,7 +45,7 @@ class PaymentController extends Controller
         }
 
         // Verifikasi kepemilikan pesanan
-        if ((int)$billing['user_id'] !== (int)$user['id']) {
+        if ((int)$billing['user_id'] !== (int)$user['user_id']) {
             return response()->json(['message' => 'Anda tidak memiliki hak untuk membayar pesanan ini.'], 403);
         }
 
@@ -97,7 +97,7 @@ class PaymentController extends Controller
             }
 
             $billing = $response->json();
-            if ((int)$billing['user_id'] !== (int)$user['id']) {
+            if ((int)$billing['user_id'] !== (int)$user['user_id']) {
                 return response()->json(['message' => 'Anda tidak memiliki hak untuk mengakses pembayaran ini.'], 403);
             }
         } catch (\Exception $e) {

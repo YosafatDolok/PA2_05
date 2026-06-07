@@ -35,9 +35,14 @@ class PaymentStatsController extends Controller
         }
 
         // 3. Data Bulanan (12 Bulan Terakhir)
+        $driver = DB::connection()->getDriverName();
+        $monthExpr = $driver === 'sqlite' 
+            ? "strftime('%m', created_at) as month_num" 
+            : "to_char(created_at, 'MM') as month_num";
+
         $monthlyData = Payment::select(
             DB::raw('SUM(amount) as total'),
-            DB::raw("strftime('%m', created_at) as month_num")
+            DB::raw($monthExpr)
         )
             ->where('status', 'paid')
             ->where('created_at', '>=', Carbon::now()->subMonths(11)->startOfMonth())

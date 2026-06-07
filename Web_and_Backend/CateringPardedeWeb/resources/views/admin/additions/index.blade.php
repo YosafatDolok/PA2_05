@@ -40,7 +40,7 @@
                                     </td>
                                     <td>
                                         <span class="badge badge-{{ $req->status_id == 1 ? 'warning' : ($req->status_id == 2 ? 'success' : 'danger') }}">
-                                            {{ $req->status->name }}
+                                            {{ $req->status->status_name }}
                                         </span>
                                     </td>
                                     <td>

@@ -10,6 +10,7 @@ import '../widgets/tap_scale.dart';
 import 'edit_profile_page.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/services/push_notification_service.dart';
+import '../../core/utils/helpers.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -103,13 +104,13 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 60),
             _EntranceAnimation(
               delay: 3,
-              child: _buildGoldButton("MASUK KE AKUN", () => Navigator.pushNamed(context, '/login')),
+              child: _buildGoldButton("MASUK KE AKUN", () => Helpers.pushNamedSafe(context, '/login')),
             ),
             const SizedBox(height: 16),
             _EntranceAnimation(
               delay: 4,
               child: TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/register'),
+                onPressed: () => Helpers.pushNamedSafe(context, '/register'),
                 child: const Text(
                   "Daftar Akun Baru",
                   style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 14),
@@ -143,7 +144,7 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 16),
             _buildMenuSection([
               if (user?.role?.id != 3)
-                _accountTile(Icons.receipt_long_rounded, "Pesanan Saya", () => Navigator.pushNamed(context, '/orders'), delay: 2),
+                _accountTile(Icons.receipt_long_rounded, "Pesanan Saya", () => Helpers.pushNamedSafe(context, '/orders'), delay: 2),
               ValueListenableBuilder<int>(
                 valueListenable: PushNotificationService.unreadCount,
                 builder: (context, count, child) {
@@ -151,7 +152,7 @@ class _AccountPageState extends State<AccountPage> {
                     Icons.notifications_active_rounded, 
                     "Notifikasi", 
                     () async {
-                      await Navigator.pushNamed(context, '/notifications');
+                      await Helpers.pushNamedSafe(context, '/notifications');
                       PushNotificationService.updateUnreadCount();
                     }, 
                     delay: 3,
@@ -171,7 +172,7 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 16),
             _buildMenuSection([
               _accountTile(Icons.person_rounded, "Edit Profil", () async {
-                final updated = await Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfilePage(user: user!)));
+                final updated = await Helpers.pushSafe(context, MaterialPageRoute(builder: (context) => EditProfilePage(user: user!)));
                 if (updated == true) _fetchAccountData();
               }, delay: 5),
             ]),

@@ -5,6 +5,7 @@ import '../../core/services/api_service.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/services/push_notification_service.dart';
+import '../../core/utils/helpers.dart';
 
 class CustomHeader extends StatefulWidget {
   final String? title;
@@ -13,6 +14,7 @@ class CustomHeader extends StatefulWidget {
   final bool showSearch;
   final Function(String)? onSearchChanged;
   final String? searchHint;
+  final Widget? action;
 
   const CustomHeader({
     super.key,
@@ -22,6 +24,7 @@ class CustomHeader extends StatefulWidget {
     this.showSearch = false,
     this.onSearchChanged,
     this.searchHint,
+    this.action,
   });
 
   @override
@@ -35,12 +38,15 @@ class _CustomHeaderState extends State<CustomHeader> {
     super.initState();
     // No need to manage local state anymore
     PushNotificationService.updateUnreadCount();
+    PushNotificationService.updateUnreadChatCount();
   }
 
   // Removed local _fetchUnreadCount method as it's now in the service
 
   @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.canPop(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(left: 20, right: 20, top: 50, bottom: 24),
@@ -67,63 +73,119 @@ class _CustomHeaderState extends State<CustomHeader> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Logo or Title
-              widget.title != null
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title!,
-                          style: AppTextStyles.title.copyWith(color: Colors.white, fontSize: 24),
-                        ),
-                        if (widget.subtitle != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.subtitle!,
-                            style: AppTextStyles.subtitle.copyWith(color: Colors.white.withValues(alpha: 0.8)),
+              // Logo or Title with optional Back Button
+              Expanded(
+                child: Row(
+                  children: [
+                    if (canPop) ...[
+                      Material(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => Navigator.pop(context),
+                          child: const Padding(
+                            padding: EdgeInsets.all(10),
+                            child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
                           ),
-                        ],
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        const Icon(
-                          Icons.local_fire_department,
-                          color: Color(0xFFFFD700), // Gold
-                          size: 38,
                         ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pardede',
-                              style: AppTextStyles.title.copyWith(
-                                color: const Color(0xFFFFD700),
-                                fontSize: 22,
-                                height: 1.0,
-                                fontWeight: FontWeight.w900,
-                              ),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                    Expanded(
+                      child: widget.title != null
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.title!,
+                                  style: AppTextStyles.title.copyWith(
+                                    color: Colors.white, 
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (widget.subtitle != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.subtitle!,
+                                    style: AppTextStyles.subtitle.copyWith(color: Colors.white.withValues(alpha: 0.8)),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                const Icon(
+                                  Icons.local_fire_department,
+                                  color: Color(0xFFFFD700), // Gold
+                                  size: 38,
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Pardede',
+                                      style: AppTextStyles.title.copyWith(
+                                        color: const Color(0xFFFFD700),
+                                        fontSize: 22,
+                                        height: 1.0,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    Text(
+                                      'CATERING',
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: const Color(0xFFFFD700),
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            Text(
-                              'CATERING',
-                              style: AppTextStyles.caption.copyWith(
-                                color: const Color(0xFFFFD700),
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 2,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
-              if (widget.showIcons)
+                  ],
+                ),
+              ),
+              if (widget.action != null)
+                widget.action!
+              else if (widget.showIcons && !canPop)
                 Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.group_rounded, color: Colors.white, size: 28),
-                      onPressed: () => Navigator.pushNamed(context, '/messages'),
+                    ValueListenableBuilder<int>(
+                      valueListenable: PushNotificationService.unreadChatCount,
+                      builder: (context, chatCount, child) {
+                        return Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 26),
+                              onPressed: () async {
+                                await Helpers.pushNamedSafe(context, '/messages');
+                                PushNotificationService.updateUnreadChatCount(); // Refresh when coming back
+                              },
+                            ),
+                            if (chatCount > 0)
+                              Positioned(
+                                right: 10,
+                                top: 10,
+                                child: Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     ValueListenableBuilder<int>(
                       valueListenable: PushNotificationService.unreadCount,
@@ -133,7 +195,7 @@ class _CustomHeaderState extends State<CustomHeader> {
                             IconButton(
                               icon: const Icon(Icons.notifications_rounded, color: Colors.white, size: 28),
                               onPressed: () async {
-                                await Navigator.pushNamed(context, '/notifications');
+                                await Helpers.pushNamedSafe(context, '/notifications');
                                 PushNotificationService.updateUnreadCount(); // Refresh when coming back
                               },
                             ),
@@ -188,11 +250,13 @@ class _CustomHeaderState extends State<CustomHeader> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: TextField(
                 onChanged: widget.onSearchChanged,
+                textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
                   icon: Icon(Icons.search_rounded, color: Colors.grey[400], size: 26),
                   hintText: widget.searchHint ?? 'Cari Paket atau Menu...',
                   hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
                   border: InputBorder.none,
+                  contentPadding: const EdgeInsets.only(bottom: 8),
                 ),
               ),
             ),

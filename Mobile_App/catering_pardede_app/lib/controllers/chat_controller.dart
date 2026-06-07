@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '/core/services/chat_service.dart';
 import '/models/order_message_model.dart';
 import 'package:dart_pusher_channels/dart_pusher_channels.dart';
@@ -6,23 +7,26 @@ import '/core/storage/local_storage.dart';
 import '/core/constants/api_endpoints.dart';
 import 'dart:convert';
 import '../core/utils/helpers.dart';
+import '/core/services/push_notification_service.dart';
 
 class ChatController extends ChangeNotifier {
   List<OrderMessageModel> messages = [];
   bool isLoading = false;
   PusherChannelsClient? pusherClient;
   PrivateChannel? _currentChannel;
+  VoidCallback? onNewMessage;
 
   Future<void> initPusher(int orderId) async {
+    debugPrint("Initializing Pusher for order $orderId...");
     final token = await LocalStorage.getToken();
     if (token == null) return;
 
     try {
       final options = PusherChannelsOptions.fromHost(
-        scheme: 'ws',
-        host: '10.0.2.2', // Localhost for Android Emulator
+        scheme: ApiEndpoints.pusherScheme,
+        host: ApiEndpoints.pusherHost,
         key: "catering_pardede_key",
-        port: 8080,
+        port: ApiEndpoints.pusherPort,
         shouldSupplyMetadataQueries: true,
         metadata: PusherChannelsOptionsMetadata.byDefault(),
       );
@@ -30,12 +34,37 @@ class ChatController extends ChangeNotifier {
       pusherClient = PusherChannelsClient.websocket(
         options: options,
         connectionErrorHandler: (exception, trace, client) {
-          debugPrint("Pusher Connection Error: $exception");
+          debugPrint("Pusher Connection Error Handler: $exception");
         },
       );
 
+      pusherClient!.onConnectionEstablished.listen((_) {
+        debugPrint("Pusher WebSocket Connected Successfully! Subscribing now...");
+        _currentChannel?.subscribe();
+      });
+
       final authUrl = "${ApiEndpoints.baseUrl}/broadcasting/auth";
       
+      // DEBUG: Explicitly test the auth endpoint first to catch hidden Laravel errors!
+      try {
+        debugPrint("Testing Auth Endpoint explicitly...");
+        final testResponse = await http.post(
+          Uri.parse(authUrl),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+          body: {
+            'socket_id': '12345.67890', // Fake socket ID for test
+            'channel_name': 'private-order.$orderId',
+          }
+        );
+        debugPrint("Auth Endpoint HTTP Status: ${testResponse.statusCode}");
+        debugPrint("Auth Endpoint Response: ${testResponse.body}");
+      } catch(e) {
+        debugPrint("Auth Endpoint Test Failed: $e");
+      }
+
       _currentChannel = pusherClient!.privateChannel(
         'private-order.$orderId',
         authorizationDelegate: EndpointAuthorizableChannelTokenAuthorizationDelegate.forPrivateChannel(
@@ -44,24 +73,46 @@ class ChatController extends ChangeNotifier {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
           },
+          onAuthFailed: (exception, trace) {
+            debugPrint("INTERNAL AUTH DELEGATE CRASHED: $exception");
+          },
         ),
       );
 
-      _currentChannel!.bind('App\\Events\\MessageSent').listen((event) {
+      _currentChannel!.bind('message.sent').listen((event) {
         final data = event.data;
+        debugPrint("Message Received on Mobile: $data");
         if (data != null) {
-          // data might be a JSON string or a Map depending on the platform/event
-          final Map<String, dynamic> jsonData = (data is String) ? jsonDecode(data) : data;
-          final newMessage = OrderMessageModel.fromJson(jsonData);
-          
-          if (!messages.any((m) => m.messageId == newMessage.messageId)) {
-            messages.add(newMessage);
-            notifyListeners();
+          try {
+            // data might be a JSON string or a Map depending on the platform/event
+            final Map<String, dynamic> jsonData = (data is String) ? jsonDecode(data) : Map<String, dynamic>.from(data);
+            final newMessage = OrderMessageModel.fromJson(jsonData);
+            
+            final index = messages.indexWhere((m) => m.messageId == newMessage.messageId);
+            if (index != -1) {
+              messages[index] = newMessage;
+              notifyListeners();
+            } else {
+              messages.add(newMessage);
+              notifyListeners();
+              onNewMessage?.call(); // Trigger scroll
+              markAsRead(orderId); // Safely mark as read EXACTLY once
+            }
+          } catch (e, stacktrace) {
+            debugPrint("CRITICAL PARSING ERROR: $e");
+            debugPrint("Stacktrace: $stacktrace");
           }
         }
       });
 
-      _currentChannel!.subscribe();
+      _currentChannel!.bind('pusher_internal:subscription_succeeded').listen((event) {
+        debugPrint("Mobile Pusher Subscription Succeeded!");
+      });
+
+      _currentChannel!.bind('pusher_internal:subscription_error').listen((event) {
+        debugPrint("Mobile Pusher Subscription Error: ${event.data}");
+      });
+
       pusherClient!.connect();
       
     } catch (e) {
@@ -139,6 +190,8 @@ class ChatController extends ChangeNotifier {
   Future<void> markAsRead(int orderId) async {
     try {
       await ChatService.markMessagesAsRead(orderId);
+      // Sync global chat notification count
+      PushNotificationService.updateUnreadChatCount();
       // Update local messages to avoid stale unread status
       for (var i = 0; i < messages.length; i++) {
         if (!messages[i].isRead) {

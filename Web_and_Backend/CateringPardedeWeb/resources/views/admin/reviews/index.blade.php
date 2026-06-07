@@ -45,10 +45,9 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="text-warning">
+                                        <div class="text-warning" style="font-size: 16px;">
                                             @for($i = 1; $i <= 5; $i++)
-                                                <i class="{{ $i <= $review->rating ? 'fas' : 'far' }} fa-star" 
-                                                   style="{{ $i <= $review->rating ? 'text-shadow: 0 0 10px rgba(255,193,7,0.5);' : '' }}"></i>
+                                                <i class="{{ $i <= $review->rating ? 'fas' : 'far' }} fa-star"></i>
                                             @endfor
                                         </div>
                                     </td>
@@ -59,6 +58,13 @@
                                     </td>
                                     <td class="text-muted smaller">
                                         {{ $review->created_at->format('d M Y, H:i') }}
+                                        @if($review->updated_at && $review->created_at && abs($review->updated_at->diffInSeconds($review->created_at)) > 1)
+                                            <div class="mt-1">
+                                                <span class="badge" style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 193, 7, 0.2); background-color: rgba(255, 193, 7, 0.05); color: #fbc531;">
+                                                    edited in {{ $review->updated_at->format('d/m/Y') }}
+                                                </span>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="badge {{ $review->is_visible ? 'bg-success-light' : 'bg-secondary' }}">
@@ -72,14 +78,6 @@
                                                 @method('PATCH')
                                                 <button type="submit" class="btn btn-icon btn-secondary" title="{{ $review->is_visible ? 'Hide' : 'Show' }}">
                                                     <i class="fas {{ $review->is_visible ? 'fa-eye-slash' : 'fa-eye' }}"></i>
-                                                </button>
-                                            </form>
-                                            
-                                            <form action="{{ route('admin.reviews.destroy', $review->review_id) }}" method="POST" onsubmit="return confirm('Delete this review permanently?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-icon btn-danger-light">
-                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
                                         </div>

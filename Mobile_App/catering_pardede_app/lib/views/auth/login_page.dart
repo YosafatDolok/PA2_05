@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
             Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/forgot-password'),
+                onTap: () => Helpers.pushNamedSafe(context, '/forgot-password'),
                 child: Text(
                   "Lupa Password?",
                   style: AppTextStyles.caption.copyWith(color: AppColors.primary),

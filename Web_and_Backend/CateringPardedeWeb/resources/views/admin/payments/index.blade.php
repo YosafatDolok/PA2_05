@@ -30,7 +30,12 @@
                             @forelse($payments as $payment)
                             <tr>
                                 <td>
-                                    <span class="font-weight-bold text-crimson">{{ $payment['midtrans_id'] ?? 'ID-'.str_pad($payment['id'], 6, '0', STR_PAD_LEFT) }}</span>
+                                    <div class="font-weight-bold text-crimson">PMT-{{ str_pad($payment['id'], 6, '0', STR_PAD_LEFT) }}</div>
+                                    @if(!empty($payment['midtrans_id']))
+                                        <div class="extra-small text-muted" style="font-size: 11px;" title="{{ $payment['midtrans_id'] }}">
+                                            Ref: {{ substr($payment['midtrans_id'], 0, 8) }}...
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>
                                     <a href="{{ route('orders.show', $payment['order_id']) }}" class="text-white-50">

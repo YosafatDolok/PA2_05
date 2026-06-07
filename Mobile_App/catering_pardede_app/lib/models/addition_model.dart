@@ -24,7 +24,7 @@ class OrderAdditionRequest {
       id: json['id'],
       orderId: json['order_id'],
       statusId: json['status_id'],
-      statusName: json['status']['status_name'],
+      statusName: json['status_text'] ?? (json['status'] != null ? json['status']['status_name'] : (json['status_id'] == 2 ? 'Approved' : (json['status_id'] == 3 ? 'Rejected' : 'Pending'))),
       notes: json['notes'],
       items: (json['items'] as List)
           .map((i) => OrderAdditionItem.fromJson(i))

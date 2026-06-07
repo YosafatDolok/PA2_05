@@ -98,7 +98,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       );
 
       if (mounted) {
-        Navigator.pushNamed(
+        Helpers.pushNamedSafe(
           context, 
           '/password-reset', 
           arguments: {'email': widget.email, 'otp': otp},

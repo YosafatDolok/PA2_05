@@ -6,6 +6,7 @@ class ReviewModel {
   final String? comment;
   final bool isVisible;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
   final String? userName;
 
   ReviewModel({
@@ -16,6 +17,7 @@ class ReviewModel {
     this.comment,
     this.isVisible = true,
     this.createdAt,
+    this.updatedAt,
     this.userName,
   });
 
@@ -28,6 +30,7 @@ class ReviewModel {
       comment: json['comment'],
       isVisible: json['is_visible'] == 1 || json['is_visible'] == true,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
       userName: json['user'] != null ? json['user']['name'] : null,
     );
   }

@@ -87,4 +87,70 @@ class ReviewController extends Controller
             'data' => $reviews
         ]);
     }
+
+    /**
+     * Update an existing review for an order.
+     */
+    public function update(Request $request, $orderId)
+    {
+        $validator = Validator::make($request->all(), [
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $order = Order::where('order_id', $orderId)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$order || !$order->review) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ulasan tidak ditemukan'
+            ], 404);
+        }
+
+        $review = $order->review;
+        $review->update([
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ulasan berhasil diperbarui',
+            'data' => $review
+        ]);
+    }
+
+    /**
+     * Delete an existing review for an order.
+     */
+    public function destroy($orderId)
+    {
+        $order = Order::where('order_id', $orderId)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$order || !$order->review) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ulasan tidak ditemukan'
+            ], 404);
+        }
+
+        $order->review->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ulasan berhasil dihapus'
+        ]);
+    }
 }

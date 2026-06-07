@@ -16,6 +16,12 @@
     <!-- Aura-Crimson Standalone Design System -->
     <link href="{{ asset('css/aura-crimson.css') }}?v={{ time() }}" rel="stylesheet"/>
 
+    @auth
+        <meta name="user-id" content="{{ auth()->id() }}">
+    @endauth
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <style>
         /* Premium Error & Warning Styles */
         .form-control-aura.is-invalid, 
@@ -204,11 +210,6 @@
                 </div>
 
                 <div class="nav-utils d-flex align-items-center">
-                    <div class="search-box me-4 d-none d-md-block" id="globalSearchBox">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="globalSearchInput" placeholder="Search anything..." autocomplete="off">
-                        <div id="globalSearchResults" class="aura-search-results"></div>
-                    </div>
                     @include('layouts.navbars.navs.auth')
                 </div>
             </header>
@@ -252,99 +253,101 @@
         const searchInput = document.getElementById('globalSearchInput');
         const searchResults = document.getElementById('globalSearchResults');
         const searchBox = document.getElementById('globalSearchBox');
-        let debounceTimer;
-        let currentIndex = -1;
+        if (searchInput && searchResults && searchBox) {
+            let debounceTimer;
+            let currentIndex = -1;
 
-        const updateActiveResult = () => {
-            const items = searchResults.querySelectorAll('.search-result-item');
-            items.forEach((item, index) => {
-                if (index === currentIndex) {
-                    item.classList.add('active');
-                    item.scrollIntoView({ block: 'nearest' });
-                } else {
-                    item.classList.remove('active');
+            const updateActiveResult = () => {
+                const items = searchResults.querySelectorAll('.search-result-item');
+                items.forEach((item, index) => {
+                    if (index === currentIndex) {
+                        item.classList.add('active');
+                        item.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            };
+
+            searchInput.addEventListener('keydown', function(e) {
+                const items = searchResults.querySelectorAll('.search-result-item');
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    currentIndex = (currentIndex + 1) % items.length;
+                    updateActiveResult();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    currentIndex = (currentIndex - 1 + items.length) % items.length;
+                    updateActiveResult();
+                } else if (e.key === 'Enter') {
+                    if (currentIndex > -1 && items[currentIndex]) {
+                        e.preventDefault();
+                        items[currentIndex].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    searchResults.style.display = 'none';
+                    currentIndex = -1;
                 }
             });
-        };
 
-        searchInput.addEventListener('keydown', function(e) {
-            const items = searchResults.querySelectorAll('.search-result-item');
-            
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                currentIndex = (currentIndex + 1) % items.length;
-                updateActiveResult();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                currentIndex = (currentIndex - 1 + items.length) % items.length;
-                updateActiveResult();
-            } else if (e.key === 'Enter') {
-                if (currentIndex > -1 && items[currentIndex]) {
-                    e.preventDefault();
-                    items[currentIndex].click();
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                const query = this.value;
+                currentIndex = -1;
+
+                if (query.length < 1) {
+                    searchResults.style.display = 'none';
+                    return;
                 }
-            } else if (e.key === 'Escape') {
-                searchResults.style.display = 'none';
-                currentIndex = -1;
-            }
-        });
 
-        searchInput.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            const query = this.value;
-            currentIndex = -1;
+                searchBox.classList.add('loading');
 
-            if (query.length < 1) {
-                searchResults.style.display = 'none';
-                return;
-            }
+                debounceTimer = setTimeout(() => {
+                    fetch(`{{ route('admin.global-search') }}?query=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            searchBox.classList.remove('loading');
+                            if (data.length > 0) {
+                                let html = '';
+                                let currentType = '';
+                                
+                                data.forEach(item => {
+                                    if (item.type !== currentType) {
+                                        html += `<div class="search-result-category">${item.type}S</div>`;
+                                        currentType = item.type;
+                                    }
+                                    html += `
+                                        <a href="${item.url}" class="search-result-item">
+                                            ${item.image ? `<img src="${item.image}" class="search-thumbnail">` : `<i class="${item.icon}"></i>`}
+                                            <div>
+                                                <div class="search-result-title">${item.title}</div>
+                                                ${item.subtitle ? `<div class="smaller text-white-50">${item.subtitle}</div>` : ''}
+                                            </div>
+                                        </a>
+                                    `;
+                                });
+                                searchResults.innerHTML = html;
+                                searchResults.style.display = 'block';
+                            } else {
+                                searchResults.innerHTML = '<div class="p-4 text-center text-muted small">No results found</div>';
+                                searchResults.style.display = 'block';
+                            }
+                        })
+                        .catch(() => {
+                            searchBox.classList.remove('loading');
+                        });
+                }, 300);
+            });
 
-            searchBox.classList.add('loading');
-
-            debounceTimer = setTimeout(() => {
-                fetch(`{{ route('admin.global-search') }}?query=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        searchBox.classList.remove('loading');
-                        if (data.length > 0) {
-                            let html = '';
-                            let currentType = '';
-                            
-                            data.forEach(item => {
-                                if (item.type !== currentType) {
-                                    html += `<div class="search-result-category">${item.type}S</div>`;
-                                    currentType = item.type;
-                                }
-                                html += `
-                                    <a href="${item.url}" class="search-result-item">
-                                        ${item.image ? `<img src="${item.image}" class="search-thumbnail">` : `<i class="${item.icon}"></i>`}
-                                        <div>
-                                            <div class="search-result-title">${item.title}</div>
-                                            ${item.subtitle ? `<div class="smaller text-white-50">${item.subtitle}</div>` : ''}
-                                        </div>
-                                    </a>
-                                `;
-                            });
-                            searchResults.innerHTML = html;
-                            searchResults.style.display = 'block';
-                        } else {
-                            searchResults.innerHTML = '<div class="p-4 text-center text-muted small">No results found</div>';
-                            searchResults.style.display = 'block';
-                        }
-                    })
-                    .catch(() => {
-                        searchBox.classList.remove('loading');
-                    });
-            }, 300);
-        });
-
-        // Hide results when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-                currentIndex = -1;
-            }
-        });
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                    currentIndex = -1;
+                }
+            });
+        }
 
         // Force refresh when navigating back via Back button to ensure all badges/notifications are updated
         window.addEventListener('pageshow', function(event) {

@@ -14,9 +14,14 @@
         </div>
         <p class="text-muted small uppercase letter-spacing-1 mb-0 mt-1">Detailed view and status management</p>
         </div>
-        <a href="{{ route('orders.index') }}" class="btn btn-secondary btn-icon rounded-circle">
-            <i class="fas fa-arrow-left"></i>
-        </a>
+        <div class="d-flex align-items-center">
+            <a href="{{ route('orders.invoice', $order->order_id) }}" class="btn btn-primary btn-sm rounded-pill px-4 font-weight-bold mr-2">
+                <i class="fas fa-file-pdf mr-2"></i> EXPORT PDF / INVOICE
+            </a>
+            <a href="{{ route('orders.index') }}" class="btn btn-secondary btn-icon rounded-circle">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+        </div>
     </div>
 
     @php
@@ -170,7 +175,7 @@
         <div class="col-md-4">
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-2">
-                    <h4 class="font-weight-bold m-0 text-secondary">Action Center</h4>
+                    <h4 class="font-weight-bold m-0 text-secondary">Manage Order</h4>
                     <a href="{{ route('orders.chat', $order->order_id) }}" class="btn btn-secondary btn-sm rounded-pill px-3">
                         <i class="fas fa-comments mr-2"></i> OPEN CHAT
                     </a>
@@ -187,7 +192,7 @@
                         <label class="text-muted small uppercase mb-2 d-block">Harga Final (Rp)</label>
                         <input type="number" name="final_price" value="{{ old('final_price', $order->final_price ? intval($order->final_price) : '') }}" 
                                class="form-control bg-dark border-secondary text-white @error('final_price') is-invalid @enderror {{ !$order->final_price ? 'animate-pulse-crimson' : '' }}" 
-                               placeholder="Masukkan harga total..." {{ $order->status_id > 1 ? 'readonly' : '' }}>
+                               placeholder="Masukkan harga total..." {{ $order->status_id > 1 ? 'readonly' : '' }} min="0" oninput="if(this.value < 0) this.value = 0;">
                         @if($order->status_id > 1)
                             <small class="text-muted mt-1">Harga tidak dapat diubah setelah pesanan diproses.</small>
                         @endif
@@ -233,7 +238,7 @@
                                 </div>
                                 <div class="row g-2">
                                     <div class="col-6">
-                                        <button type="button" onclick="handleCancel('approve')" class="btn btn-primary w-100 rounded-pill font-weight-bold py-2 shadow-sm">
+                                        <button type="button" onclick="handleCancel('approve')" class="btn btn-success w-100 rounded-pill font-weight-bold py-2 shadow-sm">
                                             <i class="fas fa-check mr-2"></i> SETUJUI
                                         </button>
                                     </div>
@@ -254,7 +259,7 @@
                             </div>
                         @elseif($order->status_id == 1) {{-- Pending --}}
                             @if($order->remaining_balance <= 0)
-                                <button type="button" onclick="submitStatus(2)" class="btn btn-primary w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
+                                <button type="button" onclick="submitStatus(2)" class="btn btn-success w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
                                     <i class="fas fa-check-circle mr-2"></i> KONFIRMASI & PROSES
                                 </button>
                             @else
@@ -266,7 +271,7 @@
                                     BELUM DIBAYAR
                                 </button>
                             @endif
-                            <button type="button" onclick="submitStatus(9)" class="btn btn-outline-danger w-100 rounded-pill btn-sm">
+                            <button type="button" onclick="submitStatus(9)" class="btn btn-danger w-100 rounded-pill py-2 font-weight-bold text-white shadow-sm">
                                 <i class="fas fa-times-circle mr-1"></i> Batalkan Pesanan
                             </button>
                         @elseif($order->status_id == 2) {{-- Preparing --}}
@@ -463,6 +468,16 @@
             font-size: 2rem;
         }
         .gap-2 { gap: 10px; }
+
+        /* Hide spinner arrows for number input */
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 
     <script>

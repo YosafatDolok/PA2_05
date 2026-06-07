@@ -114,7 +114,6 @@
 @endsection
 
 @push('js')
-<script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
 <script>
     const orderId = {{ $order->order_id }};
     const currentUserId = {{ auth()->id() }};
@@ -123,30 +122,30 @@
     const proposalForm = document.getElementById('proposal-form');
     const messageInput = document.getElementById('message-input');
 
-    // Initialize Pusher/Echo simulation
-    const pusher = new Pusher('catering_pardede_key', {
-        wsHost: '127.0.0.1',
-        wsPort: 8080,
-        forceTLS: false,
-        enabledTransports: ['ws', 'wss'],
-        cluster: 'mt1',
-        authEndpoint: '/broadcasting/auth',
-        auth: {
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
+    // Initialize Echo Subscription
+    const initEchoChat = () => {
+        if (typeof window.Echo === 'undefined') {
+            console.warn('Echo is not initialized yet. Retrying...');
+            setTimeout(initEchoChat, 500);
+            return;
         }
-    });
 
-    const channel = pusher.subscribe(`private-order.${orderId}`);
+        console.log('Subscribing to order channel via Echo:', orderId);
+        window.Echo.private(`order.${orderId}`)
+            .listen('.message.sent', (data) => {
+                appendMessage(data);
+                scrollToBottom();
+                
+                if (data.type === 'proposal' && data.proposal_status === 'accepted') {
+                    const priceEl = document.getElementById('current-final-price');
+                    if (priceEl) {
+                        priceEl.innerText = `Rp ${new Intl.NumberFormat('id-ID').format(data.proposed_price)}`;
+                    }
+                }
+            });
+    };
 
-    pusher.connection.bind('error', function(err) {
-        console.error('Pusher Connection Error:', err);
-    });
-
-    channel.bind('pusher:subscription_error', function(status) {
-        console.error('Pusher Subscription Error:', status);
-    });
+    initEchoChat();
 
     // Load initial messages
     fetch(`/api/orders/${orderId}/messages`, {
@@ -163,16 +162,6 @@
         scrollToBottom();
     });
 
-    // Listen for new messages
-    channel.bind('message.sent', function(data) {
-        appendMessage(data);
-        scrollToBottom();
-        
-        // If it's an accepted proposal, update the UI price
-        if (data.type === 'proposal' && data.proposal_status === 'accepted') {
-            document.getElementById('current-final-price').innerText = `Rp ${new Intl.NumberFormat('id-ID').format(data.proposed_price)}`;
-        }
-    });
 
     // Send Message
     chatForm.addEventListener('submit', (e) => {

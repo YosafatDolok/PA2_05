@@ -12,6 +12,7 @@ use App\Services\FirebaseService;
 use App\Exports\OrdersExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OrderController extends Controller
 {
@@ -67,6 +68,21 @@ class OrderController extends Controller
             ->update(['is_read' => true]);
 
         return view('admin.orders.show', compact('order', 'statuses', 'drivers'));
+    }
+
+    public function exportInvoice($id)
+    {
+        $order = Order::with([
+            'user',
+            'driver',
+            'status',
+            'items.menu',
+            'additions.items.menu',
+            'additions.status'
+        ])->findOrFail($id);
+
+        $pdf = Pdf::loadView('admin.orders.invoice', compact('order'));
+        return $pdf->download('Invoice_ORD_' . str_pad($order->order_id, 5, '0', STR_PAD_LEFT) . '.pdf');
     }
 
     public function chat($id)

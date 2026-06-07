@@ -8,6 +8,7 @@ use App\Models\OrderAdditionItem;
 use App\Models\Notification;
 use App\Models\OrderActivity;
 use Illuminate\Http\Request;
+use App\Services\FirebaseService;
 
 class OrderAdditionController extends Controller
 {
@@ -38,6 +39,7 @@ class OrderAdditionController extends Controller
         }
         
         $additionRequest->update(['status_id' => 2]); // Approved
+        $additionRequest->load('items');
 
         // LOG ACTIVITY
         OrderActivity::create([
@@ -47,6 +49,17 @@ class OrderAdditionController extends Controller
             'description' => "Permintaan menu tambahan disetujui (Total: Rp " . number_format($additionRequest->items->sum('final_price'), 0, ',', '.') . ")",
             'new_value' => 'Approved',
         ]);
+
+        // Notify User
+        $order = $additionRequest->order;
+        $notification = Notification::create([
+            'user_id' => $order->user_id,
+            'type' => 'order_status',
+            'title' => 'Permintaan Tambahan Disetujui',
+            'message' => 'Permintaan tambahan menu untuk Pesanan #ORD-' . str_pad($order->order_id, 5, '0', STR_PAD_LEFT) . ' telah disetujui.',
+            'related_id' => $order->order_id,
+        ]);
+        $this->sendPush($order->user, $notification, $order->order_id);
 
         return back()->with('success', 'Permintaan tambahan berhasil disetujui');
     }
@@ -65,6 +78,50 @@ class OrderAdditionController extends Controller
             'new_value' => 'Rejected',
         ]);
 
+        // Notify User
+        $order = $additionRequest->order;
+        $notification = Notification::create([
+            'user_id' => $order->user_id,
+            'type' => 'order_status',
+            'title' => 'Permintaan Tambahan Ditolak',
+            'message' => 'Permintaan tambahan menu untuk Pesanan #ORD-' . str_pad($order->order_id, 5, '0', STR_PAD_LEFT) . ' telah ditolak.',
+            'related_id' => $order->order_id,
+        ]);
+        $this->sendPush($order->user, $notification, $order->order_id);
+
         return back()->with('success', 'Permintaan tambahan berhasil ditolak');
+    }
+
+    /**
+     * Helper to send push notification safely to a specific user
+     */
+    private function sendPush($recipient, $notification, $orderId)
+    {
+        \Log::info('Attempting Push Notification (Addition)', [
+            'order_id' => $orderId,
+            'recipient_id' => $recipient->user_id,
+            'fcm_token' => $recipient->fcm_token ? 'Exists' : 'Missing'
+        ]);
+
+        if ($recipient->fcm_token) {
+            try {
+                $firebase = new FirebaseService();
+                $result = $firebase->sendNotification(
+                    $recipient->fcm_token,
+                    $notification->title,
+                    $notification->message,
+                    [
+                        'type' => (string) $notification->type,
+                        'order_id' => (string) $orderId,
+                    ]
+                );
+                
+                \Log::info('Push Notification Result (Addition)', ['success' => $result]);
+            } catch (\Exception $e) {
+                \Log::error('Firebase Push Failed (Addition): ' . $e->getMessage());
+            }
+        } else {
+            \Log::warning('Push skipped (Addition): No FCM token for user ' . $recipient->user_id);
+        }
     }
 }

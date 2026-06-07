@@ -7,6 +7,8 @@ import '/models/order_model.dart';
 import '/views/widgets/tap_scale.dart';
 import 'package:intl/intl.dart';
 import '../../core/utils/helpers.dart';
+import '../widgets/custom_header.dart';
+import '/core/services/push_notification_service.dart';
 
 class ChatInboxPage extends StatefulWidget {
   const ChatInboxPage({super.key});
@@ -24,6 +26,20 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   void initState() {
     super.initState();
     _fetchInbox();
+    // Refresh inbox in real-time when new chat notifications arrive via FCM
+    PushNotificationService.unreadChatCount.addListener(_onUnreadChatCountChanged);
+  }
+
+  void _onUnreadChatCountChanged() {
+    if (mounted) {
+      _refreshInboxInBackground();
+    }
+  }
+
+  @override
+  void dispose() {
+    PushNotificationService.unreadChatCount.removeListener(_onUnreadChatCountChanged);
+    super.dispose();
   }
 
   Future<void> _fetchInbox() async {
@@ -34,8 +50,6 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
     
     try {
       final data = await ApiService.get(ApiEndpoints.adminInbox);
-      
-      // The API Resource wraps data in a 'data' key
       final List list = (data is Map && data.containsKey('data')) ? data['data'] : (data as List);
       
       if (mounted) {
@@ -51,6 +65,22 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
           isLoading = false;
         });
       }
+    }
+  }
+
+  // Refreshes the inbox silently without showing the loading spinner or hiding the list
+  Future<void> _refreshInboxInBackground() async {
+    try {
+      final data = await ApiService.get(ApiEndpoints.adminInbox);
+      final List list = (data is Map && data.containsKey('data')) ? data['data'] : (data as List);
+      
+      if (mounted) {
+        setState(() {
+          chats = list.map((json) => ChatInboxModel.fromJson(json)).toList();
+        });
+      }
+    } catch (e) {
+      // Ignore background errors
     }
   }
 
@@ -73,135 +103,176 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Pesan Masuk', 
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20)
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: AppColors.primary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primary),
-            onPressed: _fetchInbox,
+      backgroundColor: const Color(0xFFF9F7F2),
+      body: Column(
+        children: [
+          CustomHeader(
+            title: 'PESAN MASUK',
+            showIcons: false,
+          ),
+          Expanded(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : errorMessage != null
+                    ? _buildErrorState()
+                    : chats.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _fetchInbox,
+                            color: AppColors.primary,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              itemCount: chats.length,
+                              itemBuilder: (context, index) => _buildChatItem(chats[index]),
+                            ),
+                          ),
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : errorMessage != null
-              ? _buildErrorState()
-              : chats.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      onRefresh: _fetchInbox,
-                      color: AppColors.primary,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.only(top: 8),
-                        itemCount: chats.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1, indent: 80, color: Color(0xFFF1F1F1)),
-                        itemBuilder: (context, index) => _buildChatItem(chats[index]),
-                      ),
-                    ),
     );
   }
 
   Widget _buildChatItem(ChatInboxModel chat) {
-    return TapScale(
-      onTap: () async {
-        _markAsReadLocally(chat.orderId);
-        
-        try {
-          final data = await ApiService.get('${ApiEndpoints.orders}/${chat.orderId}');
-          final order = OrderModel.fromJson(data);
-          if (mounted) {
-            Navigator.pushNamed(context, '/order-detail', arguments: order);
+    final bool hasUnread = chat.unreadCount > 0;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: hasUnread ? AppColors.primary.withValues(alpha: 0.15) : const Color(0xFFEFEFEF),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: hasUnread ? 0.05 : 0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: TapScale(
+        onTap: () async {
+          _markAsReadLocally(chat.orderId);
+          
+          try {
+            final data = await ApiService.get('${ApiEndpoints.orders}/${chat.orderId}');
+            final order = OrderModel.fromJson(data);
+            if (mounted) {
+              Helpers.pushNamedSafe(context, '/order-detail', arguments: order);
+            }
+          } catch (e) {
+            if (mounted) {
+              Helpers.showSnackBar(context, 'Gagal membuka pesanan: $e');
+            }
           }
-        } catch (e) {
-          if (mounted) {
-            Helpers.showSnackBar(context, 'Gagal membuka pesanan: $e');
-          }
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  chat.userName.isNotEmpty ? chat.userName.substring(0, 1).toUpperCase() : 'P',
-                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 22),
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
+                ),
+                padding: const EdgeInsets.all(2),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      chat.userName.isNotEmpty ? chat.userName.substring(0, 1).toUpperCase() : 'P',
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 18),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        chat.userName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: chat.unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
-                          color: Colors.black87,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: RichText(
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Order #${chat.orderId} ',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: hasUnread ? FontWeight.w900 : FontWeight.bold,
+                                    color: const Color(0xFF2D0A0A),
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: '• ${chat.userName}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      Text(
-                        _formatTime(chat.lastMessageTime),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: chat.unreadCount > 0 ? AppColors.primary : Colors.grey,
-                          fontWeight: chat.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          chat.lastMessage ?? 'Belum ada pesan',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatTime(chat.lastMessageTime),
                           style: TextStyle(
-                            fontSize: 14,
-                            color: chat.unreadCount > 0 ? Colors.black : Colors.grey.shade600,
-                            fontWeight: chat.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
+                            fontSize: 11,
+                            color: hasUnread ? AppColors.secondary : Colors.grey.shade500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                      if (chat.unreadCount > 0)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            '${chat.unreadCount}',
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            chat.lastMessage ?? 'Belum ada pesan',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: hasUnread ? Colors.black87 : Colors.grey.shade600,
+                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
+                            ),
                           ),
                         ),
-                    ],
-                  ),
-                ],
+                        if (hasUnread)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${chat.unreadCount}',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -9,6 +9,14 @@ class Notification extends Model
 {
     use HasFactory;
 
+    protected static function booted()
+    {
+        static::created(function ($notification) {
+            event(new \App\Events\NotificationSent($notification));
+        });
+    }
+
+
     protected $primaryKey = 'notification_id';
 
     protected $fillable = [

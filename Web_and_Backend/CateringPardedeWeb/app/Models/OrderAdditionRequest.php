@@ -10,6 +10,20 @@ class OrderAdditionRequest extends Model
     use HasFactory;
 
     protected $fillable = ['order_id', 'status_id', 'notes'];
+    protected $appends = ['status_text'];
+
+    public function getStatusTextAttribute()
+    {
+        $statusId = $this->status_id;
+        if ($statusId == 1) {
+            return 'Pending';
+        } elseif ($statusId == 2) {
+            return 'Approved';
+        } elseif ($statusId == 3) {
+            return 'Rejected';
+        }
+        return 'Unknown';
+    }
 
     public function order()
     {

@@ -16,6 +16,8 @@ import '/views/auth/forgot_password/registration_otp_page.dart';
 import '/views/pages/order_page.dart';
 import '/views/pages/menu_page.dart';
 import '/views/pages/chat_inbox_page.dart';
+import '/views/pages/delivery_chat_page.dart';
+import '/views/pages/order_chat_page.dart';
 import '/views/driver/driver_home_page.dart';
 import '/views/driver/driver_order_detail_page.dart';
 import '/views/pages/map_picker_page.dart';
@@ -136,6 +138,24 @@ class AppRoutes {
           );
         }
         return _errorRoute("Order data not found");
+
+      case '/delivery-chat':
+        final args = settings.arguments;
+        if (args is int) {
+          return MaterialPageRoute(
+            builder: (_) => DeliveryChatPage(orderId: args),
+          );
+        }
+        return _errorRoute("Order ID not provided");
+
+      case '/order-chat':
+        final args = settings.arguments;
+        if (args is int) {
+          return MaterialPageRoute(
+            builder: (_) => OrderChatPage(orderId: args),
+          );
+        }
+        return _errorRoute("Order ID not provided");
 
       // ================= Gallery Detail =================
       case '/gallery-detail':

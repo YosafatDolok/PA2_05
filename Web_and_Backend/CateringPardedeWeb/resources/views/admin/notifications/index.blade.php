@@ -7,8 +7,7 @@
             <div class="card-header border-0 bg-transparent p-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h4 class="card-title text-white fw-bold mb-1">Intelligence Logs</h4>
-                        <p class="small text-white-50 mb-0">System-wide event tracking and mission updates</p>
+                        <h4 class="card-title text-white fw-bold mb-1">Notifications</h4>
                     </div>
                     <form action="{{ route('admin.notifications.markAllRead') }}" method="POST">
                         @csrf

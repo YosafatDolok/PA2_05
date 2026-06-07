@@ -72,11 +72,16 @@ class OrderController extends Controller
             'event_latitude' => 'required|numeric',
             'event_longitude' => 'required|numeric',
             'event_date' => 'required|date|after_or_equal:today',
-            'people' => 'required|integer|min:1',
+            'people' => 'required|integer|min:20|max:1000',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.menu_id' => 'required|exists:menus,menu_id',
             'items.*.quantity' => 'nullable|integer|min:1',
+        ], [
+            'people.required' => 'Jumlah orang wajib diisi.',
+            'people.integer' => 'Jumlah orang harus berupa angka.',
+            'people.min' => 'Jumlah orang minimum adalah 20 pax.',
+            'people.max' => 'Jumlah orang maksimum adalah 1000 pax.',
         ]);
 
         if ($validator->fails()) {
@@ -143,7 +148,10 @@ class OrderController extends Controller
                       ->where('sender_id', '!=', auth()->id());
             }])
             ->when((int)$request->user()->role_id !== 1, function($query) use ($request) {
-                return $query->where('user_id', $request->user()->user_id);
+                return $query->where(function($q) use ($request) {
+                    $q->where('user_id', $request->user()->user_id)
+                      ->orWhere('driver_id', $request->user()->user_id);
+                });
             })
             ->findOrFail($id);
 

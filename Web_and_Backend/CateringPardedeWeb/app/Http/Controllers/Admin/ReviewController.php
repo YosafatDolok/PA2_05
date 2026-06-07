@@ -31,15 +31,4 @@ class ReviewController extends Controller
 
         return back()->with('status', 'Visibility updated successfully!');
     }
-
-    /**
-     * Remove the specified review from storage.
-     */
-    public function destroy($id)
-    {
-        $review = Review::findOrFail($id);
-        $review->delete();
-
-        return back()->with('status', 'Review deleted successfully!');
-    }
 }

@@ -133,13 +133,33 @@ class MenuController extends Controller
 
     // Mobile API
 
-    public function apiIndex()
+    public function apiIndex(Request $request)
     {
-        $menus = Menu::with('category')
-            ->where('available', true)
-            ->get();
+        $sort = $request->query('sort');
 
-        return response()->json($menus);
+        $query = Menu::with('category')->where('available', true);
+
+        if ($sort === 'best_seller') {
+            $query->leftJoin('order_items', 'menus.menu_id', '=', 'order_items.menu_id')
+                ->select('menus.*', \DB::raw('COUNT(order_items.menu_id) as order_count'))
+                ->groupBy('menus.menu_id')
+                ->orderBy('order_count', 'desc');
+        } elseif ($sort === 'popular') {
+            $thirtyDaysAgo = \Carbon\Carbon::now()->subDays(30);
+
+            $query->leftJoin('order_items', 'menus.menu_id', '=', 'order_items.menu_id')
+                ->leftJoin('orders', function($join) use ($thirtyDaysAgo) {
+                    $join->on('order_items.order_id', '=', 'orders.order_id')
+                         ->where('orders.created_at', '>=', $thirtyDaysAgo);
+                })
+                ->select('menus.*', \DB::raw('COUNT(orders.order_id) as recent_order_count'))
+                ->groupBy('menus.menu_id')
+                ->orderBy('recent_order_count', 'desc');
+        } else {
+            $query->latest();
+        }
+
+        return response()->json($query->get());
     }
 
     public function apiShow($id)

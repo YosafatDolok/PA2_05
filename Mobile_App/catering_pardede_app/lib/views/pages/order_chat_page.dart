@@ -26,18 +26,14 @@ class _OrderChatPageState extends State<OrderChatPage> {
   void initState() {
     super.initState();
     _loadUser();
-    _chatController.fetchMessages(widget.orderId);
+    _chatController.fetchMessages(widget.orderId).then((_) => _scrollToBottom());
     _chatController.initPusher(widget.orderId);
     _chatController.markAsRead(widget.orderId); // Mark as read when entering
-    _chatController.addListener(_scrollToAndRead);
-  }
-
-  void _scrollToAndRead() {
-    _scrollToBottom();
-    // If a new message arrives while we are on the page, mark it as read
-    if (_chatController.messages.isNotEmpty && !_chatController.messages.last.isRead) {
-       _chatController.markAsRead(widget.orderId);
-    }
+    
+    // Safely trigger scroll when controller says so
+    _chatController.onNewMessage = () {
+      if (mounted) _scrollToBottom();
+    };
   }
 
   Future<void> _loadUser() async {
@@ -52,19 +48,21 @@ class _OrderChatPageState extends State<OrderChatPage> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _chatController.disconnectPusher(widget.orderId);
-    _chatController.removeListener(_scrollToAndRead);
     _chatController.dispose();
     _messageController.dispose();
     _scrollController.dispose();

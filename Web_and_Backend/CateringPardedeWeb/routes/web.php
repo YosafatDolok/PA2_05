@@ -47,6 +47,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
         Route::get('/messages', [OrderController::class, 'messages'])->name('admin.messages');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{id}/invoice', [OrderController::class, 'exportInvoice'])->name('orders.invoice');
         Route::get('/orders/{id}/chat', [OrderController::class, 'chat'])->name('orders.chat');
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
         Route::post('/orders/{id}/cancel-request', [App\Http\Controllers\Admin\OrderController::class, 'handleCancelRequest'])->name('orders.cancel-request');
@@ -60,7 +61,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         // Review Routes
         Route::get('/reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
         Route::patch('/reviews/{id}/toggle', [ReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle');
-        Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
         Route::get('/global-search', [DashboardController::class, 'globalSearch'])->name('admin.global-search');
         Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notifications.index');

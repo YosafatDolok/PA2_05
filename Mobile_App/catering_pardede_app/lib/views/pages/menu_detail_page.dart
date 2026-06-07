@@ -289,7 +289,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
               onTap: () async {
                 final token = await LocalStorage.getToken();
                 if (token == null) {
-                  Navigator.pushNamed(context, '/login');
+                  Helpers.pushNamedSafe(context, '/login');
                   return;
                 }
                 _showOrderBottomSheet(menu);

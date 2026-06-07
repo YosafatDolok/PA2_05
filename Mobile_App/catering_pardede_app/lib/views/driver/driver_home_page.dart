@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../core/services/location_service.dart';
 import '../widgets/tap_scale.dart';
 import '../../core/services/push_notification_service.dart';
+import '../../core/utils/helpers.dart';
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({super.key});
@@ -152,7 +153,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
               children: [
                 IconButton(
                   icon: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 24),
-                  onPressed: () => Navigator.pushNamed(context, '/notifications').then((_) => PushNotificationService.updateUnreadCount()),
+                  onPressed: () => Helpers.pushNamedSafe(context, '/notifications').then((_) => PushNotificationService.updateUnreadCount()),
                 ),
                 if (count > 0)
                   Positioned(
@@ -322,7 +323,7 @@ class _OrderCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => Navigator.pushNamed(context, '/driver-order-detail', arguments: order),
+          onTap: () => Helpers.pushNamedSafe(context, '/driver-order-detail', arguments: order),
           borderRadius: BorderRadius.circular(32),
           child: Padding(
             padding: const EdgeInsets.all(24),
