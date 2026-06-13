@@ -8,7 +8,7 @@ class ApiEndpoints {
   // To use real-time chat via Ngrok, you need a second Ngrok tunnel: ngrok http 8080
   // If you are using an Android Emulator, set this to: '10.0.2.2' and port 8080
   // If you are using a Physical Device, set this to your computer's IP (e.g., '192.168.1.x')
-  static String get pusherHost => '10.103.50.229'; // Bypassing Ngrok entirely for WebSockets!
+  static String get pusherHost => '10.98.231.229'; // Bypassing Ngrok entirely for WebSockets!
   static int get pusherPort => 8080;
   static String get pusherScheme => 'ws';
 
@@ -22,17 +22,21 @@ class ApiEndpoints {
   static const String categories = '$baseUrl/categories';
   static const String galleries = '$baseUrl/galleries';
   static const String updateProfile = '$baseUrl/user/update';
+  static const String verifyProfileOtp = '$baseUrl/user/update/verify-otp';
+  static const String resendProfileOtp = '$baseUrl/user/update/resend-otp';
   static const String updatePassword = '$baseUrl/user/password';
   static const String orders = '$baseUrl/orders';
   static const String notifications = '$baseUrl/notifications';
   static const String reviews = '$baseUrl/reviews';
   static String reviewOrder(int id) => '$baseUrl/orders/$id/review';
+
   static String menuReviews(int id) => '$baseUrl/menus/$id/reviews';
   static String orderMessages(int id) => '$baseUrl/orders/$id/messages';
   static String deliveryMessages(int id) => '$baseUrl/orders/$id/delivery-messages';
   static const String unreadChatCount = '$baseUrl/messages/unread-count';
   static const String adminStats = '$baseUrl/admin/stats';
   static const String adminInbox = '$baseUrl/admin/inbox';
+  static const String driverInbox = '$baseUrl/driver/inbox';
   static const String forgotPassword = '$baseUrl/password/forgot';
   static const String resetPassword = '$baseUrl/password/reset';
   static const String payments = "$basePayment/payments";

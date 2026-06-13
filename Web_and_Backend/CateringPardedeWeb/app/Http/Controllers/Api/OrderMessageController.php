@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderMessage;
+use App\Models\DeliveryMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -148,8 +149,26 @@ class OrderMessageController extends Controller
             $count = OrderMessage::where('is_read', false)
                 ->where('sender_id', '!=', $userId)
                 ->count();
+            $count += DeliveryMessage::where('is_read', false)
+                ->where('sender_id', '!=', $userId)
+                ->count();
+        } else if ((int)Auth::user()->role_id === 3) {
+            // Driver
+            $count = DeliveryMessage::where('is_read', false)
+                ->where('sender_id', '!=', $userId)
+                ->whereHas('order', function ($query) use ($userId) {
+                    $query->where('driver_id', $userId);
+                })
+                ->count();
         } else {
+            // Customer
             $count = OrderMessage::where('is_read', false)
+                ->where('sender_id', '!=', $userId)
+                ->whereHas('order', function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                })
+                ->count();
+            $count += DeliveryMessage::where('is_read', false)
                 ->where('sender_id', '!=', $userId)
                 ->whereHas('order', function ($query) use ($userId) {
                     $query->where('user_id', $userId);

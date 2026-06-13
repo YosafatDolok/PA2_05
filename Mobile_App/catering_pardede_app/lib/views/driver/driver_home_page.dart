@@ -186,9 +186,9 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       child: Row(
         children: [
-          _statsCard("AKTIF", activeCount.toString(), Icons.local_shipping_rounded, Colors.blue),
+          _statsCard("AKTIF", activeCount.toString(), Icons.local_shipping_rounded, const Color(0xFF4A90E2)),
           const SizedBox(width: 16),
-          _statsCard("SELESAI", doneCount.toString(), Icons.check_circle_rounded, Colors.green),
+          _statsCard("SELESAI", doneCount.toString(), Icons.check_circle_rounded, const Color(0xFF558B6D)),
           const SizedBox(width: 16),
           _statsCard("TOTAL", orders.length.toString(), Icons.assignment_rounded, AppColors.secondary),
         ],
@@ -231,8 +231,9 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
         height: 56,
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFFEFECE5),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE5E0D5), width: 1),
         ),
         child: Row(
           children: [
@@ -251,9 +252,9 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
         onTap: () => setState(() => activeTab = index),
         child: Container(
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))] : null,
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))] : null,
           ),
           alignment: Alignment.center,
           child: Text(
@@ -261,7 +262,7 @@ class _DriverHomePageState extends State<DriverHomePage> with SingleTickerProvid
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,
-              color: isSelected ? AppColors.primary : Colors.grey[500],
+              color: isSelected ? Colors.white : const Color(0xFF8D8276),
               letterSpacing: 1,
             ),
           ),
@@ -388,31 +389,35 @@ class _OrderCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 48,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(16),
+                Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark]),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "LIHAT DETAIL PESANAN",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          letterSpacing: 1,
                         ),
-                        child: const Text("DETAIL PESANAN", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      height: 48,
-                      width: 48,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [AppColors.secondary, AppColors.accent]),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
-                      ),
-                      child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
-                    ),
-                  ],
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 12),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -424,10 +429,35 @@ class _OrderCard extends StatelessWidget {
 
   Widget _buildStatusBadge(int id, String name) {
     Color color;
+    String statusText;
     switch (id) {
-      case 3: color = Colors.blue; break;
-      case 4: color = Colors.green; break;
-      default: color = Colors.orange;
+      case 1:
+        color = Colors.orange;
+        statusText = "MENUNGGU";
+        break;
+      case 2:
+        color = Colors.orange;
+        statusText = "DIPERSIAPKAN";
+        break;
+      case 3:
+        color = Colors.blue;
+        statusText = "SEDANG DIKIRIM";
+        break;
+      case 4:
+        color = Colors.green;
+        statusText = "SELESAI";
+        break;
+      case 5:
+        color = Colors.green;
+        statusText = "LUNAS";
+        break;
+      case 9:
+        color = Colors.red;
+        statusText = "DIBATALKAN";
+        break;
+      default:
+        color = Colors.orange;
+        statusText = name.toUpperCase();
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -436,7 +466,7 @@ class _OrderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
-        name.toUpperCase(),
+        statusText,
         style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
       ),
     );

@@ -18,7 +18,8 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'order_id' => 'required'
+            'order_id' => 'required',
+            'amount' => 'nullable|numeric|min:10000' // Midtrans minimum is usually 10,000
         ]);
 
         $user = $request->attributes->get('authenticated_user');
@@ -32,7 +33,7 @@ class PaymentController extends Controller
             $response = Http::withHeaders([
                 'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key'),
                 'Accept' => 'application/json'
-            ])->timeout(3)->get($mainAppUrl . '/api/orders/' . $request->order_id . '/billing');
+            ])->timeout(10)->get($mainAppUrl . '/api/orders/' . $request->order_id . '/billing');
 
             if (!$response->successful()) {
                 return response()->json(['message' => 'Gagal mendapatkan data tagihan pesanan.'], 400);
@@ -56,10 +57,24 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Pesanan ini sudah lunas.'], 400);
         }
 
-        // Buat rekaman pembayaran baru menggunakan nominal terverifikasi dari server
+        $totalPayable = (float)($billing['total_payable'] ?? $remainingBalance);
+        $minDpAmount = $totalPayable * 0.5;
+
+        $paymentAmount = $remainingBalance;
+        if ($request->has('amount') && $request->amount > 0) {
+            $paymentAmount = (float)$request->amount;
+            if ($paymentAmount > $remainingBalance) {
+                return response()->json(['message' => 'Nominal pembayaran tidak boleh melebihi sisa tagihan.'], 400);
+            }
+            if ($paymentAmount < $minDpAmount && $remainingBalance >= $minDpAmount) {
+                return response()->json(['message' => 'Minimal pembayaran DP adalah 50% dari total tagihan.'], 400);
+            }
+        }
+
+        // Buat rekaman pembayaran baru menggunakan nominal terverifikasi
         $payment = Payment::create([
             'order_id' => $request->order_id,
-            'amount' => $remainingBalance,
+            'amount' => $paymentAmount,
             'payment_method' => 'midtrans',
             'status' => 'pending',
             'external_id' => 'ORD-' . $request->order_id . '-' . strtoupper(Str::random(5)) . '-' . time(),
@@ -73,6 +88,11 @@ class PaymentController extends Controller
      */
     public function createTransaction(Request $request, $id)
     {
+        $request->validate([
+            'payment_type' => 'required|string',
+            'bank' => 'nullable|string'
+        ]);
+
         // Ambil data pembayaran yang sudah ada
         $payment = Payment::find($id);
         if (!$payment) {
@@ -90,7 +110,7 @@ class PaymentController extends Controller
             $response = Http::withHeaders([
                 'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key'),
                 'Accept' => 'application/json'
-            ])->timeout(3)->get($mainAppUrl . '/api/orders/' . $payment->order_id . '/billing');
+            ])->timeout(10)->get($mainAppUrl . '/api/orders/' . $payment->order_id . '/billing');
 
             if (!$response->successful()) {
                 return response()->json(['message' => 'Gagal memverifikasi tagihan pesanan.'], 400);
@@ -111,23 +131,66 @@ class PaymentController extends Controller
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
+        $paymentType = $request->payment_type;
+        $bank = $request->bank;
+
         // Parameter Midtrans
         $params = [
             'transaction_details' => [
                 'order_id' => $payment->external_id,
                 'gross_amount' => (int) $payment->amount,
             ],
+            'customer_details' => [
+                'first_name' => $user['name'] ?? 'Customer',
+                'email' => $user['email'] ?? 'customer@example.com',
+                'phone' => $user['phone_number'] ?? '',
+            ],
         ];
 
-        // Buat Token Snap
+        if ($paymentType === 'bank_transfer') {
+            if ($bank === 'mandiri') {
+                $params['payment_type'] = 'echannel';
+                $params['echannel'] = [
+                    'bill_info1' => 'Payment for',
+                    'bill_info2' => 'Order ' . $payment->external_id,
+                ];
+            } elseif ($bank === 'permata') {
+                $params['payment_type'] = 'permata';
+            } else {
+                $params['payment_type'] = 'bank_transfer';
+                $params['bank_transfer'] = [
+                    'bank' => $bank,
+                ];
+            }
+        } else {
+            return response()->json(['message' => 'Payment method not supported'], 400);
+        }
+
+        // Buat Charge CoreApi
         try {
-            $snapToken = Snap::getSnapToken($params);
+            $response = \Midtrans\CoreApi::charge($params);
             
-            // Simpan token untuk digunakan nanti
-            $payment->update(['snap_token' => $snapToken]);
+            $payment->update([
+                'midtrans_id' => $response->transaction_id ?? null,
+                'status' => 'pending'
+            ]);
 
             return response()->json([
-                'snap_token' => $snapToken
+                'status_code' => $response->status_code ?? null,
+                'transaction_id' => $response->transaction_id ?? null,
+                'order_id' => $response->order_id ?? null,
+                'gross_amount' => $response->gross_amount ?? null,
+                'payment_type' => $response->payment_type ?? null,
+                // Virtual Account info
+                'va_numbers' => $response->va_numbers ?? null,
+                'bca_va_number' => $response->bca_va_number ?? null,
+                'bni_va_number' => $response->bni_va_number ?? null,
+                'permata_va_number' => $response->permata_va_number ?? null,
+                // Mandiri info
+                'bill_key' => $response->bill_key ?? null,
+                'biller_code' => $response->biller_code ?? null,
+                // E-wallet actions
+                'actions' => $response->actions ?? null,
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);

@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'page' => __('Add Gallery'),
+    'page' => __('Tambah Galeri'),
     'pageSlug' => 'galleries'
 ])
 
@@ -8,9 +8,9 @@
         <div class="col-xl-7 col-lg-9 mx-auto">
             <div class="card aura-card shadow-lg">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="m-0 font-weight-bold">Upload New Image</h4>
+                    <h4 class="m-0 font-weight-bold">Unggah Gambar Baru</h4>
                     <a href="{{ route('galleries.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                        <i class="fas fa-arrow-left me-2"></i> CANCEL
+                        <i class="fas fa-arrow-left me-2"></i> BATAL
                     </a>
                 </div>
 
@@ -22,18 +22,18 @@
                             {{-- IMAGE --}}
                             <div class="col-12">
                                 <div class="form-group mb-0 text-center">
-                                    <label class="d-block mb-3">IMAGE FILE</label>
+                                    <label class="d-block mb-3">FILE GAMBAR</label>
                                     
                                     <div class="aura-upload-zone mb-4" id="uploadZone">
                                         <div class="aura-upload-placeholder" id="placeholder">
                                             <i class="fas fa-cloud-arrow-up"></i>
-                                            <p class="text-muted small mb-0">Choose an image to upload</p>
+                                            <p class="text-muted small mb-0">Pilih gambar untuk diunggah</p>
                                         </div>
                                         <img id="previewImage" src="#" alt="Preview" class="aura-upload-preview">
                                     </div>
 
                                     <label class="btn btn-aura px-5 py-3">
-                                        <i class="fas fa-image me-2"></i> SELECT IMAGE
+                                        <i class="fas fa-image me-2"></i> PILIH GAMBAR
                                         <input type="file" name="image" accept="image/*" onchange="handleImagePreview(event)" hidden required>
                                     </label>
                                 </div>
@@ -42,14 +42,14 @@
                             {{-- DESCRIPTION --}}
                             <div class="col-12 mt-4">
                                 <div class="form-group mb-0">
-                                    <label>DESCRIPTION</label>
-                                    <textarea name="description" class="form-control" rows="3" placeholder="Add a description for this image...">{{ old('description') }}</textarea>
+                                    <label>DESKRIPSI</label>
+                                    <textarea name="description" class="form-control form-control-aura" rows="3" placeholder="Tambahkan deskripsi untuk gambar ini...">{{ old('description') }}</textarea>
                                 </div>
                             </div>
 
                             <div class="col-12 mt-5">
                                 <button type="submit" class="btn btn-primary w-100 py-3 font-weight-bold fs-5 shadow-lg">
-                                    SAVE TO GALLERY
+                                    SIMPAN KE GALERI
                                 </button>
                             </div>
                         </div>

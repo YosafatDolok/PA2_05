@@ -1,13 +1,13 @@
 @extends('layouts.app', [
-    'page' => __('Payment History'),
+    'page' => __('Riwayat Pembayaran'),
     'pageSlug' => 'payments'
 ])
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="m-0 font-weight-bold text-white">Payment History</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Monitor all incoming Midtrans transactions</p>
+            <h2 class="m-0 font-weight-bold text-white">Riwayat Pembayaran</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Pantau semua transaksi Midtrans yang masuk</p>
         </div>
     </div>
 
@@ -18,12 +18,12 @@
                     <table class="table align-items-center mb-0">
                         <thead class="text-secondary uppercase extra-small font-weight-bold">
                             <tr>
-                                <th>TRANSACTION ID</th>
-                                <th>ORDER</th>
-                                <th>AMOUNT</th>
-                                <th>METHOD</th>
+                                <th>ID TRANSAKSI</th>
+                                <th>PESANAN</th>
+                                <th>JUMLAH</th>
+                                <th>METODE</th>
                                 <th>STATUS</th>
-                                <th>TIME</th>
+                                <th>WAKTU</th>
                             </tr>
                         </thead>
                         <tbody class="text-white">
@@ -70,7 +70,7 @@
                             @empty
                             <tr>
                                 <td colspan="6" class="text-center py-5">
-                                    <div class="text-muted">No payment records found in the payment service.</div>
+                                    <div class="text-muted">Belum ada riwayat pembayaran yang ditemukan.</div>
                                 </td>
                             </tr>
                             @endforelse

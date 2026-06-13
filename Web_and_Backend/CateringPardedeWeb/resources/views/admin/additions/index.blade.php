@@ -1,4 +1,4 @@
-@extends('layouts.app', ['page' => __('Order Additions'), 'pageSlug' => 'additions'])
+@extends('layouts.app', ['page' => __('Tambahan Pesanan'), 'pageSlug' => 'additions'])
 
 @section('content')
 <div class="row">
@@ -6,7 +6,7 @@
         <div class="card card-neo">
             <div class="card-header">
                 <h4 class="card-title">Permintaan Tambahan Menu</h4>
-                <p class="category">Review and price additional menu requests from customers.</p>
+                <p class="category">Tinjau dan tentukan harga permintaan menu tambahan dari pelanggan.</p>
             </div>
             <div class="card-body">
                 @if (session('success'))
@@ -19,11 +19,11 @@
                     <table class="table">
                         <thead class="text-primary">
                             <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
-                                <th>Menus</th>
+                                <th>ID Pesanan</th>
+                                <th>Pelanggan</th>
+                                <th>Menu</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -46,10 +46,10 @@
                                     <td>
                                         @if ($req->status_id == 1)
                                             <a href="{{ route('orders.show', $req->order_id) }}#additions-section" class="btn btn-sm btn-aura">
-                                                <i class="fas fa-eye"></i> Review
+                                                <i class="fas fa-eye"></i> Tinjau
                                             </a>
                                         @else
-                                            <span class="text-muted small">Processed</span>
+                                            <span class="text-muted small">Sudah Diproses</span>
                                         @endif
                                     </td>
                                 </tr>

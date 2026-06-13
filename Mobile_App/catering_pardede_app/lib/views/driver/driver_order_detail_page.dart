@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../controllers/driver_order_controller.dart';
-import '../../core/services/location_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import 'package:intl/intl.dart';
@@ -24,7 +23,6 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
   final Map<String, bool> _checklistStates = {};
 
   @override
-
   void initState() {
     super.initState();
     if (widget.order != null) {
@@ -38,8 +36,7 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
   Future<void> _fetchOrderDetails() async {
     setState(() => isLoading = true);
     try {
-      final response = await DriverOrderController.getMyOrders(); // Reuse controller or use API directly
-      // Find the specific order in the list (or we could add a getOrderById to the controller)
+      final response = await DriverOrderController.getMyOrders();
       final order = response.firstWhere((o) => o['order_id'] == widget.orderId);
       if (mounted) {
         setState(() {
@@ -75,8 +72,8 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
   }
 
   Future<void> _callCustomer() async {
-    final phone = _currentOrder['user']['phone'];
-    if (phone == null || phone.isEmpty) {
+    final phone = _currentOrder['user']['phone_number'];
+    if (phone == null || phone.toString().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nomor telepon tidak tersedia')),
       );
@@ -95,11 +92,10 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
         orderId: _currentOrder['order_id'],
         statusId: 3, // Out for Delivery
       );
-      LocationService.startTracking();
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Trip dimulai. GPS Tracking Aktif.')),
+          const SnackBar(content: Text('Trip dimulai.')),
         );
       }
     } catch (e) {
@@ -125,7 +121,6 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
         statusId: 4, // 4 is Delivered
         proofImagePath: image.path,
       );
-      LocationService.stopTracking();
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -143,7 +138,6 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -179,30 +173,14 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
                 children: [
                   _buildSectionHeader("DETAIL PELANGGAN"),
                   const SizedBox(height: 16),
-                  _buildInfoCard("Customer", order['user']['name'], Icons.person_outline),
-                  const SizedBox(height: 12),
-                  _buildInfoCard(
-                    "Telepon", 
-                    order['user']['phone'] ?? "Tidak tersedia", 
-                    Icons.phone_outlined, 
-                    onAction: (order['user']['phone'] != null && order['user']['phone'].toString().isNotEmpty) ? _callCustomer : null, 
-                    actionIcon: Icons.call
-                  ),
-                  const SizedBox(height: 12),
-                  _buildInfoCard(
-                    "Chat", 
-                    "Diskusi & Koordinasi", 
-                    Icons.chat_bubble_outline, 
-                    onAction: () => Navigator.pushNamed(context, '/delivery-chat', arguments: order['order_id']), 
-                    actionIcon: Icons.chevron_right
-                  ),
-                  const SizedBox(height: 12),
+                  _buildGroupedCustomerCard(order),
+                  const SizedBox(height: 16),
                   _buildPaymentCard(remainingBalance, totalPayable),
                   
                   const SizedBox(height: 32),
                   _buildSectionHeader("LOKASI PENGANTARAN"),
                   const SizedBox(height: 16),
-                  _buildInfoCard("Alamat", order['event_address'], Icons.location_on_outlined, onAction: _launchNavigation, actionIcon: Icons.directions),
+                  _buildGroupedLocationCard(order),
                   
                   const SizedBox(height: 32),
                   _buildSectionHeader("WAKTU & KAPASITAS"),
@@ -254,7 +232,290 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
           ),
         ],
       ),
-      bottomNavigationBar: SafeArea(child: _buildBottomAction(statusId)),
+      bottomNavigationBar: _buildBottomAction(statusId),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 12,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 11, 
+            fontWeight: FontWeight.w900, 
+            color: Color(0xFF8D8276),
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroupedCustomerCard(dynamic order) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildRowItem("Customer", order['user']['name'], Icons.person_outline),
+          const Divider(height: 1, color: Color(0xFFF5F2EC), indent: 64),
+          _buildRowItem(
+            "Telepon", 
+            order['user']['phone_number'] ?? "Tidak tersedia", 
+            Icons.phone_outlined, 
+            onAction: (order['user']['phone_number'] != null && order['user']['phone_number'].toString().isNotEmpty) ? _callCustomer : null, 
+            actionIcon: Icons.call_rounded
+          ),
+          const Divider(height: 1, color: Color(0xFFF5F2EC), indent: 64),
+          _buildRowItem(
+            "Chat", 
+            "Diskusi & Koordinasi", 
+            Icons.chat_bubble_outline_rounded, 
+            onAction: () => Navigator.pushNamed(context, '/delivery-chat', arguments: order['order_id']), 
+            actionIcon: Icons.chevron_right_rounded
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupedLocationCard(dynamic order) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: _buildRowItem(
+        "Alamat", 
+        order['event_address'], 
+        Icons.location_on_outlined, 
+        onAction: _launchNavigation, 
+        actionIcon: Icons.directions_car_rounded
+      ),
+    );
+  }
+
+  Widget _buildRowItem(String label, String value, IconData icon, {VoidCallback? onAction, IconData? actionIcon}) {
+    final bool isActionable = onAction != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isActionable ? onAction : null,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 2),
+                    Text(
+                      value, 
+                      style: TextStyle(
+                        fontSize: 14, 
+                        fontWeight: FontWeight.w800, 
+                        color: value == "Tidak tersedia" ? Colors.grey[400] : AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isActionable) ...[
+                const SizedBox(width: 12),
+                Icon(actionIcon, color: AppColors.secondary, size: 20),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String label, String value, IconData icon, {VoidCallback? onAction, IconData? actionIcon}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 2),
+                Text(
+                  value, 
+                  style: const TextStyle(
+                    fontSize: 13, 
+                    fontWeight: FontWeight.w700, 
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onAction != null) ...[
+            const SizedBox(width: 12),
+            IconButton(
+              icon: Icon(actionIcon, color: AppColors.secondary),
+              onPressed: onAction,
+              constraints: const BoxConstraints(),
+              padding: EdgeInsets.zero,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentCard(double remainingBalance, double totalPayable) {
+    final bool isPaid = remainingBalance <= 0;
+    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isPaid ? const Color(0xFFEAF5EE) : const Color(0xFFFDF6EC),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isPaid ? const Color(0xFFD4EBDC) : const Color(0xFFF7E2C7),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isPaid ? const Color(0xFFD4EBDC) : const Color(0xFFF7E2C7),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isPaid ? Icons.check_circle_outline_rounded : Icons.monetization_on_outlined,
+              color: isPaid ? const Color(0xFF558B6D) : const Color(0xFFDCA455),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPaid ? "STATUS PEMBAYARAN" : "TAGIHAN COD / SISA BAYAR",
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isPaid ? const Color(0xFF3A604B) : const Color(0xFF8B5E2B),
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isPaid ? "LUNAS (Bayar Online)" : formatter.format(remainingBalance),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: isPaid ? const Color(0xFF2E4D3C) : const Color(0xFF6B451B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isPaid 
+                      ? "Tidak perlu menagih pembayaran." 
+                      : "Harap tagih sisa pembayaran saat serah terima.",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isPaid ? const Color(0xFF3A604B) : const Color(0xFF8B5E2B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomAction(int statusId) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -10))],
+      ),
+      child: statusId < 3 
+        ? _actionButton("MULAI PENGANTARAN", AppColors.primary, _startDelivery)
+        : statusId == 3
+          ? _actionButton("KONFIRMASI TERKIRIM", Colors.green, _completeDelivery)
+          : const SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: Center(child: Text("PESANAN SELESAI", style: TextStyle(color: Colors.green, fontWeight: FontWeight.w900, letterSpacing: 2))),
+            ),
+    );
+  }
+
+  Widget _actionButton(String label, Color color, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton(
+        onPressed: isUpdating ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 0,
+        ),
+        child: isUpdating 
+          ? const CircularProgressIndicator(color: Colors.white)
+          : Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+      ),
     );
   }
 
@@ -305,11 +566,19 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Container(color: AppColors.primary),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                ),
+              ),
+            ),
             Positioned(
-              right: -20,
-              bottom: -20,
-              child: Icon(Icons.receipt_long, size: 150, color: Colors.white.withValues(alpha: 0.1)),
+              right: -30,
+              bottom: -30,
+              child: Icon(Icons.receipt_long_rounded, size: 180, color: Colors.white.withValues(alpha: 0.04)),
             ),
           ],
         ),
@@ -317,156 +586,6 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
         onPressed: () => Navigator.pop(context),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
-    );
-  }
-
-  Widget _buildInfoCard(String label, String value, IconData icon, {VoidCallback? onAction, IconData? actionIcon}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppColors.background.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: AppColors.secondary, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primary)),
-              ],
-            ),
-          ),
-          if (onAction != null)
-            IconButton(
-              icon: Icon(actionIcon, color: AppColors.secondary),
-              onPressed: onAction,
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomAction(int statusId) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, -10))],
-      ),
-      child: statusId < 3 
-        ? _actionButton("MULAI PENGANTARAN", AppColors.primary, _startDelivery)
-        : statusId == 3
-          ? _actionButton("KONFIRMASI TERKIRIM", Colors.green, _completeDelivery)
-          : const SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: Center(child: Text("PESANAN SELESAI", style: TextStyle(color: Colors.green, fontWeight: FontWeight.w900, letterSpacing: 2))),
-            ),
-    );
-  }
-
-  Widget _actionButton(String label, Color color, VoidCallback onPressed) {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: ElevatedButton(
-        onPressed: isUpdating ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 0,
-        ),
-        child: isUpdating 
-          ? const CircularProgressIndicator(color: Colors.white)
-          : Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
-      ),
-    );
-  }
-
-  Widget _buildPaymentCard(double remainingBalance, double totalPayable) {
-    final bool isPaid = remainingBalance <= 0;
-    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isPaid ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isPaid ? Colors.green.withValues(alpha: 0.3) : Colors.orange.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isPaid ? Icons.check_circle_outline : Icons.monetization_on_outlined,
-              color: isPaid ? Colors.green : Colors.orange,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isPaid ? "STATUS PEMBAYARAN" : "TAGIHAN COD / SISA BAYAR",
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isPaid ? Colors.green[800] : Colors.orange[850],
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  isPaid ? "LUNAS (Paid Online)" : formatter.format(remainingBalance),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: isPaid ? Colors.green[900] : Colors.orange[900],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isPaid 
-                      ? "Tidak perlu menagih pembayaran." 
-                      : "Harap tagih sisa pembayaran saat serah terima.",
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isPaid ? Colors.green[700] : Colors.orange[800],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -577,4 +696,3 @@ class _DriverOrderDetailPageState extends State<DriverOrderDetailPage> {
     );
   }
 }
-

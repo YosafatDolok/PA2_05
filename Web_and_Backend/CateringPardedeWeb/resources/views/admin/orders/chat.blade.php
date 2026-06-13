@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'page' => __('Negotiation Chat'),
+    'page' => __('Chat Pesanan'),
     'pageSlug' => 'orders'
 ])
 
@@ -12,11 +12,11 @@
                 <a href="{{ route('orders.show', $order->order_id) }}" class="btn btn-link text-secondary p-0 mr-3">
                     <i class="fas fa-chevron-left"></i>
                 </a>
-                <h4 class="font-weight-bold m-0">Order Summary</h4>
+                <h4 class="font-weight-bold m-0">Ringkasan Pesanan</h4>
             </div>
 
             <div class="mb-4">
-                <label class="text-muted extra-small uppercase d-block">Customer</label>
+                <label class="text-muted extra-small uppercase d-block">Pelanggan</label>
                 <div class="d-flex align-items-center mt-2">
                     <div class="avatar-circle mr-3" style="width: 40px; height: 40px; background: var(--aura-crimson); display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; color: white;">
                         {{ substr($order->user->name, 0, 1) }}
@@ -29,7 +29,7 @@
             </div>
 
             <div class="mb-4">
-                <label class="text-muted extra-small uppercase d-block">Status & Price</label>
+                <label class="text-muted extra-small uppercase d-block">Status & Harga</label>
                 <div class="mt-2">
                     <span class="badge bg-primary-light mb-2">{{ strtoupper($order->status->status_name) }}</span>
                     <h3 class="text-secondary font-weight-bold" id="current-final-price">Rp {{ number_format($order->final_price ?? 0, 0, ',', '.') }}</h3>
@@ -37,10 +37,10 @@
             </div>
 
             <div class="mb-4">
-                <label class="text-muted extra-small uppercase d-block">Items</label>
+                <label class="text-muted extra-small uppercase d-block">Daftar Menu</label>
                 <ul class="list-unstyled mt-2">
                     @foreach($order->items as $item)
-                        <li class="text-white mb-2">• {{ $item->menu->name }}</li>
+                        <li class="text-muted mb-2">• {{ $item->menu->name }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -59,7 +59,7 @@
     <div class="col-md-8">
         <div class="card aura-card border-0 shadow-lg d-flex flex-column" style="height: 75vh;">
             <div class="card-header border-bottom border-secondary p-3">
-                <h5 class="m-0 font-weight-bold text-white">{{ $order->user->name }}</h5>
+                <h5 class="m-0 font-weight-bold">{{ $order->user->name }}</h5>
             </div>
             
             <div id="chat-messages" class="card-body overflow-auto p-4 d-flex flex-column">
@@ -69,10 +69,10 @@
                 </div>
             </div>
 
-            <div class="card-footer border-top border-secondary p-3 bg-dark-aura">
+            <div class="card-footer border-top border-secondary p-3 bg-transparent">
                 <form id="chat-form" class="d-flex align-items-center" style="gap: 15px;">
                     <div class="flex-grow-1">
-                        <input type="text" id="message-input" class="form-control bg-dark border-secondary text-white rounded-pill px-4 w-100" style="height: 50px;" placeholder="Type your response..." autocomplete="off">
+                        <input type="text" id="message-input" class="form-control bg-dark border-secondary text-white rounded-pill px-4 w-100" style="height: 50px;" placeholder="Ketik pesan Anda..." autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-primary btn-icon rounded-circle shadow-aura flex-shrink-0" style="width: 50px; height: 50px; padding: 0; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-paper-plane"></i>
@@ -228,10 +228,10 @@
             `;
         } else {
             contentHtml = `
-                <div class="message-bubble p-3 rounded shadow-sm" style="background: ${isMe ? 'var(--aura-crimson)' : 'rgba(255,255,255,0.05)'}; max-width: 70%;">
-                    <p class="m-0 text-white">${msg.message}</p>
+                <div class="message-bubble p-3 rounded shadow-sm" style="background: ${isMe ? 'var(--aura-crimson)' : 'var(--aura-bg)'}; border: ${isMe ? 'none' : '1px solid var(--aura-border)'}; max-width: 70%;">
+                    <p class="m-0" style="color: ${isMe ? '#ffffff' : 'var(--aura-text-main)'};">${msg.message}</p>
                     <div class="text-right mt-1">
-                        <small class="text-white-50" style="font-size: 0.65rem;">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                        <small style="font-size: 0.65rem; color: ${isMe ? 'rgba(255,255,255,0.7)' : 'var(--aura-text-muted)'};">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
                     </div>
                 </div>
             `;
@@ -250,12 +250,12 @@
     #chat-messages {
         flex: 1;
         scrollbar-width: thin;
-        scrollbar-color: rgba(255,255,255,0.1) transparent;
+        scrollbar-color: var(--aura-border) transparent;
     }
     #chat-messages::-webkit-scrollbar { width: 6px; }
     #chat-messages::-webkit-scrollbar-track { background: transparent; }
-    #chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-    #chat-messages::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    #chat-messages::-webkit-scrollbar-thumb { background: var(--aura-border); border-radius: 10px; }
+    #chat-messages::-webkit-scrollbar-thumb:hover { background: var(--aura-text-muted); }
     
     .status-dot {
         width: 10px;
@@ -265,8 +265,7 @@
         box-shadow: 0 0 10px #4caf50;
     }
     
-    .bg-dark-aura { background: rgba(0,0,0,0.2); }
-    .shadow-aura { box-shadow: 0 0 15px rgba(255, 51, 75, 0.4); }
+    .shadow-aura { box-shadow: 0 0 15px rgba(204, 78, 70, 0.4); }
     
     .message-bubble {
         position: relative;

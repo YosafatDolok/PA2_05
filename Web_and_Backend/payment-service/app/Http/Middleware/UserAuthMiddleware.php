@@ -34,7 +34,7 @@ class UserAuthMiddleware
             $response = Http::withHeaders([
                 'Authorization' => $token,
                 'Accept' => 'application/json'
-            ])->timeout(3)->get($targetUrl);
+            ])->timeout(10)->get($targetUrl);
 
             \Illuminate\Support\Facades\Log::debug('UserAuthMiddleware: Response code: ' . $response->status() . ', body: ' . $response->body());
 
@@ -47,6 +47,12 @@ class UserAuthMiddleware
         } catch (\Exception $e) {
             // Log error
             \Illuminate\Support\Facades\Log::error('Auth Introspection failed: ' . $e->getMessage());
+            
+            if (str_contains($e->getMessage(), 'timed out') || str_contains($e->getMessage(), 'cURL error')) {
+                return response()->json([
+                    'message' => 'Server sedang sibuk, silakan coba lagi.'
+                ], 500);
+            }
         }
 
         return response()->json([

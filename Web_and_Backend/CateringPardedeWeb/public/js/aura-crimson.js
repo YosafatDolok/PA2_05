@@ -50,16 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const form = deleteBtn.closest('form');
 
             Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete "${itemName}". This action cannot be undone!`,
+                title: 'Apakah Anda yakin?',
+                text: `Anda akan menghapus "${itemName}". Tindakan ini tidak dapat dibatalkan!`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ff334b',
-                cancelButtonColor: 'rgba(255,255,255,0.1)',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel',
-                background: 'rgba(15, 15, 20, 0.98)',
-                color: '#fff',
+                cancelButtonColor: '#718096',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal',
+                background: '#fff',
+                color: '#2d3748',
                 backdrop: `rgba(0,0,0,0.4) blur(4px)`
             }).then((result) => {
                 if (result.isConfirmed) {

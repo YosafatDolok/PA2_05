@@ -39,6 +39,8 @@ Route::get('/reviews', [ReviewController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/user/update', [ProfileController::class, 'update']); 
+    Route::post('/user/update/verify-otp', [ProfileController::class, 'verifyProfileOtp']); 
+    Route::post('/user/update/resend-otp', [ProfileController::class, 'resendProfileOtp']); 
     Route::post('/user/fcm-token', [ProfileController::class, 'updateFcmToken']); 
     Route::post('/user/password', [ProfileController::class, 'updatePassword']); 
     
@@ -87,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Driver Logistics
     Route::prefix('driver')->group(function () {
         Route::get('/orders', [\App\Http\Controllers\Api\DriverController::class, 'myOrders']);
+        Route::get('/inbox', [\App\Http\Controllers\Api\DriverController::class, 'inbox']);
         Route::post('/location', [\App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
         Route::post('/orders/{id}/status', [\App\Http\Controllers\Api\DriverController::class, 'updateStatus']);
     });

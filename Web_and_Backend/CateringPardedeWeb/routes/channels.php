@@ -18,6 +18,6 @@ Broadcast::channel('delivery.order.{orderId}', function ($user, $orderId) {
     $order = \App\Models\Order::find($orderId);
     if (!$order) return false;
     
-    // Customer (user_id) or Driver (driver_id) can join
-    return $order->user_id === $user->user_id || $order->driver_id === $user->user_id;
+    // Customer (user_id), Driver (driver_id), or Admin (role_id 1) can join
+    return $user->role_id === 1 || $order->user_id === $user->user_id || $order->driver_id === $user->user_id;
 });

@@ -41,6 +41,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::resource('galleries', GalleryController::class);
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profile/confirm', [ProfileController::class, 'confirmUpdate'])->name('profile.confirm');
         
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         // Custom route for Excel export
@@ -50,12 +51,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/orders/{id}/invoice', [OrderController::class, 'exportInvoice'])->name('orders.invoice');
         Route::get('/orders/{id}/chat', [OrderController::class, 'chat'])->name('orders.chat');
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+        Route::post('/orders/{id}/item-prices', [OrderController::class, 'updateItemPrices'])->name('orders.updateItemPrices');
+        Route::post('/orders/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');
         Route::post('/orders/{id}/cancel-request', [App\Http\Controllers\Admin\OrderController::class, 'handleCancelRequest'])->name('orders.cancel-request');
         Route::get('/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');
 
         Route::get('/additions', [OrderAdditionController::class, 'index'])->name('admin.additions.index');
         Route::patch('/additions/{id}', [OrderAdditionController::class, 'update'])->name('admin.additions.update');
         Route::post('/additions/{id}/approve', [OrderAdditionController::class, 'approve'])->name('additions.approve');
+        Route::post('/additions/{id}/save-prices', [OrderAdditionController::class, 'savePrices'])->name('additions.save-prices');
         Route::post('/additions/{id}/reject', [OrderAdditionController::class, 'reject'])->name('additions.reject');
         
         // Review Routes

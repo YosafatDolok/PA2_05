@@ -8,7 +8,11 @@ import '../widgets/tap_scale.dart';
 import '../../core/utils/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../core/storage/local_storage.dart';
 import '../widgets/custom_header.dart';
+import 'profile_otp_page.dart';
 
 class EditProfilePage extends StatefulWidget {
   final UserModel user;
@@ -58,19 +62,47 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _isLoading = true);
 
     try {
-      await ApiService.postMultipart(
-        ApiEndpoints.updateProfile,
-        {
-          'name': _nameController.text,
-          'email': _emailController.text,
-          'phone_number': _phoneController.text,
-        },
-        filePath: _image?.path,
-      );
+      final request = http.MultipartRequest('POST', Uri.parse(ApiEndpoints.updateProfile));
+      request.headers['Authorization'] = 'Bearer ${await LocalStorage.getToken()}';
+      request.headers['Accept'] = 'application/json';
+      
+      request.fields['name'] = _nameController.text;
+      request.fields['email'] = _emailController.text;
+      request.fields['phone_number'] = _phoneController.text;
+      
+      if (_image != null) {
+        request.files.add(await http.MultipartFile.fromPath('profile_picture', _image!.path));
+      }
 
-      if (mounted) {
-        Helpers.showSnackBar(context, 'Profil berhasil diperbarui!');
-        Navigator.pop(context, true); // Return true to indicate data changed
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = json.decode(response.body);
+        
+        if (data['requires_otp'] == true) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            final success = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfileOtpPage(targetEmail: data['target_email']),
+              ),
+            );
+            
+            if (success == true && mounted) {
+              Helpers.showSnackBar(context, 'Profil berhasil diperbarui!');
+              Navigator.pop(context, true);
+            }
+          }
+        } else {
+          if (mounted) {
+            Helpers.showSnackBar(context, 'Profil berhasil diperbarui!');
+            Navigator.pop(context, true);
+          }
+        }
+      } else {
+        throw Exception(json.decode(response.body)['message'] ?? 'Gagal memperbarui profil');
       }
     } catch (e) {
       if (mounted) {

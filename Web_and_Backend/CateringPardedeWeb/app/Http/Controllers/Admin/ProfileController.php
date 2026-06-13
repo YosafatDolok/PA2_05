@@ -48,23 +48,187 @@ class ProfileController extends Controller
                 ->store('profiles', 'public');
         }
 
-        // Update fields
+        // Check if email or phone changed
+        $emailChanged = $request->email !== $user->email;
+        $phoneChanged = $request->phone_number !== $user->phone_number;
+
+        if ($request->wantsJson() && ($emailChanged || $phoneChanged)) {
+            // Save to pending_profile_updates
+            $otp = (string) rand(100000, 999999);
+            $expiresAt = \Carbon\Carbon::now()->addMinutes(5);
+
+            \Illuminate\Support\Facades\DB::table('pending_profile_updates')->updateOrInsert(
+                ['user_id' => $user->user_id],
+                [
+                    'new_email' => $emailChanged ? $request->email : null,
+                    'new_phone_number' => $phoneChanged ? $request->phone_number : null,
+                    'otp_code' => $otp,
+                    'expires_at' => $expiresAt,
+                    'created_at' => \Carbon\Carbon::now(),
+                    'updated_at' => \Carbon\Carbon::now(),
+                ]
+            );
+
+            // Send OTP to the NEW email if email changed, otherwise to CURRENT email
+            $targetEmail = $emailChanged ? $request->email : $user->email;
+            
+            try {
+                \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\ProfileUpdateOtpMail($otp, $user->name));
+                
+                // Update name and profile picture immediately
+                $user->update([
+                    'name' => $request->name,
+                    'profile_picture' => $user->profile_picture,
+                ]);
+
+                return response()->json([
+                    'requires_otp' => true,
+                    'target_email' => $targetEmail,
+                    'message' => 'Kode verifikasi telah dikirim ke email Anda.'
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Gagal mengirim email verifikasi.'], 500);
+            }
+        }
+
+        // Handle web update requiring password confirmation if email/phone changed
+        if (!$request->wantsJson() && ($emailChanged || $phoneChanged)) {
+            session([
+                'pending_email' => $request->email,
+                'pending_phone' => $request->phone_number,
+                'requires_password_confirmation' => true
+            ]);
+            $user->update(['name' => $request->name, 'profile_picture' => $user->profile_picture]);
+            return redirect()->route('profile.edit')->with('info', 'Harap masukkan password Anda untuk mengonfirmasi perubahan.');
+        }
+
+        // Normal update (only name/picture changed or mobile request)
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
             'phone_number' => $request->phone_number,
-            'profile_picture' => $user->profile_picture, // Ensure the path set above is persisted
+            'profile_picture' => $user->profile_picture, 
         ]);
 
-        // API response (for mobile reuse)
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Profile updated',
-                'user' => $user
-            ]);
+        return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    public function confirmUpdate(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'current_password' => 'required',
+        ], [
+            'current_password.required' => 'Password saat ini wajib diisi.',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+            return back()->with('error', 'Password yang Anda masukkan salah. Perubahan profil dibatalkan.');
         }
 
-        return back()->with('success', 'Profile updated successfully');
+        // Apply pending changes from session
+        $pendingEmail = session('pending_email');
+        $pendingPhone = session('pending_phone');
+
+        if ($pendingEmail || $pendingPhone) {
+            $user->update([
+                'email' => $pendingEmail ?? $user->email,
+                'phone_number' => $pendingPhone ?? $user->phone_number,
+            ]);
+
+            // Clear session data
+            session()->forget(['pending_email', 'pending_phone', 'requires_password_confirmation']);
+
+            return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui dengan aman.');
+        }
+
+        return redirect()->route('profile.edit')->with('error', 'Tidak ada perubahan yang tertunda.');
+    }
+
+    public function verifyProfileOtp(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|string|size:6',
+        ]);
+
+        $user = auth()->user();
+
+        $pending = \Illuminate\Support\Facades\DB::table('pending_profile_updates')
+            ->where('user_id', $user->user_id)
+            ->where('otp_code', $request->otp)
+            ->first();
+
+        if (!$pending) {
+            return response()->json(['message' => 'Kode verifikasi salah.'], 422);
+        }
+
+        if (\Carbon\Carbon::parse($pending->expires_at)->isPast()) {
+            return response()->json(['message' => 'Kode verifikasi telah kadaluarsa.'], 422);
+        }
+
+        // Apply the updates
+        $updates = [];
+        if ($pending->new_email) $updates['email'] = $pending->new_email;
+        if ($pending->new_phone_number) $updates['phone_number'] = $pending->new_phone_number;
+
+        $user->update($updates);
+
+        // Delete pending request
+        \Illuminate\Support\Facades\DB::table('pending_profile_updates')->where('user_id', $user->user_id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui.',
+            'user' => $user
+        ]);
+    }
+
+    public function resendProfileOtp(Request $request)
+    {
+        $user = auth()->user();
+
+        $pending = \Illuminate\Support\Facades\DB::table('pending_profile_updates')
+            ->where('user_id', $user->user_id)
+            ->first();
+
+        if (!$pending) {
+            return response()->json(['message' => 'Tidak ada permintaan perubahan profil yang tertunda.'], 404);
+        }
+
+        $rateLimitKey = 'otp-send-profile:' . $user->user_id;
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
+            $minutes = ceil($seconds / 60);
+            return response()->json([
+                'message' => "Terlalu banyak permintaan. Silakan coba lagi dalam {$minutes} menit."
+            ], 429);
+        }
+
+        \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 300);
+
+        $otp = (string) rand(100000, 999999);
+
+        \Illuminate\Support\Facades\DB::table('pending_profile_updates')
+            ->where('user_id', $user->user_id)
+            ->update([
+                'otp_code' => $otp,
+                'expires_at' => \Carbon\Carbon::now()->addMinutes(5),
+                'updated_at' => \Carbon\Carbon::now(),
+            ]);
+
+        $targetEmail = $pending->new_email ?: $user->email;
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\ProfileUpdateOtpMail($otp, $user->name));
+            return response()->json([
+                'success' => true,
+                'message' => 'Kode verifikasi baru telah dikirim ke email Anda.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal mengirim email verifikasi.'], 500);
+        }
     }
 
     public function updateFcmToken(Request $request)

@@ -138,41 +138,50 @@ class _OrderChatPageState extends State<OrderChatPage> {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.only(bottom: 6, top: 2),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+          minWidth: 80,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : AppColors.white,
+          color: isMe ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 16),
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: Radius.circular(isMe ? 18 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 18),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Wrap(
+          alignment: WrapAlignment.end,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          spacing: 8,
           children: [
             Text(
               message.message,
               style: TextStyle(
                 color: isMe ? Colors.white : AppColors.textPrimary,
                 fontSize: 15,
+                height: 1.3,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(message.createdAt),
-              style: TextStyle(
-                color: isMe ? Colors.white70 : AppColors.textSecondary,
-                fontSize: 10,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 1),
+              child: Text(
+                _formatTime(message.createdAt),
+                style: TextStyle(
+                  color: isMe ? Colors.white.withValues(alpha: 0.7) : Colors.black38,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -183,57 +192,84 @@ class _OrderChatPageState extends State<OrderChatPage> {
 
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -2),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.04),
+            offset: const Offset(0, -4),
+            blurRadius: 12,
           ),
         ],
       ),
       child: SafeArea(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (_userRole == 'admin')
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
-                onPressed: _showProposalDialog,
+              Padding(
+                padding: const EdgeInsets.only(right: 12, bottom: 4),
+                child: GestureDetector(
+                  onTap: _showProposalDialog,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: const Icon(Icons.request_quote_rounded, color: AppColors.primary, size: 22),
+                  ),
+                ),
               ),
             Expanded(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                constraints: const BoxConstraints(maxHeight: 120),
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: TextField(
                   controller: _messageController,
-                  decoration: const InputDecoration(
-                    hintText: 'Ketik pesan...',
-                    border: InputBorder.none,
-                    hintStyle: AppTextStyles.subtitle,
-                  ),
+                  textInputAction: TextInputAction.newline,
+                  keyboardType: TextInputType.multiline,
                   maxLines: null,
+                  decoration: InputDecoration(
+                    hintText: 'Ketik pesan...',
+                    hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {
-                final text = _messageController.text;
-                _chatController.sendMessage(context, widget.orderId, text);
-                _messageController.clear();
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
+            const SizedBox(width: 12),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: GestureDetector(
+                onTap: () {
+                  final text = _messageController.text;
+                  _chatController.sendMessage(context, widget.orderId, text);
+                  _messageController.clear();
+                },
+                child: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                 ),
-                child: const Icon(Icons.send, color: Colors.white, size: 20),
               ),
             ),
           ],

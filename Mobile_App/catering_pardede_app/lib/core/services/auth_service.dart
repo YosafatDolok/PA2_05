@@ -121,6 +121,16 @@ class AuthService {
     return false;
   }
 
+  static Future<bool> isDriver() async {
+    final user = await getUser();
+    if (user != null) {
+      final role = user['role']?['name'] ?? 
+                   (user['role_id'] == 3 ? 'driver' : 'customer');
+      return role == 'driver';
+    }
+    return false;
+  }
+
   static Future<void> logout() async {
     try {
       await ApiService.post(ApiEndpoints.logout, {});

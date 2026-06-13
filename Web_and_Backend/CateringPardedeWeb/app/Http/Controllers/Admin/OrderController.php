@@ -26,7 +26,9 @@ class OrderController extends Controller
                       ->where('sender_id', '!=', auth()->id());
             }]);
 
-        if ($statusId) {
+        if ($statusId === 'unpaid_delivery') {
+            $query->where('status_id', 4)->where('remaining_balance', '>', 0);
+        } elseif ($statusId) {
             $query->where('status_id', $statusId);
         }
 
@@ -53,7 +55,16 @@ class OrderController extends Controller
             ->withCount(['assignedOrders as active_deliveries' => function ($query) {
                 $query->where('status_id', 3); // Out for Delivery
             }])
-            ->get();
+            ->get()
+            ->sortBy(function ($driver) {
+                // Sort priorities:
+                // 1. Available (0 deliveries)
+                // 2. Busy (1-2 deliveries)
+                // 3. Full Capacity (3+ deliveries)
+                if ($driver->active_deliveries == 0) return 1;
+                if ($driver->active_deliveries < 3) return 2;
+                return 3;
+            });
 
         // MARK AS READ: When admin opens order details, mark all customer messages as read
         \App\Models\OrderMessage::where('order_id', $id)
@@ -137,16 +148,25 @@ class OrderController extends Controller
         }
 
         if ($request->action === 'approve') {
+            $forfeited = (float)$order->total_paid;
+            
             $order->update([
                 'status_id' => 9, // Cancelled
-                'is_cancelling' => false
+                'is_cancelling' => false,
+                'forfeited_amount' => $order->forfeited_amount + $forfeited,
+                'total_paid' => 0, // Clear total_paid so it doesn't count as active revenue
             ]);
+
+            $desc = "Permintaan pembatalan DISETUJUI oleh Admin.";
+            if ($forfeited > 0) {
+                $desc .= " Uang sejumlah Rp " . number_format($forfeited, 0, ',', '.') . " hangus.";
+            }
 
             OrderActivity::create([
                 'order_id' => $order->order_id,
                 'user_id' => auth()->id(),
                 'type' => 'status_change',
-                'description' => "Permintaan pembatalan DISETUJUI oleh Admin.",
+                'description' => $desc,
                 'old_value' => 'Requested',
                 'new_value' => 'Cancelled',
             ]);
@@ -193,16 +213,6 @@ class OrderController extends Controller
         $request->validate([
             'status_id' => 'required|exists:order_statuses,status_id',
             'final_price' => 'nullable|numeric|min:0',
-            'driver_id' => [
-                'nullable',
-                'exists:users,user_id',
-                function ($attribute, $value, $fail) {
-                    $user = User::find($value);
-                    if ($user && $user->role_id != 3) {
-                        $fail('The selected user must have the Driver role.');
-                    }
-                },
-            ],
         ], [
             'status_id.required' => 'Status pesanan wajib dipilih.',
             'final_price.numeric' => 'Harga final harus berupa angka.',
@@ -218,13 +228,7 @@ class OrderController extends Controller
 
         $oldPrice = $order->final_price;
         $oldStatusId = $order->status_id;
-        $oldDriverId = $order->driver_id;
-
         $order->status_id = $request->status_id;
-        if ($request->has('final_price')) {
-            $order->final_price = $request->final_price;
-        }
-        $order->driver_id = $request->driver_id;
 
         // AUTO-PAID TRANSITION: Check if order is fully paid when marking as Delivered (4)
         if ($order->status_id == 4 && $order->remaining_balance <= 0) {
@@ -260,30 +264,105 @@ class OrderController extends Controller
             $this->sendPush($order->user, $notification, $order->order_id);
         }
 
-        // 2. Price Update Activity
-        if ($request->has('final_price') && $oldPrice != $order->final_price) {
+
+
+        return redirect()->back()->with('success', 'Detail pesanan berhasil diperbarui');
+    }
+
+    public function updateItemPrices(Request $request, $id)
+    {
+        $request->validate([
+            'prices' => 'required|array',
+            'prices.*' => 'nullable|numeric|min:0',
+        ]);
+
+        $order = Order::with(['items', 'additions.items'])->findOrFail($id);
+
+        if ($order->status_id > 1) {
+            return redirect()->back()->with('error', 'Harga tidak dapat diubah karena pesanan sudah diproses.');
+        }
+
+        $oldPrice = $order->final_price;
+        $sum = 0;
+
+        // Update each item price
+        foreach ($order->items as $item) {
+            if (isset($request->prices[$item->order_item_id])) {
+                $item->final_price = $request->prices[$item->order_item_id];
+                $item->save();
+            }
+            $sum += $item->final_price;
+        }
+
+        // Add approved additions to the sum
+        foreach ($order->additions->where('status_id', 2) as $addition) {
+            $sum += $addition->items->sum('final_price');
+        }
+
+        $order->final_price = $sum;
+        $order->save();
+
+        if ($oldPrice != $order->final_price) {
             OrderActivity::create([
                 'order_id' => $order->order_id,
                 'user_id' => auth()->id(),
                 'type' => 'price_set',
-                'description' => "Harga final ditetapkan menjadi Rp " . number_format($order->final_price, 0, ',', '.'),
+                'description' => "Harga per-menu diatur, total harga diperbarui menjadi Rp " . number_format($order->final_price, 0, ',', '.'),
                 'old_value' => $oldPrice,
                 'new_value' => $order->final_price,
             ]);
 
             // Notify User
-            $notification = Notification::create([
+            $notification = \App\Models\Notification::create([
                 'user_id' => $order->user_id,
                 'type' => 'order_price',
                 'title' => 'Update Harga Pesanan #' . $order->order_id,
-                'message' => 'Admin telah menetapkan harga final untuk pesanan Anda: Rp ' . number_format($order->final_price, 0, ',', '.'),
+                'message' => 'Admin telah menetapkan harga pesanan Anda: Rp ' . number_format($order->final_price, 0, ',', '.'),
                 'related_id' => $order->order_id,
             ]);
             $this->sendPush($order->user, $notification, $order->order_id);
         }
 
-        // 3. Driver Assignment Activity
-        if ($order->wasChanged('driver_id')) {
+        return redirect()->back()->with('success', 'Harga menu berhasil disimpan dan total harga telah diperbarui.');
+    }
+
+    public function assignDriver(Request $request, $id)
+    {
+        $request->validate([
+            'driver_id' => [
+                'nullable',
+                'exists:users,user_id',
+                function ($attribute, $value, $fail) {
+                    if ($value) {
+                        $user = User::find($value);
+                        if ($user && $user->role_id != 3) {
+                            $fail('The selected user must have the Driver role.');
+                        }
+                    }
+                },
+            ],
+        ]);
+
+        $order = Order::findOrFail($id);
+
+        // Jika meng-assign driver baru (bukan menghapus / unassign)
+        if ($request->driver_id) {
+            $driver = User::find($request->driver_id);
+            // Cek limit kapasitas driver
+            $activeDeliveries = Order::where('driver_id', $driver->user_id)
+                ->where('status_id', 4) // Asumsi 4 = Out for Delivery / Active
+                ->count();
+
+            if ($activeDeliveries >= 3) {
+                return redirect()->back()->with('error', 'Gagal menugaskan: Driver ' . $driver->name . ' sedang mencapai kapasitas maksimal (3 pesanan aktif).');
+            }
+        }
+
+        $order->driver_id = $request->driver_id;
+
+        if ($order->isDirty('driver_id')) {
+            $order->save();
+
             $driverName = $order->driver->name ?? 'N/A';
             OrderActivity::create([
                 'order_id' => $order->order_id,
@@ -303,9 +382,11 @@ class OrderController extends Controller
                 ]);
                 $this->sendPush($order->driver, $driverNotification, $order->order_id);
             }
+            
+            return redirect()->back()->with('success', 'Driver berhasil ' . ($request->driver_id ? 'ditugaskan.' : 'dibatalkan.'));
         }
 
-        return redirect()->back()->with('success', 'Detail pesanan berhasil diperbarui');
+        return redirect()->back()->with('info', 'Tidak ada perubahan pada penugasan driver.');
     }
 
     /**

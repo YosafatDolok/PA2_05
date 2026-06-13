@@ -120,6 +120,21 @@ class _MapPickerPageState extends State<MapPickerPage> {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.primary,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              final LatLng? selectedLocation = await showSearch<LatLng?>(
+                context: context,
+                delegate: LocationSearchDelegate(),
+              );
+              if (selectedLocation != null) {
+                _mapController.move(selectedLocation, 16.0);
+                _reverseGeocode(selectedLocation);
+              }
+            },
+          )
+        ],
       ),
       body: Stack(
         children: [
@@ -210,5 +225,99 @@ class _MapPickerPageState extends State<MapPickerPage> {
         ],
       ),
     );
+  }
+}
+
+class LocationSearchDelegate extends SearchDelegate<LatLng?> {
+  @override
+  String get searchFieldLabel => 'Cari lokasi...';
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            query = '';
+            showSuggestions(context);
+          },
+        ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildSearchResults();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    if (query.isEmpty) {
+      return const Center(child: Text("Ketik nama jalan, gedung, atau area"));
+    }
+    return _buildSearchResults();
+  }
+
+  Widget _buildSearchResults() {
+    return FutureBuilder<List<dynamic>>(
+      future: _searchNominatim(query),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+        final results = snapshot.data;
+        if (results == null || results.isEmpty) {
+          return const Center(child: Text("Lokasi tidak ditemukan"));
+        }
+
+        return ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final place = results[index];
+            final displayName = place['display_name'] ?? '';
+            final lat = double.tryParse(place['lat'].toString());
+            final lon = double.tryParse(place['lon'].toString());
+
+            return ListTile(
+              leading: const Icon(Icons.location_on, color: Colors.grey),
+              title: Text(displayName, maxLines: 2, overflow: TextOverflow.ellipsis),
+              onTap: () {
+                if (lat != null && lon != null) {
+                  close(context, LatLng(lat, lon));
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<List<dynamic>> _searchNominatim(String query) async {
+    if (query.isEmpty) return [];
+    try {
+      final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5&countrycodes=id');
+      final response = await http.get(url, headers: {
+        'User-Agent': 'CateringPardedeApp/1.0 (com.catering.pardede.app)'
+      });
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      debugPrint("Search error: $e");
+    }
+    return [];
   }
 }

@@ -14,11 +14,14 @@ class ChatInboxResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $user = auth()->user();
+        $isCustomer = $user && (int)$user->role_id === 2;
+
         return [
             'order_id' => $this->order_id,
             'user' => [
-                'name' => $this->user->name ?? 'Pelanggan',
-                'profile_picture' => $this->user->profile_picture,
+                'name' => $isCustomer ? 'Catering Admin' : ($this->user->name ?? 'Pelanggan'),
+                'profile_picture' => $isCustomer ? null : $this->user->profile_picture,
             ],
             'latest_message' => [
                 'message' => $this->latestMessage->message ?? '...',

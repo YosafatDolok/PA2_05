@@ -61,7 +61,37 @@ class OrderAdditionController extends Controller
         ]);
         $this->sendPush($order->user, $notification, $order->order_id);
 
-        return back()->with('success', 'Permintaan tambahan berhasil disetujui');
+        return redirect(url()->previous() . '#additions-section')->with('success', 'Permintaan tambahan berhasil disetujui');
+    }
+
+    public function savePrices(Request $request, $id)
+    {
+        $request->validate([
+            'prices' => 'required|array',
+            'prices.*' => 'nullable|numeric|min:0',
+        ], [
+            'prices.*.numeric' => 'Harga harus berupa angka.',
+            'prices.*.min' => 'Harga tidak boleh kurang dari 0.',
+        ]);
+
+        $additionRequest = OrderAdditionRequest::findOrFail($id);
+        
+        foreach ($request->prices as $itemId => $price) {
+            OrderAdditionItem::where('id', $itemId)->update(['final_price' => $price]);
+        }
+        
+        $additionRequest->load('items');
+
+        // LOG ACTIVITY
+        OrderActivity::create([
+            'order_id' => $additionRequest->order_id,
+            'user_id' => auth()->id(),
+            'type' => 'addition_priced',
+            'description' => "Harga permintaan tambahan disimpan (Total: Rp " . number_format($additionRequest->items->sum('final_price'), 0, ',', '.') . ")",
+            'new_value' => 'Pending',
+        ]);
+
+        return redirect(url()->previous() . '#additions-section')->with('success', 'Harga tambahan berhasil disimpan tanpa disetujui');
     }
 
     public function reject($id)

@@ -275,32 +275,34 @@ class _MenuPageState extends State<MenuPage> {
                   ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    menu.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900, 
-                      fontSize: 15, 
-                      color: Color(0xFF2D0A0A),
-                      letterSpacing: -0.2,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      menu.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900, 
+                        fontSize: 15, 
+                        color: Color(0xFF2D0A0A),
+                        letterSpacing: -0.2,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    menu.description ?? "Quality Catering Pardede",
-                    style: TextStyle(fontSize: 11, color: Colors.brown[300], height: 1.4, fontWeight: FontWeight.w500),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 18),
-                  _buildAddButton(menu),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      menu.description ?? "Quality Catering Pardede",
+                      style: TextStyle(fontSize: 11, color: Colors.brown[300], height: 1.4, fontWeight: FontWeight.w500),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    _buildAddButton(menu),
+                  ],
+                ),
               ),
             ),
           ],
@@ -412,17 +414,19 @@ class _MenuPageState extends State<MenuPage> {
               aspectRatio: 1.1,
               child: ShimmerLoading.rounded(width: double.infinity, height: double.infinity, borderRadius: 28),
             ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Column(
-                children: [
-                  ShimmerLoading.rounded(width: 100, height: 16, borderRadius: 6),
-                  const SizedBox(height: 8),
-                  ShimmerLoading.rounded(width: 140, height: 12, borderRadius: 4),
-                  const SizedBox(height: 16),
-                  ShimmerLoading.rounded(width: double.infinity, height: 40, borderRadius: 14),
-                ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ShimmerLoading.rounded(width: 100, height: 16, borderRadius: 6),
+                    const SizedBox(height: 8),
+                    ShimmerLoading.rounded(width: 140, height: 12, borderRadius: 4),
+                    const Spacer(),
+                    ShimmerLoading.rounded(width: double.infinity, height: 40, borderRadius: 14),
+                  ],
+                ),
               ),
             )
           ],

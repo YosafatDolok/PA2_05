@@ -1,292 +1,495 @@
 :root {
-    --crimson: #a81c1c;
-    --crimson-light: #c62828;
-    --crimson-dark: #7f0000;
-    --crimson-op: rgba(168, 28, 28, 0.1);
-    --bg-light: #f4f7f6;
-    --panel-white: #ffffff;
-    --text-dark: #2d3436;
-    --text-muted: #636e72;
-    --border-color: rgba(0, 0, 0, 0.05);
-    --sidebar-width: 100px;
-    --header-height: 250px;
-    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.05);
+    /* Main Backgrounds */
+    --aura-bg: #FCFBFA; /* Soft Ivory */
+    --aura-panel: #FFFFFF; /* Crisp Paper White */
+    
+    /* Brand Colors */
+    --aura-crimson: #CC4E46; /* Deep Terracotta */
+    --aura-crimson-glow: rgba(204, 78, 70, 0.4);
+    
+    /* Text Colors */
+    --aura-white: #FFFFFF;
+    --aura-text-main: #2C2825; /* Dark Charcoal */
+    --aura-text-muted: #80756C; /* Warm Taupe */
+    
+    /* Borders and Shadows */
+    --aura-border: rgba(44, 40, 37, 0.08); /* Soft Taupe Border */
+    --aura-glass: rgba(255, 255, 255, 0.8);
+    --aura-shadow: 0 10px 30px rgba(44, 40, 37, 0.04);
+    
+    /* Layout */
+    --aura-sidebar-width: 280px;
+    --aura-header-height: 80px;
+    --sidebar-bg: #F7F4EE; /* Warm Vanilla */
+}
+
+* {
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--aura-text-muted) transparent;
 }
 
 body {
-    background-color: var(--bg-light);
-    color: var(--text-dark);
-    font-family: 'Outfit', 'Inter', sans-serif;
+    background-color: var(--aura-bg);
+    color: var(--aura-text-main);
+    font-family: 'Outfit', sans-serif;
     margin: 0;
     overflow-x: hidden;
+    line-height: 1.6;
 }
 
-/* Layout Structure */
-.header-bg {
-    background-color: var(--crimson);
-    height: var(--header-height);
-    width: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 0;
-    border-radius: 0 0 40px 40px;
-}
-
-.wrapper {
-    position: relative;
-    z-index: 1;
+/* ---------------- Layout ---------------- */
+.aura-app {
     display: flex;
     min-height: 100vh;
-    padding: 30px;
-    gap: 30px;
 }
 
-.main-panel {
-    flex: 1;
+.aura-sidebar {
+    width: var(--aura-sidebar-width);
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--aura-border);
     display: flex;
     flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Top Navbar */
-.navbar-crimson {
-    height: 70px;
+.aura-main-panel {
+    flex: 1;
+    margin-left: var(--aura-sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.aura-navbar {
+    height: var(--aura-header-height);
+    background: rgba(252, 251, 250, 0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--aura-border);
+    padding: 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.aura-content {
+    padding: 40px;
+}
+
+/* ---------------- Sidebar Components ---------------- */
+.sidebar-header {
+    padding: 40px;
+    text-align: center;
+}
+
+.sidebar-logo {
+    font-size: 2.2rem;
+    font-weight: 700;
+    font-family: 'Dancing Script', cursive;
+    color: var(--aura-crimson);
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.sidebar-nav {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    direction: rtl; 
+    scrollbar-width: thin;
+    scrollbar-color: rgba(204, 78, 70, 0.3) transparent;
+}
+
+.sidebar-nav > * {
+    direction: ltr; 
+}
+
+.sidebar-nav .nav-item {
+    margin-bottom: 8px;
+    list-style: none;
+}
+
+.sidebar-nav .nav-link {
     display: flex;
     align-items: center;
-    padding: 0;
-    color: white;
-    margin-bottom: 30px;
+    padding: 14px 20px;
+    color: var(--aura-text-main);
+    font-size: 1.05rem;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-weight: 500;
 }
 
-.navbar-crimson .nav-link {
-    color: rgba(255, 255, 255, 0.7) !important;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-    margin: 0 20px;
+.sidebar-nav .nav-link i {
+    width: 24px;
+    font-size: 1.2rem;
+    margin-right: 15px;
+    color: var(--aura-crimson);
+}
+
+.sidebar-nav .nav-link:hover {
+    background: rgba(44, 40, 37, 0.04);
+    color: var(--aura-text-main);
+}
+
+.sidebar-nav .nav-item.active .nav-link {
+    background: rgba(204, 78, 70, 0.08);
+    color: var(--aura-crimson);
+}
+
+.sidebar-footer .nav-link {
+    background: var(--aura-bg);
+    border-radius: 12px;
     transition: all 0.3s ease;
 }
 
-.navbar-crimson .nav-link:hover,
-.navbar-crimson .nav-link.active {
-    color: white !important;
-    transform: translateY(-2px);
+.sidebar-footer .nav-link:hover {
+    background: rgba(204, 78, 70, 0.1);
+    color: var(--aura-crimson) !important;
 }
 
-/* Floating Sidebar */
-.sidebar-floating {
-    width: var(--sidebar-width);
-    background: var(--panel-white);
-    border-radius: 30px;
-    box-shadow: var(--shadow-soft);
-    padding: 40px 10px;
-    height: calc(100vh - 60px);
-    position: sticky;
-    top: 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 100;
-}
-
-.sidebar-floating .logo {
-    margin-bottom: 50px;
-}
-
-.sidebar-floating .nav {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-}
-
-.sidebar-floating .nav li {
-    margin-bottom: 15px;
-    width: 100%;
-}
-
-.sidebar-floating .nav li a {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 15px 0;
+/* ---------------- UI Components (Cards) ---------------- */
+.aura-card, .card {
+    background: var(--aura-panel) !important;
+    border: none !important;
     border-radius: 20px;
-    color: var(--text-muted);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    text-decoration: none;
-}
-
-.sidebar-floating .nav li a i {
-    font-size: 1.4rem;
-    margin-bottom: 8px;
-}
-
-.sidebar-floating .nav li a span {
-    font-size: 0.6rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.sidebar-floating .nav li:hover a,
-.sidebar-floating .nav li.active a {
-    background: var(--crimson);
-    color: white;
-    box-shadow: 0 8px 20px rgba(168, 28, 28, 0.25);
-    transform: scale(1.05);
-}
-
-/* Dashboard & Core Components */
-.card-clean {
-    background: var(--panel-white);
-    border: none;
-    border-radius: 24px;
-    box-shadow: var(--shadow-soft);
     padding: 30px;
     margin-bottom: 30px;
+    box-shadow: var(--aura-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: var(--aura-text-main) !important;
 }
 
-.card-stat {
+.aura-card:hover, .card:hover {
+    box-shadow: 0 15px 40px rgba(44, 40, 37, 0.08);
+    transform: translateY(-3px);
+}
+
+/* Overrides for specific cards */
+.aura-card.bg-transparent, .card.bg-transparent {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.card-header, .card-footer {
+    background: transparent !important;
+    border-color: var(--aura-border) !important;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--aura-bg);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--aura-text-main);
+}
+
+.stat-label {
+    color: var(--aura-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* ---------------- Upload & Media Components ---------------- */
+.aura-upload-zone {
+    position: relative;
+    width: 100%;
+    min-height: 250px;
+    background: var(--aura-bg);
+    border: 2px dashed var(--aura-border);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.aura-upload-zone:hover {
+    border-color: var(--aura-crimson);
+    background: rgba(204, 78, 70, 0.02);
+}
+
+.aura-upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    color: var(--aura-text-muted);
+}
+
+.aura-upload-placeholder i {
+    font-size: 2.5rem;
+    color: var(--aura-text-muted);
+    margin-bottom: 15px;
+}
+
+/* ---------------- Auth Page ---------------- */
+.aura-auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--aura-bg);
+}
+
+.auth-card {
+    width: 450px;
+    background: var(--aura-panel);
     border: none;
-    border-radius: 24px;
-    padding: 25px;
-    color: white;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+    padding: 50px;
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(44, 40, 37, 0.08);
 }
 
-.card-stat:hover {
-    transform: translateY(-5px);
+/* ---------------- Forms & Inputs ---------------- */
+.form-control-aura, .form-control, .form-select {
+    background: var(--aura-bg);
+    border: 1px solid var(--aura-border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    color: var(--aura-text-main);
+    transition: all 0.3s ease;
 }
 
-.bg-crimson-dark {
-    background: linear-gradient(135deg, #7f0000 0%, #a81c1c 100%);
+.form-control-aura:focus, .form-control:focus, .form-select:focus {
+    background: var(--aura-panel);
+    border-color: var(--aura-crimson);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(204, 78, 70, 0.1);
 }
 
-.bg-white-op-2 {
-    background: rgba(255, 255, 255, 0.15);
+label {
+    color: var(--aura-text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
 }
 
-/* Table Enhancements */
+/* ---------------- Buttons ---------------- */
+.btn-aura, .btn-primary {
+    background: var(--aura-crimson) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 5px 15px rgba(204, 78, 70, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-aura:hover, .btn-primary:hover {
+    background: #b8453e !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(204, 78, 70, 0.3);
+}
+
+.btn-secondary {
+    background: var(--aura-bg);
+    border: 1px solid var(--aura-border);
+    color: var(--aura-text-main);
+    border-radius: 12px;
+}
+
+/* ---------------- Tables ---------------- */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--aura-text-main);
+    --bs-table-border-color: var(--aura-border);
+    --bs-table-hover-bg: rgba(44, 40, 37, 0.02);
+}
+
 .table thead th {
-    background: var(--bg-light);
-    border: none;
-    padding: 15px 20px;
-    color: var(--text-muted);
+    background: var(--aura-bg) !important;
+    color: var(--aura-text-muted) !important;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 15px 25px;
+    border-bottom: 1px solid var(--aura-border) !important;
 }
 
 .table tbody td {
-    padding: 20px;
-    border-top: 1px solid var(--border-color);
-    vertical-align: middle;
+    padding: 20px 25px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid var(--aura-border) !important;
 }
 
-/* Badges */
-.badge-pill {
-    padding: 8px 16px;
-    font-weight: 600;
-    font-size: 0.75rem;
+/* ---------------- Notifications & Badges ---------------- */
+.dropdown-menu {
+    background: var(--aura-panel) !important;
+    border: 1px solid var(--aura-border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--aura-shadow) !important;
 }
 
-.badge-success-light {
-    background: rgba(46, 213, 115, 0.1);
-    color: #2ed573;
+.dropdown-item {
+    color: var(--aura-text-main) !important;
+    border-radius: 10px !important;
+    margin: 4px 8px !important;
+    width: auto !important;
 }
 
-.badge-danger-light {
-    background: rgba(255, 71, 87, 0.1);
-    color: #ff4759;
+.dropdown-item:hover {
+    background: var(--aura-bg) !important;
 }
 
-/* Buttons */
-.btn-crimson {
-    background: var(--crimson);
-    color: white !important;
-    border: none;
-    box-shadow: 0 8px 20px rgba(168, 28, 28, 0.2);
-    transition: all 0.3s ease;
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--aura-crimson);
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 8px;
 }
 
-.btn-crimson:hover {
-    background: var(--crimson-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(168, 28, 28, 0.3);
+
+
+.bg-aura-crimson { background-color: var(--aura-crimson) !important; color: white !important; }
+.text-aura-crimson { color: var(--aura-crimson) !important; }
+.bg-aura-crimson-soft { background: rgba(204, 78, 70, 0.1) !important; color: var(--aura-crimson) !important; }
+.bg-aura-crimson-transparent { background: rgba(204, 78, 70, 0.08) !important; }
+.bg-warning-transparent { background: rgba(220, 164, 85, 0.08) !important; color: #DCA455 !important; }
+
+.notification-item.unread-item {
+    background: rgba(204, 78, 70, 0.04) !important;
+    position: relative;
 }
 
-.btn-white {
-    background: white;
-    color: var(--crimson) !important;
-    border: none;
-    box-shadow: var(--shadow-soft);
+.notification-item.unread-item::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 25%;
+    bottom: 25%;
+    width: 3px;
+    background: var(--aura-crimson);
+    border-radius: 0 4px 4px 0;
 }
 
-.btn-icon {
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    display: inline-flex;
+.aura-icon-circle-sm {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
-/* Typography & Utilities */
-.section-title {
-    font-weight: 800;
-    letter-spacing: -0.5px;
+/* ---------------- Text & Utility Overrides ---------------- */
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    color: var(--aura-text-main);
 }
 
-.text-white-50 {
-    color: rgba(255, 255, 255, 0.5) !important;
+.text-white { color: var(--aura-text-main) !important; }
+.text-white-50 { color: var(--aura-text-muted) !important; }
+
+/* SweetAlert overrides for light theme */
+.swal2-popup {
+    background: var(--aura-panel) !important;
+    color: var(--aura-text-main) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--aura-shadow) !important;
 }
 
-.gap-2 {
-    gap: 8px;
+.swal2-title {
+    color: var(--aura-text-main) !important;
 }
 
-/* User Mini Profile */
-.user-profile-mini img {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+.swal2-html-container {
+    color: var(--aura-text-muted) !important;
 }
 
-.search-bar-rounded {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    padding: 10px 20px;
-    color: white;
-    width: 350px;
-    backdrop-filter: blur(5px);
+/* ---------------- Global Utility Overrides for Seamless Light Theme ---------------- */
+/* Inputs & Forms */
+.bg-dark { background-color: var(--aura-panel) !important; border-color: var(--aura-border) !important; color: var(--aura-text-main) !important; }
+.bg-dark-soft { background-color: var(--aura-bg) !important; color: var(--aura-text-main) !important; border-color: var(--aura-border) !important; }
+.border-secondary { border-color: var(--aura-border) !important; }
+.text-white { color: var(--aura-text-main) !important; }
+.text-white-50 { color: var(--aura-text-muted) !important; }
+.text-muted { color: var(--aura-text-muted) !important; }
+.border-0 { border: none !important; }
+
+/* Buttons */
+.btn-outline-success { 
+    color: var(--aura-crimson) !important; 
+    border-color: var(--aura-crimson) !important; 
+}
+.btn-outline-success:hover { 
+    background-color: var(--aura-crimson) !important; 
+    color: white !important; 
+}
+.btn-secondary {
+    background-color: var(--aura-bg) !important;
+    color: var(--aura-text-main) !important;
+    border: 1px solid var(--aura-border) !important;
+}
+.btn-danger, .btn-primary {
+    background-color: var(--aura-crimson) !important;
+    border-color: var(--aura-crimson) !important;
+    color: white !important;
 }
 
-.search-bar-rounded:focus {
-    background: rgba(255, 255, 255, 0.2);
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.3);
+/* Badges (Soft Pastel Washes) */
+.badge.bg-warning, .badge.bg-warning-light { background-color: rgba(220, 164, 85, 0.15) !important; color: #DCA455 !important; border: 1px solid rgba(220, 164, 85, 0.3) !important; }
+.badge.bg-success, .badge.bg-success-light { background-color: rgba(85, 139, 109, 0.15) !important; color: #558B6D !important; border: 1px solid rgba(85, 139, 109, 0.3) !important; }
+.badge.bg-primary-light { background-color: rgba(69, 140, 150, 0.15) !important; color: #458C96 !important; border: 1px solid rgba(69, 140, 150, 0.3) !important; }
+.badge.bg-info-light { background-color: rgba(130, 163, 161, 0.15) !important; color: #82a3a1 !important; border: 1px solid rgba(130, 163, 161, 0.3) !important; }
+.badge.bg-danger, .badge.bg-danger-light, .badge.bg-crimson { background-color: rgba(204, 78, 70, 0.15) !important; color: var(--aura-crimson) !important; border: 1px solid rgba(204, 78, 70, 0.3) !important; }
+.badge.bg-secondary-light { background-color: rgba(128, 117, 108, 0.15) !important; color: var(--aura-text-muted) !important; border: 1px solid rgba(128, 117, 108, 0.3) !important; }
+
+/* Alerts */
+.alert-danger, .alert-crimson {
+    background-color: rgba(204, 78, 70, 0.1) !important;
+    border-left: 4px solid var(--aura-crimson) !important;
+    color: var(--aura-crimson) !important;
 }
 
-/* Responsive */
+/* Modal text color */
+.modal-title { color: var(--aura-text-main) !important; font-weight: 700; }
+.modal-content p, .modal-content label { color: var(--aura-text-muted) !important; }
+
+/* Eradicate all pulsing animations */
+.pulse-mini, .pulse-warning, .pulse-red, .animate-pulse, .animate-pulse-crimson {
+    animation: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* ---------------- Responsive ---------------- */
 @media (max-width: 991px) {
-    .sidebar-floating {
-        position: fixed;
-        left: -120%;
-        transition: left 0.3s ease;
-    }
-
-    .sidebar-floating.show {
-        left: 20px;
-    }
-
-    .wrapper {
-        padding: 15px;
-    }
-
-    .header-bg {
-        border-radius: 0 0 20px 20px;
-        height: 180px;
-    }
+    .aura-sidebar { transform: translateX(-100%); }
+    .aura-sidebar.active { transform: translateX(0); }
+    .aura-main-panel { margin-left: 0; }
+    .aura-navbar { padding: 0 20px; }
+    .aura-content { padding: 20px; }
 }

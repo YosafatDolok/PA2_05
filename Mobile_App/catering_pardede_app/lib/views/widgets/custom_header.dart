@@ -6,6 +6,7 @@ import '../../core/constants/api_endpoints.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/services/push_notification_service.dart';
 import '../../core/utils/helpers.dart';
+import '../../core/services/auth_service.dart';
 
 class CustomHeader extends StatefulWidget {
   final String? title;
@@ -32,6 +33,8 @@ class CustomHeader extends StatefulWidget {
 }
 
 class _CustomHeaderState extends State<CustomHeader> {
+  bool _isAdmin = false;
+  bool _isDriver = false;
 
   @override
   void initState() {
@@ -39,6 +42,18 @@ class _CustomHeaderState extends State<CustomHeader> {
     // No need to manage local state anymore
     PushNotificationService.updateUnreadCount();
     PushNotificationService.updateUnreadChatCount();
+    _checkAdminStatus();
+  }
+
+  Future<void> _checkAdminStatus() async {
+    final isAdmin = await AuthService.isAdmin();
+    final isDriver = await AuthService.isDriver();
+    if (mounted) {
+      setState(() {
+        _isAdmin = isAdmin;
+        _isDriver = isDriver;
+      });
+    }
   }
 
   // Removed local _fetchUnreadCount method as it's now in the service
@@ -187,6 +202,7 @@ class _CustomHeaderState extends State<CustomHeader> {
                         );
                       },
                     ),
+                    const SizedBox(width: 8),
                     ValueListenableBuilder<int>(
                       valueListenable: PushNotificationService.unreadCount,
                       builder: (context, count, child) {

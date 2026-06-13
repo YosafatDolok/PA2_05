@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\DriverLocation;
+use App\Models\DeliveryMessage;
+use App\Http\Resources\DeliveryInboxResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -22,6 +24,33 @@ class DriverController extends Controller
             ->get();
 
         return response()->json($orders);
+    }
+
+    /**
+     * Get active delivery chats for the driver inbox.
+     */
+    public function inbox(Request $request)
+    {
+        $driverId = $request->user()->user_id;
+
+        // 1. Get unique order IDs that have delivery messages
+        $orderIds = DeliveryMessage::distinct()->pluck('order_id');
+
+        // 2. Fetch orders specifically assigned to this driver
+        $conversations = Order::where('driver_id', $driverId)
+            ->whereIn('order_id', $orderIds)
+            ->with(['user', 'latestDeliveryMessage'])
+            ->withCount(['deliveryMessages as unread_count' => function ($query) use ($driverId) {
+                $query->where('is_read', false)
+                      ->where('sender_id', '!=', $driverId);
+            }])
+            ->get()
+            ->sortByDesc(function ($order) {
+                return $order->latestDeliveryMessage?->created_at ?? $order->updated_at;
+            })
+            ->values();
+
+        return DeliveryInboxResource::collection($conversations);
     }
 
     /**

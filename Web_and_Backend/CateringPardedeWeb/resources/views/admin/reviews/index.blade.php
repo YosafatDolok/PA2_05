@@ -1,12 +1,12 @@
-@extends('layouts.app', ['page' => 'Customer Reviews', 'pageSlug' => 'reviews'])
+@extends('layouts.app', ['page' => 'Ulasan Pelanggan', 'pageSlug' => 'reviews'])
 
 @section('content')
 <div class="row">
     <div class="col-md-12">
         <div class="card aura-card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title m-0">Customer Feedback</h4>
-                <div class="text-muted small">Manage visibility of customer testimonials</div>
+                <h4 class="card-title m-0">Umpan Balik Pelanggan</h4>
+                <div class="text-muted small">Kelola visibilitas ulasan pelanggan</div>
             </div>
             <div class="card-body">
                 @if (session('status'))
@@ -19,13 +19,13 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Order</th>
-                                <th>Customer</th>
-                                <th>Rating</th>
-                                <th>Comment</th>
-                                <th>Date</th>
+                                <th>Pesanan</th>
+                                <th>Pelanggan</th>
+                                <th>Peringkat</th>
+                                <th>Komentar</th>
+                                <th>Tanggal</th>
                                 <th>Status</th>
-                                <th class="text-right">Actions</th>
+                                <th class="text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,14 +61,14 @@
                                         @if($review->updated_at && $review->created_at && abs($review->updated_at->diffInSeconds($review->created_at)) > 1)
                                             <div class="mt-1">
                                                 <span class="badge" style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 193, 7, 0.2); background-color: rgba(255, 193, 7, 0.05); color: #fbc531;">
-                                                    edited in {{ $review->updated_at->format('d/m/Y') }}
+                                                    diedit pada {{ $review->updated_at->format('d/m/Y') }}
                                                 </span>
                                             </div>
                                         @endif
                                     </td>
                                     <td>
                                         <span class="badge {{ $review->is_visible ? 'bg-success-light' : 'bg-secondary' }}">
-                                            {{ $review->is_visible ? 'VISIBLE' : 'HIDDEN' }}
+                                            {{ $review->is_visible ? 'TERLIHAT' : 'TERSEMBUNYI' }}
                                         </span>
                                     </td>
                                     <td class="td-actions text-right">
@@ -87,7 +87,7 @@
                                 <tr>
                                     <td colspan="7" class="text-center py-5 text-muted">
                                         <i class="fas fa-comment-slash fa-3x mb-3 opacity-20"></i>
-                                        <p>No customer reviews yet.</p>
+                                        <p>Belum ada ulasan pelanggan.</p>
                                     </td>
                                 </tr>
                             @endforelse

@@ -6,8 +6,8 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="m-0 font-weight-bold">Live Negotiations</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage customer discussions and proposals</p>
+            <h2 class="m-0 font-weight-bold">Daftar Pesan</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Kelola diskusi dan pertanyaan pelanggan</p>
         </div>
     </div>
 
@@ -18,11 +18,11 @@
                     <table class="table align-items-center mb-0" style="border-separate: separate; border-spacing: 0 12px;">
                         <thead>
                             <tr class="text-muted extra-small uppercase border-0">
-                                <th class="ps-4 border-0">Customer</th>
-                                <th class="border-0">Latest Message</th>
-                                <th class="border-0">Order Info</th>
+                                <th class="ps-4 border-0">Pelanggan</th>
+                                <th class="border-0">Pesan Terakhir</th>
+                                <th class="border-0">Info Pesanan</th>
                                 <th class="border-0">Status</th>
-                                <th class="text-center border-0">Action</th>
+                                <th class="text-center border-0">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -50,14 +50,14 @@
                                     <td class="py-4">
                                         <div class="message-preview" id="preview-text-{{ $order->order_id }}">
                                             @if($lastMessage->sender_id == auth()->id())
-                                                <span class="text-secondary-light font-weight-bold">You: </span>
+                                                <span class="text-secondary-light font-weight-bold">Anda: </span>
                                             @endif
                                             {{ $lastMessage->message }}
                                         </div>
                                     </td>
                                     <td class="py-4">
                                         <div class="text-white small font-weight-bold">#ORD-{{ str_pad($order->order_id, 5, '0', STR_PAD_LEFT) }}</div>
-                                        <div class="text-muted extra-small">{{ $order->items->count() }} items ordered</div>
+                                        <div class="text-muted extra-small">{{ $order->items->count() }} item dipesan</div>
                                     </td>
                                     <td class="py-4" id="status-cell-{{ $order->order_id }}">
                                         <div class="d-flex align-items-center">
@@ -72,7 +72,7 @@
 
                                     <td class="text-center py-4 rounded-end">
                                         <a href="{{ route('orders.chat', $order->order_id) }}" class="btn btn-primary btn-sm rounded-pill px-4 shadow-crimson-sm hover-scale">
-                                            <i class="fas fa-comment-dots mr-2"></i> OPEN CHAT
+                                            <i class="fas fa-comment-dots mr-2"></i> BUKA CHAT
                                         </a>
                                     </td>
                                 </tr>
@@ -81,8 +81,8 @@
                                     <td colspan="5" class="text-center py-5">
                                         <div class="empty-state py-5">
                                             <i class="fas fa-comment-slash mb-4" style="font-size: 4rem; color: rgba(255,255,255,0.05);"></i>
-                                            <h4 class="text-muted">No messages yet</h4>
-                                            <p class="text-muted small">Customer inquiries will appear here.</p>
+                                            <h4 class="text-muted">Belum ada pesan</h4>
+                                            <p class="text-muted small">Pertanyaan pelanggan akan muncul di sini.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -98,58 +98,44 @@
 @push('js')
 <style>
     .inbox-row {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: var(--aura-panel);
+        border: 1px solid var(--aura-border);
         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         cursor: pointer;
     }
 
     .inbox-row:hover {
-        background: rgba(255, 255, 255, 0.07);
+        background: var(--aura-bg);
         transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     }
 
     .unread-thread {
-        background: rgba(255, 51, 75, 0.04);
-        border-left: 4px solid #ff334b !important;
+        background: rgba(204, 78, 70, 0.04);
+        border-left: 4px solid var(--aura-crimson) !important;
     }
 
     .avatar-premium {
         width: 45px;
         height: 45px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(204, 78, 70, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 14px;
         font-weight: 800;
-        color: white;
+        color: var(--aura-crimson);
         font-size: 1.2rem;
     }
 
     .unread-thread .avatar-premium {
-        background: linear-gradient(135deg, #ff334b, #b91d2e);
-        border: none;
-        box-shadow: 0 4px 10px rgba(255, 51, 75, 0.4);
-    }
-
-    .status-indicator-pulse {
-        position: absolute;
-        top: 50%;
-        right: -8px;
-        transform: translateY(-50%);
-        width: 10px;
-        height: 10px;
-        background: #ff334b;
-        border: 2px solid #0f0f14;
-        border-radius: 50%;
-        animation: pulse-mini 1.5s infinite;
+        background: var(--aura-crimson);
+        color: white;
+        box-shadow: 0 4px 10px rgba(204, 78, 70, 0.2);
     }
 
     .message-preview {
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--aura-text-muted);
         font-size: 0.85rem;
         max-width: 350px;
         white-space: nowrap;
@@ -164,12 +150,13 @@
         font-size: 0.65rem;
         font-weight: 700;
         letter-spacing: 1px;
-        background: rgba(255,255,255,0.05);
-        color: rgba(255,255,255,0.6);
+        background: rgba(128, 117, 108, 0.15);
+        color: var(--aura-text-muted);
     }
 
-    .badge-aura-status.pending { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
-    .badge-aura-status.confirmed { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
+    .badge-aura-status.pending { background: rgba(220, 164, 85, 0.15); color: #DCA455; }
+    .badge-aura-status.confirmed, .badge-aura-status.delivered { background: rgba(85, 139, 109, 0.15); color: #558B6D; }
+    .badge-aura-status.cancelled { background: rgba(204, 78, 70, 0.15); color: var(--aura-crimson); }
 
     .hover-scale:hover {
         transform: scale(1.05);
@@ -206,7 +193,7 @@
                         if (previewDiv) {
                             const isMe = data.sender_id == {{ auth()->id() }};
                             previewDiv.innerHTML = `
-                                ${isMe ? '<span class="text-secondary-light font-weight-bold">You: </span>' : ''}
+                                ${isMe ? '<span class="text-secondary-light font-weight-bold">Anda: </span>' : ''}
                                 ${data.message}
                             `;
                         }
@@ -214,7 +201,7 @@
                         // 2. Update time difference
                         const timeSpan = document.getElementById(`time-diff-${orderId}`);
                         if (timeSpan) {
-                            timeSpan.textContent = 'Just now';
+                            timeSpan.textContent = 'Baru saja';
                         }
 
                         // 3. Mark thread as unread (if message from client)

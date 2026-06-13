@@ -1,20 +1,20 @@
 @extends('layouts.app', [
-    'page' => __('Menu List'),
+    'page' => __('Daftar Menu'),
     'pageSlug' => 'menus'
 ])
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="m-0 font-weight-bold">Menu List</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage your dishes and items</p>
+            <h2 class="m-0 font-weight-bold">Daftar Menu</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Kelola hidangan dan barang Anda</p>
         </div>
         <div class="d-flex align-items-center">
             <a href="{{ route('menus.trashed') }}" class="btn btn-outline-primary rounded-pill px-4 mr-2">
-                <i class="fas fa-trash-arrow-up mr-2"></i> VIEW TRASH
+                <i class="fas fa-trash-arrow-up mr-2"></i> LIHAT SAMPAH
             </a>
             <a href="{{ route('menus.create') }}" class="btn btn-primary rounded-pill px-4">
-                <i class="fas fa-plus mr-2"></i> ADD NEW MENU
+                <i class="fas fa-plus mr-2"></i> TAMBAH MENU BARU
             </a>
         </div>
     </div>
@@ -26,11 +26,11 @@
                     <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th>IMAGE</th>
-                                <th>NAME</th>
-                                <th>CATEGORY</th>
+                                <th>GAMBAR</th>
+                                <th>NAMA</th>
+                                <th>KATEGORI</th>
                                 <th>STATUS</th>
-                                <th class="text-center">ACTIONS</th>
+                                <th class="text-center">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -52,19 +52,19 @@
                                     <div class="text-muted extra-small uppercase mt-1">{{ \Illuminate\Support\Str::limit($menu->description, 30) }}</div>
                                 </td>
                                 <td>
-                                    <span class="badge border border-secondary text-muted small">{{ $menu->category->name ?? 'Unclassified' }}</span>
+                                    <span class="badge border border-secondary text-muted small">{{ $menu->category->name ?? 'Belum Diklasifikasi' }}</span>
                                 </td>
                                 <td>
                                     @if($menu->available)
-                                        <span class="badge bg-success-light">AVAILABLE</span>
+                                        <span class="badge bg-success-light">TERSEDIA</span>
                                     @else
-                                        <span class="badge bg-danger-light">UNAVAILABLE</span>
+                                        <span class="badge bg-danger-light">TIDAK TERSEDIA</span>
                                     @endif
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-3">
                                         <a href="{{ route('menus.edit', $menu->menu_id) }}" class="btn btn-sm btn-icon btn-secondary rounded-circle">
-                                            <i class="fas fa-terminal"></i>
+                                            <i class="fas fa-pen"></i>
                                         </a>
 
                                         <form action="{{ route('menus.destroy', $menu->menu_id) }}" method="POST" class="d-inline">

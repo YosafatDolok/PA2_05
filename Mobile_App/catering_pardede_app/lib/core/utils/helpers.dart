@@ -132,4 +132,14 @@ class Helpers {
     _lastNavigatedTime = now;
     return Navigator.push<T>(context, route);
   }
+
+  /// Launches any external URL safely.
+  static Future<void> launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $urlString';
+    }
+  }
 }

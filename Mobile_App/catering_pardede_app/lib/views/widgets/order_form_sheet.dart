@@ -97,7 +97,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                 ),
               ],
             ),
-            _buildTextField(_addressController, "Masukkan atau pilih alamat...", maxLines: 2),
+            _buildTextField(_addressController, "Masukkan atau pilih alamat...", maxLines: 2, readOnly: true, onTap: _pickOnMap),
             const SizedBox(height: 12),
             _buildTextField(_locationNotesController, "Detail lokasi (Patokan, No. Rumah, Lantai...)", maxLines: 1),
             const SizedBox(height: 16),
@@ -225,7 +225,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   }
 
   Widget _buildTextField(TextEditingController controller, String hint,
-      {int maxLines = 1, TextInputType keyboardType = TextInputType.text, ValueChanged<String>? onChanged, bool hasError = false}) {
+      {int maxLines = 1, TextInputType keyboardType = TextInputType.text, ValueChanged<String>? onChanged, bool hasError = false, bool readOnly = false, VoidCallback? onTap}) {
     final borderColor = hasError ? Colors.red : Colors.grey.shade300;
     final focusedBorderColor = hasError ? Colors.red : AppColors.primary;
     return TextField(
@@ -233,6 +233,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       onChanged: onChanged,
+      readOnly: readOnly,
+      onTap: onTap,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),

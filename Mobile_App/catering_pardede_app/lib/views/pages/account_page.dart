@@ -177,8 +177,31 @@ class _AccountPageState extends State<AccountPage> {
               }, delay: 5),
             ]),
             const SizedBox(height: 32),
+            const _EntranceAnimation(
+              delay: 6,
+              child: Text(
+                "HUBUNGI & IKUTI KAMI",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildMenuSection([
+              _accountTile(
+                Icons.camera_alt_rounded,
+                "Instagram @pardede_catering",
+                () => Helpers.launchURL("https://www.instagram.com/pardede_catering"),
+                delay: 7,
+              ),
+              _accountTile(
+                Icons.chat_bubble_outline_rounded,
+                "WhatsApp (Hubungi Kami)",
+                () => Helpers.launchURL("https://wa.me/6281234567890"),
+                delay: 8,
+              ),
+            ]),
+            const SizedBox(height: 32),
             _EntranceAnimation(
-              delay: 7,
+              delay: 9,
               child: _buildLogoutButton(),
             ),
           ],

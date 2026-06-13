@@ -1,16 +1,16 @@
 @extends('layouts.app', [
-    'page' => __('Categories'),
+    'page' => __('Kategori'),
     'pageSlug' => 'categories'
 ])
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="m-0 font-weight-bold">Categories</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage menu groups</p>
+            <h2 class="m-0 font-weight-bold">Kategori</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Kelola grup menu</p>
         </div>
         <a href="{{ route('categories.create') }}" class="btn btn-primary rounded-pill px-4">
-            <i class="fas fa-layer-group me-2"></i> NEW CATEGORY
+            <i class="fas fa-layer-group me-2"></i> KATEGORI BARU
         </a>
     </div>
 
@@ -21,8 +21,8 @@
                     <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th>CATEGORY NAME</th>
-                                <th class="text-center">ACTIONS</th>
+                                <th>NAMA KATEGORI</th>
+                                <th class="text-center">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>

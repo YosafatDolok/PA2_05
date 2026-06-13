@@ -6,11 +6,11 @@
         <div class="col-xl-3 col-md-6">
             <div class="aura-card mb-0 h-100">
                 <div class="stat-card">
-                    <div class="stat-icon">
+                    <div class="stat-icon bg-aura-crimson-soft text-aura-crimson">
                         <i class="fas fa-utensils"></i>
                     </div>
                     <div>
-                        <p class="stat-label">Total Menus</p>
+                        <p class="stat-label">Total Menu</p>
                         <h3 class="stat-value">{{ $totalMenus ?? 0 }}</h3>
                     </div>
                 </div>
@@ -21,11 +21,11 @@
         <div class="col-xl-3 col-md-6">
             <div class="aura-card mb-0 h-100">
                 <div class="stat-card">
-                    <div class="stat-icon" style="color: #4cd137;">
+                    <div class="stat-icon" style="background: rgba(85, 139, 109, 0.08); color: #558B6D;">
                         <i class="fas fa-cart-shopping"></i>
                     </div>
                     <div>
-                        <p class="stat-label">Orders Received</p>
+                        <p class="stat-label">Pesanan Masuk</p>
                         <h3 class="stat-value">{{ $ordersReceived ?? 0 }}</h3>
                     </div>
                 </div>
@@ -36,11 +36,11 @@
         <div class="col-xl-3 col-md-6">
             <div class="aura-card mb-0 h-100">
                 <div class="stat-card">
-                    <div class="stat-icon" style="color: #00a8ff;">
+                    <div class="stat-icon bg-warning-transparent">
                         <i class="fas fa-bowl-food"></i>
                     </div>
                     <div>
-                        <p class="stat-label">Active Menus</p>
+                        <p class="stat-label">Menu Aktif</p>
                         <h3 class="stat-value">{{ $activeMenus ?? 0 }}</h3>
                     </div>
                 </div>
@@ -51,11 +51,11 @@
         <div class="col-xl-3 col-md-6">
             <div class="aura-card mb-0 h-100">
                 <div class="stat-card">
-                    <div class="stat-icon" style="color: #fbc531;">
+                    <div class="stat-icon" style="background: rgba(69, 140, 150, 0.08); color: #458C96;">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <div>
-                        <p class="stat-label">Revenue Growth</p>
+                        <p class="stat-label">Pertumbuhan Pendapatan</p>
                         <h3 class="stat-value {{ $revenueGrowth >= 0 ? 'text-success' : 'text-danger' }}">
                             {{ $revenueGrowth >= 0 ? '+' : '' }}{{ $revenueGrowth }}%
                         </h3>
@@ -71,7 +71,7 @@
         <div class="col-xl-8">
             <div class="aura-card h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="m-0 text-white font-weight-bold">Revenue Growth</h5>
+                    <h5 class="m-0 text-white font-weight-bold">Pertumbuhan Pendapatan</h5>
                 </div>
                 <div id="revenueChart" style="min-height: 350px;"></div>
             </div>
@@ -80,7 +80,7 @@
         {{-- Order Status Donut Chart --}}
         <div class="col-xl-4">
             <div class="aura-card h-100">
-                <h5 class="mb-4 text-white font-weight-bold">Order Distribution</h5>
+                <h5 class="mb-4 text-white font-weight-bold">Distribusi Pesanan</h5>
                 <div id="statusChart" style="min-height: 350px;"></div>
             </div>
         </div>
@@ -90,7 +90,7 @@
     <div class="row g-4 mb-5">
         <div class="col-12">
             <div class="aura-card">
-                <h5 class="mb-4 text-white font-weight-bold">Top Performing Menus</h5>
+                <h5 class="mb-4 text-white font-weight-bold">Menu Terlaris</h5>
                 <div id="menuChart" style="min-height: 300px;"></div>
             </div>
         </div>
@@ -103,25 +103,25 @@
     // Global ApexCharts Defaults for Aura-Crimson Theme
     window.Apex = {
         chart: {
-            foreColor: '#94a3b8',
+            foreColor: '#5C544E',
             toolbar: { show: false },
         },
         grid: {
-            borderColor: 'rgba(255,255,255,0.05)',
+            borderColor: '#F0EAE1',
         },
         stroke: {
             curve: 'smooth',
             width: 3,
         },
         tooltip: {
-            theme: 'dark',
+            theme: 'light',
         }
     };
 
     // 1. Revenue Chart
     const revenueOptions = {
         series: [{
-            name: 'Revenue',
+            name: 'Pendapatan',
             data: {!! json_encode($revenueData->pluck('total')) !!}
         }],
         chart: {
@@ -133,7 +133,7 @@
                 speed: 800,
             }
         },
-        colors: ['#ff334b'],
+        colors: ['#CC4E46'],
         fill: {
             type: 'gradient',
             gradient: {
@@ -163,7 +163,7 @@
             height: 350,
         },
         labels: {!! json_encode($statusDistribution->pluck('label')) !!},
-        colors: ['#ff334b', '#4cd137', '#00a8ff', '#fbc531', '#9c88ff', '#ffa502'],
+        colors: ['#CC4E46', '#558B6D', '#DCA455', '#E29578', '#458C96', '#82a3a1'],
         stroke: {
             show: false,
         },
@@ -178,8 +178,8 @@
                         show: true,
                         total: {
                             show: true,
-                            label: 'Orders',
-                            color: '#fff',
+                            label: 'Pesanan',
+                            color: '#2C2825',
                         }
                     }
                 }
@@ -190,14 +190,14 @@
     // 3. Top Menus Chart
     const menuOptions = {
         series: [{
-            name: 'Orders',
+            name: 'Pesanan',
             data: {!! json_encode($topMenus->pluck('count')) !!}
         }],
         chart: {
             type: 'bar',
             height: 300,
         },
-        colors: ['#fbc531'],
+        colors: ['#DCA455'],
         plotOptions: {
             bar: {
                 borderRadius: 8,

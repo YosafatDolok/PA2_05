@@ -1,16 +1,16 @@
 @extends('layouts.app', [
-    'page' => __('Driver Management'),
+    'page' => __('Manajemen Sopir'),
     'pageSlug' => 'drivers'
 ])
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="m-0 font-weight-bold">Driver Management</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage your delivery fleet</p>
+            <h2 class="m-0 font-weight-bold">Manajemen Sopir</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Kelola armada pengiriman Anda</p>
         </div>
         <a href="{{ route('drivers.create') }}" class="btn btn-primary rounded-pill px-4">
-            <i class="fas fa-plus me-2"></i> REGISTER NEW DRIVER
+            <i class="fas fa-plus me-2"></i> DAFTAR SOPIR BARU
         </a>
     </div>
 
@@ -24,10 +24,10 @@
                     <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th>NAME</th>
+                                <th>NAMA</th>
                                 <th>EMAIL</th>
-                                <th>PHONE</th>
-                                <th class="text-center">ACTIONS</th>
+                                <th>TELEPON</th>
+                                <th class="text-center">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -47,9 +47,7 @@
                                         <div class="mb-0 font-weight-bold text-white fs-6">
                                             {{ $driver->name }}
                                             @if($driver->invite_token)
-                                                <span class="badge bg-warning-light text-warning small ms-2 px-2 border-warning-soft" style="font-size: 10px;">PENDING</span>
-                                            @else
-                                                <span class="badge bg-success-light text-success small ms-2 px-2 border-success-soft" style="font-size: 10px;">ACTIVE</span>
+                                                <span class="badge bg-warning-light text-warning small ms-2 px-2 border-warning-soft" style="font-size: 10px;">TERTUNDA</span>
                                             @endif
                                         </div>
                                     </div>
@@ -101,7 +99,7 @@
 
                     <div class="form-group mb-0">
                         <label class="text-muted small uppercase mb-2">Ketik <span class="text-white font-weight-bold" id="targetNameDisplay"></span> untuk mengonfirmasi</label>
-                        <input type="text" id="confirmNameInput" class="form-control bg-dark border-secondary text-white" placeholder="Ketik nama driver di sini..." autocomplete="off">
+                        <input type="text" id="confirmNameInput" class="form-control bg-dark border-secondary text-white" placeholder="Ketik nama sopir di sini..." autocomplete="off">
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">

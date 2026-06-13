@@ -16,8 +16,8 @@ class DeliveryChatController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
-        // Ensure user is authorized (Customer or Driver)
-        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id()) {
+        // Ensure user is authorized (Customer, Driver, or Admin)
+        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id() && (int)Auth::user()->role_id !== 1) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -33,8 +33,8 @@ class DeliveryChatController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
-        // Ensure user is authorized (Customer or Driver)
-        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id()) {
+        // Ensure user is authorized (Customer, Driver, or Admin)
+        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id() && (int)Auth::user()->role_id !== 1) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -51,17 +51,30 @@ class DeliveryChatController extends Controller
         // Broadcast the message
         broadcast(new DeliveryMessageSent($message))->toOthers();
 
-        // Send Push Notification via FCM
-        $recipientId = null;
-        if ((int)Auth::id() === (int)$order->user_id) {
-            // Sender is Customer, recipient is Driver
-            $recipientId = $order->driver_id;
-        } else {
-            // Sender is Driver, recipient is Customer
-            $recipientId = $order->user_id;
+        // Send Push Notification via FCM to the OTHER participants
+        $recipients = [];
+        $senderId = (int)Auth::id();
+
+        // 1. Notify Customer (if sender is not Customer)
+        if ($senderId !== (int)$order->user_id) {
+            $recipients[] = $order->user_id;
         }
 
-        if ($recipientId) {
+        // 2. Notify Driver (if assigned, and sender is not Driver)
+        if ($order->driver_id && $senderId !== (int)$order->driver_id) {
+            $recipients[] = $order->driver_id;
+        }
+
+        // 3. Notify Admin (if sender is not Admin)
+        $admin = \App\Models\User::whereHas('role', function($q) {
+            $q->where('name', 'admin');
+        })->first();
+        
+        if ($admin && $senderId !== (int)$admin->user_id) {
+            $recipients[] = $admin->user_id;
+        }
+
+        foreach ($recipients as $recipientId) {
             $recipient = \App\Models\User::find($recipientId);
             if ($recipient && $recipient->fcm_token) {
                 dispatch(new \App\Jobs\SendPushNotification(

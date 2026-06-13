@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'page' => __('Logistics Dashboard'),
+    'page' => __('Lokasi Pesanan'),
     'pageSlug' => 'logistics'
 ])
 
@@ -9,8 +9,8 @@
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="m-0 font-weight-bold text-white">Logistics Command Center</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Real-time driver tracking and delivery management</p>
+            <h2 class="m-0 font-weight-bold text-white">Pusat Kendali Logistik</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Pelacakan sopir secara langsung dan manajemen pengiriman</p>
         </div>
         <div class="d-flex gap-2">
         </div>
@@ -27,7 +27,7 @@
         {{-- Drivers Info Column --}}
         <div class="col-xl-3 col-lg-4">
             <div class="aura-card border-0 shadow-lg p-4 h-100 overflow-auto" style="max-height: 650px;">
-                <h5 class="text-secondary font-weight-bold mb-4 border-bottom border-secondary pb-2">Active Drivers</h5>
+                <h5 class="text-secondary font-weight-bold mb-4 border-bottom border-secondary pb-2">Sopir Aktif</h5>
                 
                 @forelse($drivers as $driver)
                 <div class="driver-status-card mb-3 p-3 rounded" style="background: rgba(255,255,255,0.03);">
@@ -37,26 +37,25 @@
                         </div>
                         <div>
                             <h6 class="m-0 text-white font-weight-bold">{{ $driver->name }}</h6>
-                            <small class="text-muted">{{ $driver->location ? 'Online' : 'Offline' }}</small>
                         </div>
                     </div>
                     @if($driver->location)
-                        <p class="small text-muted mb-0"><i class="fas fa-clock me-1"></i> Last seen: {{ \Carbon\Carbon::parse($driver->location->updated_at)->diffForHumans() }}</p>
+                        <p class="small text-muted mb-0"><i class="fas fa-clock me-1"></i> Terakhir dilihat: {{ \Carbon\Carbon::parse($driver->location->updated_at)->diffForHumans() }}</p>
                     @endif
                 </div>
                 @empty
                 <div class="text-center py-5">
-                    <p class="text-muted italic">No drivers registered</p>
+                    <p class="text-muted italic">Belum ada sopir terdaftar</p>
                 </div>
                 @endforelse
 
-                <h5 class="text-secondary font-weight-bold mb-4 mt-5 border-bottom border-secondary pb-2">Active Deliveries</h5>
+                <h5 class="text-secondary font-weight-bold mb-4 mt-5 border-bottom border-secondary pb-2">Pengiriman Aktif</h5>
                 @forelse($activeOrders as $order)
                 <div class="order-status-card mb-3 p-3 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid #00a8ff;">
                     <div class="d-flex justify-content-between align-items-start">
                         <h6 class="m-0 text-white font-weight-bold">ORD-{{ str_pad($order->order_id, 5, '0', STR_PAD_LEFT) }}</h6>
                         @if($order->total_payable > $order->total_paid)
-                            <span class="badge bg-warning extra-small pulse-warning" title="Ada tagihan tambahan belum dibayar!">UNPAID</span>
+                            <span class="badge bg-warning extra-small" title="Ada tagihan tambahan belum dibayar!">BELUM LUNAS</span>
                         @endif
                     </div>
                     <p class="small text-muted mb-2">{{ \Illuminate\Support\Str::limit($order->event_address, 40) }}</p>
@@ -64,7 +63,7 @@
                 </div>
                 @empty
                 <div class="text-center py-5">
-                    <p class="text-muted italic">No active deliveries</p>
+                    <p class="text-muted italic">Belum ada pengiriman aktif</p>
                 </div>
                 @endforelse
             </div>
@@ -143,17 +142,5 @@
     
     .bg-primary-light { background: rgba(0, 168, 255, 0.1); color: #00a8ff; border: 1px solid rgba(0, 168, 255, 0.2); }
     .italic { font-style: italic; }
-    .pulse-mini { animation: aura-pulse-mini 2s infinite; }
-    .pulse-warning { animation: aura-pulse-warning 2s infinite; }
-    @keyframes aura-pulse-mini {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76, 209, 55, 0.4); }
-        70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(76, 209, 55, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76, 209, 55, 0); }
-    }
-    @keyframes aura-pulse-warning {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
-        70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(255, 152, 0, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
-    }
 </style>
 @endpush

@@ -1,6 +1,6 @@
 <nav class="aura-sidebar">
     <div class="sidebar-header">
-        <h1 class="sidebar-logo">Pardede</h1>
+        <h1 class="sidebar-logo">Pardede Catering</h1>
     </div>
 
     <ul class="sidebar-nav">
@@ -16,7 +16,7 @@
         <li class="nav-item {{ request()->routeIs('menus.*') ? 'active' : '' }}">
             <a href="{{ route('menus.index') }}" class="nav-link">
                 <i class="fas fa-utensils"></i>
-                <span>Menus</span>
+                <span>Daftar Menu</span>
             </a>
         </li>
 
@@ -24,7 +24,7 @@
         <li class="nav-item {{ request()->routeIs('orders.*') ? 'active' : '' }}">
             <a href="{{ route('orders.index') }}" class="nav-link">
                 <i class="fas fa-box-open"></i>
-                <span>Orders</span>
+                <span>Pesanan</span>
                 @if($pendingOrdersCount > 0)
                     <span class="badge-dot animate-pulse-crimson"></span>
                 @endif
@@ -35,7 +35,7 @@
         <li class="nav-item {{ request()->routeIs('admin.messages') ? 'active' : '' }}">
             <a href="{{ route('admin.messages') }}" class="nav-link">
                 <i class="fas fa-comments"></i>
-                <span>Messages</span>
+                <span>Pesan</span>
                 @if($unreadMessagesTotalCount > 0)
                     <span class="badge bg-crimson pulse-mini ms-auto" style="font-size: 0.6rem; padding: 0.3em 0.6em;">
                         {{ $unreadMessagesTotalCount }}
@@ -48,7 +48,7 @@
         <li class="nav-item {{ request()->routeIs('admin.additions.*') ? 'active' : '' }}">
             <a href="{{ route('admin.additions.index') }}" class="nav-link">
                 <i class="fas fa-plus-circle"></i>
-                <span>Additions</span>
+                <span>Tambahan</span>
                 @if($pendingAdditionsCount > 0)
                     <span class="badge-dot animate-pulse-crimson"></span>
                 @endif
@@ -59,7 +59,7 @@
         <li class="nav-item {{ request()->routeIs('admin.payments.index') ? 'active' : '' }}">
             <a href="{{ route('admin.payments.index') }}" class="nav-link">
                 <i class="fas fa-money-bill-wave"></i>
-                <span>Payments</span>
+                <span>Pembayaran</span>
             </a>
         </li>
 
@@ -67,7 +67,7 @@
         <li class="nav-item {{ request()->routeIs('admin.logistics.index') ? 'active' : '' }}">
             <a href="{{ route('admin.logistics.index') }}" class="nav-link">
                 <i class="fas fa-map-location-dot"></i>
-                <span>Order's Locations</span>
+                <span>Lokasi Pesanan</span>
             </a>
         </li>
 
@@ -75,7 +75,7 @@
         <li class="nav-item {{ request()->routeIs('drivers.*') ? 'active' : '' }}">
             <a href="{{ route('drivers.index') }}" class="nav-link">
                 <i class="fas fa-id-card"></i>
-                <span>Drivers</span>
+                <span>Daftar Sopir</span>
             </a>
         </li>
 
@@ -83,7 +83,7 @@
         <li class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
             <a href="{{ route('categories.index') }}" class="nav-link">
                 <i class="fas fa-tags"></i>
-                <span>Categories</span>
+                <span>Kategori</span>
             </a>
         </li>
 
@@ -91,21 +91,17 @@
         <li class="nav-item {{ request()->routeIs('galleries.*') ? 'active' : '' }}">
             <a href="{{ route('galleries.index') }}" class="nav-link">
                 <i class="fas fa-camera-retro"></i>
-                <span>Gallery</span>
+                <span>Galeri</span>
             </a>
         </li>
 
         <li class="nav-item {{ request()->routeIs('admin.reviews.index') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.reviews.index') }}">
                 <i class="fas fa-star"></i>
-                <span>Reviews</span>
+                <span>Ulasan</span>
             </a>
         </li>
     </ul>
 
-    <div class="sidebar-footer p-4">
-        <a href="{{ route('logout') }}" class="nav-link text-center text-muted" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-            <i class="fas fa-power-off"></i>
-        </a>
-    </div>
+
 </nav>

@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../core/utils/helpers.dart';
 import '../widgets/custom_header.dart';
 import '/core/services/push_notification_service.dart';
+import '../../core/services/auth_service.dart';
 
 class ChatInboxPage extends StatefulWidget {
   const ChatInboxPage({super.key});
@@ -21,6 +22,7 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   List<ChatInboxModel> chats = [];
   bool isLoading = true;
   String? errorMessage;
+  bool _isDriver = false;
 
   @override
   void initState() {
@@ -43,13 +45,15 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   }
 
   Future<void> _fetchInbox() async {
+    _isDriver = await AuthService.isDriver();
     setState(() {
       isLoading = true;
       errorMessage = null;
     });
     
     try {
-      final data = await ApiService.get(ApiEndpoints.adminInbox);
+      final endpoint = _isDriver ? ApiEndpoints.driverInbox : ApiEndpoints.adminInbox;
+      final data = await ApiService.get(endpoint);
       final List list = (data is Map && data.containsKey('data')) ? data['data'] : (data as List);
       
       if (mounted) {
@@ -71,7 +75,8 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   // Refreshes the inbox silently without showing the loading spinner or hiding the list
   Future<void> _refreshInboxInBackground() async {
     try {
-      final data = await ApiService.get(ApiEndpoints.adminInbox);
+      final endpoint = _isDriver ? ApiEndpoints.driverInbox : ApiEndpoints.adminInbox;
+      final data = await ApiService.get(endpoint);
       final List list = (data is Map && data.containsKey('data')) ? data['data'] : (data as List);
       
       if (mounted) {
@@ -157,10 +162,14 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
           _markAsReadLocally(chat.orderId);
           
           try {
-            final data = await ApiService.get('${ApiEndpoints.orders}/${chat.orderId}');
-            final order = OrderModel.fromJson(data);
-            if (mounted) {
-              Helpers.pushNamedSafe(context, '/order-detail', arguments: order);
+            if (_isDriver) {
+              Helpers.pushNamedSafe(context, '/delivery-chat', arguments: chat.orderId);
+            } else {
+              final data = await ApiService.get('${ApiEndpoints.orders}/${chat.orderId}');
+              final order = OrderModel.fromJson(data);
+              if (mounted) {
+                Helpers.pushNamedSafe(context, '/order-detail', arguments: order);
+              }
             }
           } catch (e) {
             if (mounted) {

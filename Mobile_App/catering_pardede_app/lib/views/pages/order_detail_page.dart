@@ -38,6 +38,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   bool _isLoading = true;
   bool _isLoadingAdditions = false;
   bool _isAdmin = false;
+  bool _isDriver = false;
   final AdminController _adminController = AdminController();
 
   @override
@@ -49,7 +50,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
       // Even if order is passed, fetch latest to avoid stale data from list
       _currentOrder = widget.order;
       _isLoading = false;
-      _checkAdminStatus();
+      _checkRoles();
       _fetchAdditions();
       _fetchOrderDetails(); // Background refresh
     }
@@ -64,7 +65,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           _currentOrder = OrderModel.fromJson(response);
           _isLoading = false;
         });
-        _checkAdminStatus();
+        _checkRoles();
         _fetchAdditions();
       }
     } catch (e) {
@@ -76,9 +77,13 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
-  Future<void> _checkAdminStatus() async {
-    final status = await AuthService.isAdmin();
-    if (mounted) setState(() => _isAdmin = status);
+  Future<void> _checkRoles() async {
+    final statusAdmin = await AuthService.isAdmin();
+    final statusDriver = await AuthService.isDriver();
+    if (mounted) setState(() {
+      _isAdmin = statusAdmin;
+      _isDriver = statusDriver;
+    });
   }
 
   Future<void> _fetchAdditions() async {
@@ -522,7 +527,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         const SizedBox(height: 20),
                         if (hasReview)
                           _buildReviewCard()
-                        else
+                        else if (!_isAdmin && !_isDriver)
                           _buildReviewButton(),
                       ],
 
@@ -536,7 +541,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                         ..._additions.asMap().entries.map((entry) => _buildAdditionReceipt(entry.key + 1, entry.value)),
                       ],
 
-                      if (!_isAdmin && (_currentOrder!.statusId == 1 || _currentOrder!.statusId == 2)) ...[
+                      if (!_isAdmin && !_isDriver && (_currentOrder!.statusId == 1 || _currentOrder!.statusId == 2)) ...[
                         const SizedBox(height: 24),
                         _buildActionButton(
                           "TAMBAH MENU TAMBAHAN",
@@ -545,7 +550,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                           () => _showAddMenuSheet(),
                         ),
                       ],
-                      if (_currentOrder!.statusId == 1) ...[
+                      if (!_isDriver && _currentOrder!.statusId == 1 && _currentOrder!.totalPaid == 0) ...[
                         const SizedBox(height: 16),
                         TapScale(
                           onTap: _isCancelling ? () {} : () => _cancelOrder(),
@@ -593,7 +598,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                             ],
                           ),
                         ),
-                      ] else if ((_currentOrder!.statusId == 2 || _currentOrder!.statusId == 3) && _currentOrder!.totalPaid == 0) ...[
+                      ] else if (!_isDriver && _currentOrder!.statusId >= 1 && _currentOrder!.statusId <= 3 && !_currentOrder!.isCancelling) ...[
                         const SizedBox(height: 16),
                         TapScale(
                           onTap: () => _showRequestCancelSheet(),
@@ -984,13 +989,14 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           _buildPaymentSummaryRow("SISA TAGIHAN", "Rp ${Helpers.formatNumber(_currentOrder!.remainingBalance)}", AppColors.secondary, isBold: true),
           const SizedBox(height: 24),
         ],
-        _buildReceiptActionButton(
-          _isAdmin ? "DISKUSI DENGAN PELANGGAN" : "DISKUSI DENGAN ADMIN",
-          Icons.chat_bubble_rounded,
-          AppColors.primary,
-          () => Helpers.pushSafe(context, MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder!.id))),
-          unreadCount: _currentOrder!.unreadMessagesCount,
-        ),
+        if (!_isDriver)
+          _buildReceiptActionButton(
+            _isAdmin ? "DISKUSI DENGAN PELANGGAN" : "DISKUSI DENGAN ADMIN",
+            Icons.chat_bubble_rounded,
+            AppColors.primary,
+            () => Helpers.pushSafe(context, MaterialPageRoute(builder: (context) => OrderChatPage(orderId: _currentOrder!.id))),
+            unreadCount: _currentOrder!.unreadMessagesCount,
+          ),
         if (!_isAdmin && _currentOrder!.driverId != null) ...[
           const SizedBox(height: 12),
           _buildReceiptActionButton(
@@ -1000,7 +1006,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             () => Helpers.pushNamedSafe(context, '/delivery-chat', arguments: _currentOrder!.id),
           ),
         ],
-        if (_currentOrder!.remainingBalance > 0 && !_isAdmin && _currentOrder!.statusId != 9 && _currentOrder!.totalPayable > 0) ...[
+        if (!_isDriver && _currentOrder!.statusId >= 2 && _currentOrder!.remainingBalance > 0 && !_isAdmin && _currentOrder!.statusId != 9 && _currentOrder!.totalPayable > 0) ...[
           const SizedBox(height: 12),
           _buildReceiptActionButton(
             _currentOrder!.totalPaid > 0 ? "BAYAR SISA TAGIHAN" : "BAYAR SEKARANG",
@@ -1261,10 +1267,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
   Widget _buildAdditionReceipt(int index, OrderAdditionRequest req) {
     double requestTotal = 0;
-    if (req.statusId == 2) {
-      for (var item in req.items) {
-        requestTotal += item.finalPrice ?? 0;
-      }
+    for (var item in req.items) {
+      requestTotal += item.finalPrice ?? 0;
     }
 
     return Container(
@@ -1337,7 +1341,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(item.menuName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      if (req.statusId == 2)
+                      if (req.statusId == 2 || (req.statusId == 1 && item.finalPrice != null && item.finalPrice! > 0))
                         Text(
                           "Rp ${item.finalPrice?.toStringAsFixed(0) ?? '-'}",
                           style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFB8860B), fontSize: 14),
@@ -1352,7 +1356,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                     style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic),
                   ),
                 ],
-                if (req.statusId == 2) ...[
+                if (req.statusId == 2 || (req.statusId == 1 && requestTotal > 0)) ...[
                   const SizedBox(height: 16),
                   const Divider(height: 1),
                   const SizedBox(height: 12),

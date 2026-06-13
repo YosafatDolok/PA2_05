@@ -1,48 +1,49 @@
 <div class="aura-nav-utils d-flex align-items-center">
     {{-- Notifications --}}
     <div class="dropdown me-4">
-        <a href="#" class="text-white op-8 position-relative" data-bs-toggle="dropdown" id="notificationBellLink">
-            <i class="far fa-bell fs-5"></i>
+        <a href="#" class="op-8 position-relative" data-bs-toggle="dropdown" id="notificationBellLink">
+            <i class="fas fa-bell fs-5 text-aura-crimson"></i>
             @if($unreadCount > 0)
-                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-aura-crimson border border-dark rounded-circle pulse-red" style="width: 10px; height: 10px;" id="notificationRedDot"></span>
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-aura-crimson border border-white rounded-circle pulse-red" style="width: 10px; height: 10px;" id="notificationRedDot"></span>
             @endif
         </a>
-        <div class="dropdown-menu dropdown-menu-end aura-dropdown-dark border-0 p-0 mt-3 shadow-lg" style="width: 380px;">
-            <div class="p-4 border-bottom border-white-5 d-flex justify-content-between align-items-center">
+        <div class="dropdown-menu dropdown-menu-end border-0 p-0 mt-3 shadow-sm rounded-4" style="width: 380px;">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top-4">
                 <div>
-                    <h6 class="mb-0 fw-bold text-white">Notifications</h6>
-                    <p class="smaller text-white-50 mb-0">Stay updated with your boutique activity</p>
+                    <h6 class="mb-0 fw-bold text-dark">Notifikasi</h6>
+                    <p class="smaller text-muted mb-0">Tetap terupdate dengan aktivitas katering Anda</p>
                 </div>
-                <span class="badge bg-aura-crimson-soft text-white rounded-pill px-3" id="notificationCountBadge">{{ $unreadCount }} New</span>
+                <span class="badge bg-danger-light text-danger rounded-pill px-3 py-2" id="notificationCountBadge">{{ $unreadCount }} Baru</span>
             </div>
-            <div class="aura-notification-list custom-scrollbar" style="max-height: 420px; overflow-y: auto;" id="notificationList">
+            <div class="aura-notification-list" style="max-height: 420px; overflow-y: auto; overflow-x: hidden;" id="notificationList">
+                @php \Carbon\Carbon::setLocale('id'); @endphp
                 @forelse($notifications as $notification)
                     <a href="{{ $notification->related_id ? route('orders.show', $notification->related_id) : '#' }}" 
-                       class="dropdown-item px-4 py-3 notification-item {{ $notification->is_read ? 'op-6' : 'unread-item' }}">
-                        <div class="d-flex align-items-center">
-                            <div class="aura-icon-circle-sm {{ $notification->type == 'new_order' ? 'bg-warning-transparent text-warning' : 'bg-aura-crimson-transparent text-aura-crimson' }} me-3">
+                       class="dropdown-item px-4 py-3 notification-item border-bottom {{ $notification->is_read ? 'opacity-75' : 'bg-light' }}">
+                        <div class="d-flex align-items-start">
+                            <div class="aura-icon-circle-sm {{ $notification->type == 'new_order' ? 'bg-warning-light text-warning' : 'bg-danger-light text-danger' }} me-3 mt-1" style="flex-shrink: 0;">
                                 <i class="fas {{ $notification->type == 'new_order' ? 'fa-shopping-basket' : 'fa-info-circle' }}"></i>
                             </div>
-                            <div class="flex-grow-1">
+                            <div style="flex: 1; min-width: 0;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <p class="mb-0 fw-bold small text-white">{{ $notification->title }}</p>
-                                    <p class="mb-0 smaller text-white-50 op-6">{{ $notification->created_at->diffForHumans() }}</p>
+                                    <p class="mb-0 fw-bold small text-dark text-truncate pe-2">{{ $notification->title }}</p>
+                                    <p class="mb-0 smaller text-muted text-nowrap">{{ $notification->created_at->diffForHumans() }}</p>
                                 </div>
-                                <p class="mb-0 text-white-50 smaller line-clamp-1">{{ $notification->message }}</p>
+                                <p class="mb-0 text-muted smaller text-truncate">{{ $notification->message }}</p>
                             </div>
                         </div>
                     </a>
                 @empty
                     <div class="p-5 text-center" id="emptyNotificationMessage">
-                        <div class="op-2 mb-3">
-                            <i class="far fa-bell-slash fs-1 text-white"></i>
+                        <div class="opacity-50 mb-3">
+                            <i class="far fa-bell-slash fs-1 text-muted"></i>
                         </div>
-                        <p class="small text-white-50 mb-0">No new transmissions</p>
+                        <p class="small text-muted mb-0">Belum ada pemberitahuan</p>
                     </div>
                 @endforelse
             </div>
-            <div class="p-3 bg-aura-dark-footer">
-                <a href="{{ route('admin.notifications.index') }}" class="btn btn-aura-crimson-outline btn-sm w-100 fw-bold py-2 rounded-3">VIEW ALL NOTIFICATIONS</a>
+            <div class="p-3 bg-light rounded-bottom-4">
+                <a href="{{ route('admin.notifications.index') }}" class="btn btn-outline-danger btn-sm w-100 fw-bold py-2 rounded-pill">LIHAT SEMUA NOTIFIKASI</a>
             </div>
         </div>
     </div>
@@ -61,14 +62,14 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-end p-2 mt-3 shadow-lg" style="min-width: 200px;">
             <li>
-                <a href="{{ route('profile.edit') }}" class="dropdown-item py-2 px-3 rounded-3 mb-1">
-                    <i class="fas fa-user-gear text-danger"></i> Profile Settings
+                <a href="{{ route('profile.edit') }}" class="dropdown-item py-2 px-3 rounded-3 mb-1 text-secondary">
+                    <i class="fas fa-user-gear text-danger me-2"></i> Pengaturan Profil
                 </a>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
                 <a href="#" class="dropdown-item py-2 px-3 rounded-3 text-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fas fa-power-off"></i> Logout
+                    <i class="fas fa-power-off me-2"></i> Keluar
                 </a>
             </li>
         </ul>
@@ -78,19 +79,7 @@
     </div>
 </div>
 
-{{-- Search Modal --}}
-<div class="modal modal-search fade" id="searchModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content glass-card border-0">
-            <div class="modal-header border-0">
-                <input type="text" class="form-control form-control-neo" placeholder="{{ __('SEARCH...') }}">
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

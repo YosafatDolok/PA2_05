@@ -15,24 +15,45 @@ class AdminChatController extends Controller
      */
     public function inbox(Request $request)
     {
-        // 1. Get unique order IDs that have messages
-        // We use a raw query check to ensure we get everything regardless of soft deletes or scopes
-        $orderIds = OrderMessage::distinct()->pluck('order_id');
+        $user = auth()->user();
+        $roleId = (int)$user->role_id;
 
-        // 2. Fetch orders bypassing all filters, specifically for the admin inbox
-        $conversations = Order::withoutGlobalScopes()
-            ->whereIn('order_id', $orderIds)
-            ->with(['user', 'latestMessage'])
-            ->withCount(['messages as unread_count' => function ($query) {
-                $query->where('is_read', false)
-                      ->where('sender_id', '!=', auth()->id());
-            }])
-            ->get()
-            ->sortByDesc(function ($order) {
-                // Sort by the latest message time or the order update time
-                return $order->latestMessage?->created_at ?? $order->updated_at;
-            })
-            ->values();
+        // 🛡️ Security Guardrail: Only Admin (1) and Customer (2) can access this endpoint. Drivers (3) have their own.
+        if ($roleId !== 1 && $roleId !== 2) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($roleId === 1) {
+            // Admin Inbox: all conversations
+            $orderIds = OrderMessage::distinct()->pluck('order_id');
+
+            $conversations = Order::withoutGlobalScopes()
+                ->whereIn('order_id', $orderIds)
+                ->with(['user', 'latestMessage'])
+                ->withCount(['messages as unread_count' => function ($query) {
+                    $query->where('is_read', false)
+                          ->where('sender_id', '!=', auth()->id());
+                }])
+                ->get()
+                ->sortByDesc(function ($order) {
+                    return $order->latestMessage?->created_at ?? $order->updated_at;
+                })
+                ->values();
+        } else {
+            // Customer Inbox: only their own orders with messages
+            $conversations = Order::where('user_id', $user->user_id)
+                ->whereHas('messages')
+                ->with(['latestMessage'])
+                ->withCount(['messages as unread_count' => function ($query) {
+                    $query->where('is_read', false)
+                          ->where('sender_id', '!=', auth()->id());
+                }])
+                ->get()
+                ->sortByDesc(function ($order) {
+                    return $order->latestMessage?->created_at ?? $order->updated_at;
+                })
+                ->values();
+        }
 
         return ChatInboxResource::collection($conversations);
     }

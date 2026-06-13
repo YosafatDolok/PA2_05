@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'page' => __('Order Detail'),
+    'page' => __('Detail Pesanan'),
     'pageSlug' => 'orders'
 ])
 
@@ -7,16 +7,16 @@
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
         <div class="d-flex align-items-center gap-3">
-            <h2 class="m-0 font-weight-bold">Order #ORD-{{ str_pad($order->order_id, 5, '0', STR_PAD_LEFT) }}</h2>
+            <h2 class="m-0 font-weight-bold">Pesanan #ORD-{{ str_pad($order->order_id, 5, '0', STR_PAD_LEFT) }}</h2>
             <span class="badge {{ $order->status_id == 9 ? 'bg-danger-light' : 'bg-primary-light' }} py-2 px-3 rounded-pill">
                 {{ strtoupper($order->status->status_name) }}
             </span>
         </div>
-        <p class="text-muted small uppercase letter-spacing-1 mb-0 mt-1">Detailed view and status management</p>
+        <p class="text-muted small uppercase letter-spacing-1 mb-0 mt-1">Tampilan detail dan manajemen status</p>
         </div>
         <div class="d-flex align-items-center">
             <a href="{{ route('orders.invoice', $order->order_id) }}" class="btn btn-primary btn-sm rounded-pill px-4 font-weight-bold mr-2">
-                <i class="fas fa-file-pdf mr-2"></i> EXPORT PDF / INVOICE
+                <i class="fas fa-file-pdf mr-2"></i> EKSPOR PDF / FAKTUR
             </a>
             <a href="{{ route('orders.index') }}" class="btn btn-secondary btn-icon rounded-circle">
                 <i class="fas fa-arrow-left"></i>
@@ -37,48 +37,79 @@
         </div>
     @endif
 
+    @if($order->status_id == 4 && $order->remaining_balance > 0)
+        <div class="alert alert-danger aura-card mb-4 border-0 shadow-lg animate-pulse" style="background: rgba(244, 67, 54, 0.1); border-left: 5px solid #f44336 !important; color: #ff5252;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-money-bill-wave fa-2x mr-3"></i>
+                <div>
+                    <h5 class="font-weight-bold m-0 text-white">TERKIRIM TAPI BELUM LUNAS!</h5>
+                    <span class="small">Pesanan ini sudah dikirim tetapi pelanggan masih memiliki sisa tagihan sebesar <strong class="text-white">Rp {{ number_format($order->remaining_balance, 0, ',', '.') }}</strong>.</span>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-md-8">
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Ordered Menus</h4>
-                <div class="table-responsive">
-                    <table class="table text-white mb-0">
-                        <thead>
-                            <tr class="text-muted extra-small uppercase">
-                                <th>Menu Name</th>
-                                <th class="text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($order->items as $item)
-                            <tr>
-                                <td class="py-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="menu-dot mr-3"></div>
-                                        <span class="font-weight-bold">{{ $item->menu->name ?? 'Unknown Item' }}</span>
-                                    </div>
-                                </td>
-                                <td class="text-right py-3">
-                                    <a href="{{ route('menus.edit', $item->menu_id) }}" class="btn btn-link btn-sm text-secondary p-0">View Menu</a>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Menu yang Dipesan</h4>
+                <form action="{{ route('orders.updateItemPrices', $order->order_id) }}" method="POST">
+                    @csrf
+                    <div class="table-responsive">
+                        <table class="table text-white mb-0">
+                            <thead>
+                                <tr class="text-muted extra-small uppercase">
+                                    <th>Nama Menu</th>
+                                    <th style="width: 250px;">Harga (Rp)</th>
+                                    <th class="text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($order->items as $item)
+                                <tr>
+                                    <td class="py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="menu-dot mr-3"></div>
+                                            <span class="font-weight-bold">{{ $item->menu->name ?? 'Item Tidak Diketahui' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-2">
+                                        <input type="text" class="form-control item-price-input" 
+                                               data-item-id="{{ $item->order_item_id }}"
+                                               value="{{ $item->final_price ? number_format($item->final_price, 0, ',', '') : '' }}"
+                                               placeholder="0" {{ $order->status_id > 1 ? 'readonly' : '' }}>
+                                        <input type="hidden" name="prices[{{ $item->order_item_id }}]" class="item-price-hidden" 
+                                               value="{{ $item->final_price ? intval($item->final_price) : '' }}">
+                                    </td>
+                                    <td class="text-right py-3">
+                                        <a href="{{ route('menus.edit', $item->menu_id) }}" class="btn btn-link btn-sm text-secondary p-0">Lihat Menu</a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($order->status_id == 1)
+                    <div class="text-right mt-3">
+                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4">
+                            <i class="fas fa-save mr-1"></i> Simpan Harga
+                        </button>
+                    </div>
+                    @endif
+                </form>
             </div>
 
             @if($order->additions->count() > 0)
             <div id="additions-section" class="card aura-card border-0 shadow-lg p-4 mb-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Additional Menus (Additions)</h4>
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Menu Tambahan (Additions)</h4>
                 @foreach($order->additions as $addition)
-                    <div class="addition-request mb-4 p-3 rounded" style="background: rgba(255,255,255,0.03); border-left: 3px solid {{ $addition->status_id == 1 ? '#ff9800' : ($addition->status_id == 2 ? '#4caf50' : '#f44336') }}">
+                    <div class="addition-request mb-4 p-3 rounded bg-light" style="border-left: 3px solid {{ $addition->status_id == 1 ? '#ff9800' : ($addition->status_id == 2 ? '#4caf50' : '#f44336') }}">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <span class="badge {{ $addition->status_id == 1 ? 'bg-warning' : ($addition->status_id == 2 ? 'bg-success' : 'bg-danger') }} small uppercase mb-2">
                                     {{ $addition->status->status_name }}
                                 </span>
-                                <p class="text-muted extra-small mb-0">Request Date: {{ $addition->created_at->format('d M Y, H:i') }}</p>
+                                <p class="text-muted extra-small mb-0">Tanggal Permintaan: {{ $addition->created_at->format('d M Y, H:i') }}</p>
                             </div>
                             @if($addition->status_id == 2)
                                 <h5 class="text-secondary font-weight-bold">Rp {{ number_format($addition->items->sum('final_price'), 0, ',', '.') }}</h5>
@@ -87,8 +118,8 @@
 
                         <ul class="list-unstyled mb-3">
                             @foreach($addition->items as $item)
-                                <li class="text-white d-flex justify-content-between">
-                                    <span>• {{ $item->menu->name ?? 'Unknown Item' }}</span>
+                                <li class="text-dark d-flex justify-content-between">
+                                    <span>• {{ $item->menu->name ?? 'Item Tidak Diketahui' }}</span>
                                     @if($addition->status_id == 2)
                                         <span class="text-muted small">Rp {{ number_format($item->final_price, 0, ',', '.') }}</span>
                                     @endif
@@ -97,7 +128,7 @@
                         </ul>
 
                         @if($addition->notes)
-                            <div class="bg-dark p-2 rounded mb-3">
+                            <div class="bg-white border p-2 rounded mb-3">
                                 <p class="text-muted extra-small italic mb-0">"{{ $addition->notes }}"</p>
                             </div>
                         @endif
@@ -108,13 +139,21 @@
                                 <div class="row align-items-end">
                                     @foreach($addition->items as $item)
                                         <div class="col-md-6 mb-2">
-                                            <label class="extra-small text-muted mb-1">{{ $item->menu->name ?? 'Unknown Item' }} Price (Rp)</label>
-                                            <input type="number" name="prices[{{ $item->id }}]" class="form-control form-control-sm bg-dark border-secondary text-white animate-pulse-crimson" placeholder="Harga per request...">
+                                            <label class="extra-small text-muted mb-1">Harga {{ $item->menu->name ?? 'Item Tidak Diketahui' }} (Rp)</label>
+                                            <input type="text" class="form-control form-control-sm addition-price-input @error('prices.'.$item->id) is-invalid @enderror" 
+                                                   placeholder="Harga per request..."
+                                                   value="{{ old('prices.'.$item->id, $item->final_price) ? number_format(old('prices.'.$item->id, $item->final_price), 0, ',', '.') : '' }}">
+                                            <input type="hidden" name="prices[{{ $item->id }}]" class="addition-price-hidden"
+                                                   value="{{ old('prices.'.$item->id, $item->final_price) }}">
+                                            @error('prices.'.$item->id)
+                                                <span class="invalid-feedback d-block">{{ $message }}</span>
+                                            @enderror
                                         </div>
                                     @endforeach
                                     <div class="col-12 mt-2">
-                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 font-weight-bold">APPROVE & SET PRICES</button>
-                                        <button type="submit" form="reject-form-{{ $addition->id }}" class="btn btn-link btn-sm text-danger">Reject</button>
+                                        <button type="submit" formaction="{{ route('additions.save-prices', $addition->id) }}" class="btn btn-outline-success btn-sm rounded-pill px-4 mr-2 font-weight-bold text-uppercase">SIMPAN HARGA (TANPA GANTI STATUS)</button>
+                                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 font-weight-bold text-uppercase">SETUJUI & TETAPKAN HARGA</button>
+                                        <button type="submit" form="reject-form-{{ $addition->id }}" class="btn btn-outline-danger btn-sm rounded-pill px-4 font-weight-bold text-uppercase ml-2">TOLAK</button>
                                     </div>
                                 </div>
                             </form>
@@ -128,31 +167,53 @@
             @endif
 
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Customer & Event Info</h4>
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Info Pelanggan & Acara</h4>
                 <div class="row mb-3">
-                    <div class="col-sm-4 text-muted small uppercase">Customer Name</div>
-                    <div class="col-sm-8 text-white font-weight-bold">{{ $order->user->name }}</div>
+                    <div class="col-sm-4 text-muted small uppercase">Nama Pelanggan</div>
+                    <div class="col-sm-8 text-dark font-weight-bold">{{ $order->user->name }}</div>
+                </div>
+                @if($order->user->email)
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted small uppercase">Email</div>
+                    <div class="col-sm-8 text-dark">{{ $order->user->email }}</div>
+                </div>
+                @endif
+                @if($order->user->phone_number)
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted small uppercase">No. Telepon</div>
+                    <div class="col-sm-8 text-dark">{{ $order->user->phone_number }}</div>
+                </div>
+                @endif
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted small uppercase">Alamat Acara</div>
+                    <div class="col-sm-8 text-dark">
+                        {{ $order->event_address }}
+                        @if($order->event_latitude && $order->event_longitude)
+                            <div class="mt-2">
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ $order->event_latitude }},{{ $order->event_longitude }}" 
+                                   target="_blank" class="btn btn-sm" style="background-color: rgba(230, 57, 70, 0.1); color: #e63946; border: 1px solid rgba(230, 57, 70, 0.2); border-radius: 20px; font-size: 11px; padding: 4px 10px;">
+                                    <i class="fas fa-map-marker-alt mr-1"></i> Buka di Google Maps
+                                </a>
+                            </div>
+                        @endif
+                    </div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-sm-4 text-muted small uppercase">Event Address</div>
-                    <div class="col-sm-8 text-white">{{ $order->event_address }}</div>
+                    <div class="col-sm-4 text-muted small uppercase">Tanggal Acara</div>
+                    <div class="col-sm-8 text-dark">{{ $order->event_date->format('l, d F Y') }}</div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-sm-4 text-muted small uppercase">Event Date</div>
-                    <div class="col-sm-8 text-white">{{ $order->event_date->format('l, d F Y') }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-sm-4 text-muted small uppercase">Capacity</div>
-                    <div class="col-sm-8 text-white">{{ $order->people }} People</div>
+                    <div class="col-sm-4 text-muted small uppercase">Kapasitas</div>
+                    <div class="col-sm-8 text-dark">{{ $order->people }} Orang</div>
                 </div>
                 <div class="row">
-                    <div class="col-sm-4 text-muted small uppercase">Notes</div>
-                    <div class="col-sm-8 text-white italic-placeholder">{{ $order->notes ?? 'No specific notes' }}</div>
+                    <div class="col-sm-4 text-muted small uppercase">Catatan</div>
+                    <div class="col-sm-8 text-dark italic-placeholder">{{ $order->notes ?? 'Tidak ada catatan khusus' }}</div>
                 </div>
             </div>
 
             <div class="card aura-card border-0 shadow-lg p-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Delivery Info</h4>
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Info Pengiriman</h4>
                 <div class="row mb-3">
                     <div class="col-sm-4 text-muted small uppercase">Status</div>
                     <div class="col-sm-8">
@@ -161,13 +222,13 @@
                 </div>
                 @if($order->delivered_at)
                 <div class="row mb-3">
-                    <div class="col-sm-4 text-muted small uppercase">Delivered At</div>
-                    <div class="col-sm-8 text-white">{{ $order->delivered_at->format('d M Y, H:i') }}</div>
+                    <div class="col-sm-4 text-muted small uppercase">Terkirim Pada</div>
+                    <div class="col-sm-8 text-dark">{{ $order->delivered_at->format('d M Y, H:i') }}</div>
                 </div>
                 @endif
                 <div class="row">
-                    <div class="col-sm-4 text-muted small uppercase">Location Notes</div>
-                    <div class="col-sm-8 text-white">{{ $order->location_notes ?? '-' }}</div>
+                    <div class="col-sm-4 text-muted small uppercase">Catatan Lokasi</div>
+                    <div class="col-sm-8 text-dark">{{ $order->location_notes ?? '-' }}</div>
                 </div>
             </div>
         </div>
@@ -175,9 +236,9 @@
         <div class="col-md-4">
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-2">
-                    <h4 class="font-weight-bold m-0 text-secondary">Manage Order</h4>
+                    <h4 class="font-weight-bold m-0 text-secondary">Kelola Pesanan</h4>
                     <a href="{{ route('orders.chat', $order->order_id) }}" class="btn btn-secondary btn-sm rounded-pill px-3">
-                        <i class="fas fa-comments mr-2"></i> OPEN CHAT
+                        <i class="fas fa-comments mr-2"></i> BUKA CHAT
                     </a>
                 </div>
                 
@@ -190,30 +251,91 @@
 
                     <div class="mb-4">
                         <label class="text-muted small uppercase mb-2 d-block">Harga Final (Rp)</label>
-                        <input type="number" name="final_price" value="{{ old('final_price', $order->final_price ? intval($order->final_price) : '') }}" 
-                               class="form-control bg-dark border-secondary text-white @error('final_price') is-invalid @enderror {{ !$order->final_price ? 'animate-pulse-crimson' : '' }}" 
-                               placeholder="Masukkan harga total..." {{ $order->status_id > 1 ? 'readonly' : '' }} min="0" oninput="if(this.value < 0) this.value = 0;">
+                        <input type="text" id="final_price_display" value="{{ old('final_price', $order->final_price ? number_format($order->final_price, 0, ',', '.') : '') }}" 
+                               class="form-control" 
+                               placeholder="Menghitung total..." readonly>
+                        <input type="hidden" name="final_price" id="final_price_actual" value="{{ old('final_price', $order->final_price ? intval($order->final_price) : '') }}">
+                        
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const displayInput = document.getElementById('final_price_display');
+                                const actualInput = document.getElementById('final_price_actual');
+                                const priceInputs = document.querySelectorAll('.item-price-input');
+                                
+                                // Approved additions sum (server-rendered constant)
+                                const approvedAdditionsTotal = {{ $order->additions->where('status_id', 2)->sum(function($add) { return $add->items->sum('final_price'); }) }};
+
+                                function calculateTotal() {
+                                    let total = approvedAdditionsTotal;
+                                    
+                                    priceInputs.forEach(input => {
+                                        let rawValue = input.value.replace(/[^0-9]/g, '');
+                                        if (rawValue) {
+                                            total += parseInt(rawValue, 10);
+                                        }
+                                        
+                                        // Update hidden inputs for submission
+                                        let hiddenInput = input.parentElement.querySelector('.item-price-hidden');
+                                        if (hiddenInput) {
+                                            hiddenInput.value = rawValue;
+                                        }
+                                    });
+
+                                    // Format individual input display
+                                    priceInputs.forEach(input => {
+                                        let rawValue = input.value.replace(/[^0-9]/g, '');
+                                        if (rawValue) {
+                                            let selectionStart = input.selectionStart;
+                                            let oldLen = input.value.length;
+                                            input.value = parseInt(rawValue, 10).toLocaleString('id-ID');
+                                            let diff = input.value.length - oldLen;
+                                            input.setSelectionRange(selectionStart + diff, selectionStart + diff);
+                                        } else {
+                                            input.value = '';
+                                        }
+                                    });
+
+                                    if (displayInput) {
+                                        displayInput.value = total > 0 ? total.toLocaleString('id-ID') : '';
+                                        actualInput.value = total;
+                                    }
+                                }
+
+                                priceInputs.forEach(input => {
+                                    input.addEventListener('input', calculateTotal);
+                                });
+
+                                // Format addition price inputs
+                                const additionPriceInputs = document.querySelectorAll('.addition-price-input');
+                                additionPriceInputs.forEach(input => {
+                                    input.addEventListener('input', function() {
+                                        let rawValue = input.value.replace(/[^0-9]/g, '');
+                                        let hiddenInput = input.parentElement.querySelector('.addition-price-hidden');
+                                        
+                                        if (hiddenInput) {
+                                            hiddenInput.value = rawValue;
+                                        }
+                                        
+                                        if (rawValue) {
+                                            let selectionStart = input.selectionStart;
+                                            let oldLen = input.value.length;
+                                            input.value = parseInt(rawValue, 10).toLocaleString('id-ID');
+                                            let diff = input.value.length - oldLen;
+                                            input.setSelectionRange(selectionStart + diff, selectionStart + diff);
+                                        } else {
+                                            input.value = '';
+                                        }
+                                    });
+                                });
+
+                                // Initialize totals and formats on load
+                                calculateTotal();
+                            });
+                        </script>
                         @if($order->status_id > 1)
                             <small class="text-muted mt-1">Harga tidak dapat diubah setelah pesanan diproses.</small>
                         @endif
                         @error('final_price')
-                            <span class="invalid-feedback">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="text-muted small uppercase mb-2 d-block">Assign Driver</label>
-                        <select name="driver_id" class="form-control bg-dark border-secondary text-white @error('driver_id') is-invalid @enderror">
-                            <option value="">-- No Driver Assigned --</option>
-                            @foreach($drivers as $driver)
-                                <option value="{{ $driver->user_id }}" {{ old('driver_id', $order->driver_id) == $driver->user_id ? 'selected' : '' }} 
-                                    style="color: {{ $driver->active_deliveries > 0 ? '#ff9800' : '#4caf50' }}">
-                                    {{ $driver->name }} 
-                                    {{ $driver->active_deliveries > 0 ? '(BUSY - ' . $driver->active_deliveries . ' Delivery)' : '(AVAILABLE)' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('driver_id')
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
                     </div>
@@ -258,19 +380,9 @@
                                 <p class="small text-muted mb-0 mt-2">Tidak ada tindakan lebih lanjut yang diperlukan.</p>
                             </div>
                         @elseif($order->status_id == 1) {{-- Pending --}}
-                            @if($order->remaining_balance <= 0)
-                                <button type="button" onclick="submitStatus(2)" class="btn btn-success w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
-                                    <i class="fas fa-check-circle mr-2"></i> KONFIRMASI & PROSES
-                                </button>
-                            @else
-                                <div class="alert alert-danger border-0 small text-center p-3 mb-3 rounded-3 shadow-sm" style="background: rgba(244, 67, 54, 0.1); border-left: 4px solid #f44336; color: #f44336;">
-                                    <i class="fas fa-lock mr-2 font-weight-bold"></i> <span class="font-weight-bold uppercase">MENUNGGU PEMBAYARAN ONLINE</span>
-                                    <p class="small text-muted mb-0 mt-1">Pelanggan belum menyelesaikan pembayaran. Proses dapur dan pengiriman terkunci.</p>
-                                </div>
-                                <button type="button" class="btn btn-secondary w-100 rounded-pill font-weight-bold py-3 mb-3" disabled title="Menunggu pembayaran online diselesaikan">
-                                    BELUM DIBAYAR
-                                </button>
-                            @endif
+                            <button type="button" onclick="submitStatus(2)" class="btn btn-success w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
+                                <i class="fas fa-check-circle mr-2"></i> KONFIRMASI & PROSES
+                            </button>
                             <button type="button" onclick="submitStatus(9)" class="btn btn-danger w-100 rounded-pill py-2 font-weight-bold text-white shadow-sm">
                                 <i class="fas fa-times-circle mr-1"></i> Batalkan Pesanan
                             </button>
@@ -279,18 +391,9 @@
                                 <i class="fas fa-truck mr-2"></i> SIAP DIKIRIM
                             </button>
                         @elseif($order->status_id == 3) {{-- Out for Delivery --}}
-                            @if($order->remaining_balance <= 0)
-                                <button type="button" onclick="submitStatus(4)" class="btn btn-success w-100 rounded-pill font-weight-bold py-3 shadow-lg">
-                                    <i class="fas fa-home mr-2"></i> SELESAIKAN PESANAN
-                                </button>
-                            @else
-                                <div class="alert alert-danger border-0 small text-center p-2 mb-3">
-                                    <i class="fas fa-lock mr-2"></i> PELUNASAN DIPERLUKAN
-                                </div>
-                                <button type="button" class="btn btn-secondary w-100 rounded-pill font-weight-bold py-3" disabled title="Harap lunasi pembayaran terlebih dahulu">
-                                    PESANAN BELUM LUNAS
-                                </button>
-                            @endif
+                            <button type="button" onclick="submitStatus(4)" class="btn btn-success w-100 rounded-pill font-weight-bold py-3 shadow-lg">
+                                <i class="fas fa-home mr-2"></i> TANDAI TELAH DIKIRIM (DELIVERED)
+                            </button>
                         @elseif($order->status_id == 4) {{-- Delivered --}}
                             <div class="alert alert-success border-0 text-center py-3">
                                 <i class="fas fa-check-double mr-2"></i> PESANAN TELAH SELESAI
@@ -306,8 +409,45 @@
                 </form>
             </div>
 
+            <!-- DRIVER MANAGEMENT CARD -->
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Order Summary</h4>
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Kelola Sopir</h4>
+                
+                <form action="{{ route('orders.assignDriver', $order->order_id) }}" method="POST">
+                    @csrf
+                    
+                    <div class="mb-4">
+                        <label class="text-muted small uppercase mb-2 d-block">Tugaskan Sopir</label>
+                        <select name="driver_id" class="form-control bg-dark border-secondary text-white @error('driver_id') is-invalid @enderror" onchange="this.form.submit()">
+                            <option value="">-- Belum Ada Sopir --</option>
+                            @foreach($drivers as $driver)
+                                @php
+                                    $isAtCapacity = $driver->active_deliveries >= 3;
+                                    $color = $isAtCapacity ? '#e63946' : ($driver->active_deliveries > 0 ? '#ff9800' : '#4caf50');
+                                @endphp
+                                <option value="{{ $driver->user_id }}" {{ old('driver_id', $order->driver_id) == $driver->user_id ? 'selected' : '' }} 
+                                    style="color: {{ $color }}" {{ $isAtCapacity && $order->driver_id != $driver->user_id ? 'disabled' : '' }}>
+                                    {{ $driver->name }} 
+                                    @if($isAtCapacity)
+                                        (KAPASITAS PENUH - 3 Pengiriman)
+                                    @elseif($driver->active_deliveries > 0)
+                                        (SIBUK - {{ $driver->active_deliveries }} Pengiriman)
+                                    @else
+                                        (TERSEDIA)
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('driver_id')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                        @enderror
+                        <small class="text-muted mt-2 d-block"><i class="fas fa-info-circle mr-1"></i> Kapasitas maksimal driver adalah 3 pesanan aktif bersamaan. Memilih driver akan langsung menyimpannya.</small>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ORDER SUMMARY CARD -->
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Ringkasan Pesanan</h4>
                 
                 @php
                     $additionsTotal = 0;
@@ -319,16 +459,16 @@
                 @endphp
 
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted extra-small uppercase">Base Order</span>
+                    <span class="text-muted extra-small uppercase">Pesanan Dasar</span>
                     <span class="text-white font-weight-bold">Rp {{ number_format($order->final_price ?? 0, 0, ',', '.') }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-3 border-bottom border-dark pb-2">
-                    <span class="text-muted extra-small uppercase">Additions</span>
+                    <span class="text-muted extra-small uppercase">Tambahan</span>
                     <span class="text-white font-weight-bold">+ Rp {{ number_format($additionsTotal, 0, ',', '.') }}</span>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="text-muted small uppercase font-weight-bold">Total Payable</span>
+                    <span class="text-muted small uppercase font-weight-bold">Total Tagihan</span>
                     @if($order->final_price || $additionsTotal > 0)
                         <h3 class="text-secondary font-weight-bold mb-0">Rp {{ number_format($order->total_payable, 0, ',', '.') }}</h3>
                     @else
@@ -338,19 +478,19 @@
 
                 <div class="mt-4 pt-3 border-top border-dark">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted extra-small uppercase">Total Paid</span>
+                        <span class="text-muted extra-small uppercase">Total Dibayar</span>
                         <span class="text-success font-weight-bold">Rp {{ number_format($order->total_paid, 0, ',', '.') }}</span>
                     </div>
                     
                     @if($order->total_payable > $order->total_paid)
                         <div class="alert alert-warning border-0 p-2 text-center mt-2 mb-0" style="background: rgba(255, 152, 0, 0.1); color: #ff9800;">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
-                            <span class="extra-small font-weight-bold">UNPAID BALANCE: Rp {{ number_format($order->total_payable - $order->total_paid, 0, ',', '.') }}</span>
+                            <span class="extra-small font-weight-bold">SISA TAGIHAN: Rp {{ number_format($order->total_payable - $order->total_paid, 0, ',', '.') }}</span>
                         </div>
                     @elseif($order->total_paid > 0 && $order->total_paid >= $order->total_payable)
                         <div class="alert alert-success border-0 p-2 text-center mt-2 mb-0" style="background: rgba(76, 175, 80, 0.1); color: #4caf50;">
                             <i class="fas fa-check-double mr-2"></i>
-                            <span class="extra-small font-weight-bold">FULLY PAID</span>
+                            <span class="extra-small font-weight-bold">LUNAS</span>
                         </div>
                     @endif
                 </div>
@@ -358,7 +498,7 @@
 
             {{-- ACTIVITY TIMELINE --}}
             <div class="card aura-card border-0 shadow-lg p-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Activity Log</h4>
+                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Log Aktivitas</h4>
                 <div class="activity-timeline mt-3">
                     @forelse($order->activities as $activity)
                         <div class="timeline-item mb-0 pb-4 position-relative">
@@ -385,7 +525,7 @@
                                 <div class="flex-grow-1">
                                     <p class="text-white small mb-1 font-weight-bold">{{ $activity->description }}</p>
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted extra-small uppercase" style="font-size: 9px;">By: {{ $activity->user->name }}</span>
+                                        <span class="text-muted extra-small uppercase" style="font-size: 9px;">Oleh: {{ $activity->user->name }}</span>
                                         <span class="text-muted extra-small" style="font-size: 9px;">{{ $activity->created_at->diffForHumans() }}</span>
                                     </div>
                                 </div>

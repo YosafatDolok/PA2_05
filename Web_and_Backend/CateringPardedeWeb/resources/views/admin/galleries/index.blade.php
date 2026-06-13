@@ -1,16 +1,16 @@
 @extends('layouts.app', [
-    'page' => __('Galleries'),
+    'page' => __('Galeri'),
     'pageSlug' => 'galleries'
 ])
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="m-0 font-weight-bold">Gallery</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Manage your images</p>
+            <h2 class="m-0 font-weight-bold">Galeri</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Kelola gambar Anda</p>
         </div>
         <a href="{{ route('galleries.create') }}" class="btn btn-primary rounded-pill px-4">
-            <i class="fas fa-plus me-2"></i> UPLOAD IMAGE
+            <i class="fas fa-plus me-2"></i> UNGGAH GAMBAR
         </a>
     </div>
 
@@ -21,9 +21,9 @@
                     <table class="table align-items-center mb-0">
                         <thead>
                             <tr>
-                                <th>IMAGE</th>
-                                <th>DESCRIPTION</th>
-                                <th class="text-center">ACTIONS</th>
+                                <th>GAMBAR</th>
+                                <th>DESKRIPSI</th>
+                                <th class="text-center">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -39,18 +39,18 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <div class="text-white mb-1 fw-bold">{{ $g->description ? \Illuminate\Support\Str::limit($g->description, 60) : 'NO METADATA AVAILABLE' }}</div>
+                                    <div class="text-dark mb-1 font-weight-bold">{{ $g->description ? \Illuminate\Support\Str::limit($g->description, 60) : 'TIDAK ADA DESKRIPSI' }}</div>
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-3">
                                         <a href="{{ route('galleries.edit', $g->id) }}" class="btn btn-sm btn-icon btn-secondary rounded-circle">
-                                            <i class="fas fa-terminal"></i>
+                                            <i class="fas fa-pen"></i>
                                         </a>
 
                                         <form action="{{ route('galleries.destroy', $g->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" class="btn btn-sm btn-icon btn-outline-danger shadow-sm rounded-circle btn-delete" data-name="this visual asset">
+                                            <button type="button" class="btn btn-sm btn-icon btn-outline-danger shadow-sm rounded-circle btn-delete" data-name="aset visual ini">
                                                 <i class="fas fa-trash-can"></i>
                                             </button>
                                         </form>

@@ -89,6 +89,11 @@ class Order extends Model
         return $this->hasOne(OrderMessage::class, 'order_id')->latestOfMany('message_id');
     }
 
+    public function latestDeliveryMessage()
+    {
+        return $this->hasOne(DeliveryMessage::class, 'order_id')->latestOfMany('message_id');
+    }
+
     public function activities()
     {
         return $this->hasMany(OrderActivity::class, 'order_id')->latest();

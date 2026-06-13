@@ -171,10 +171,13 @@ class OrderController extends Controller
         $order = $query->findOrFail($id);
 
         // Universal Rule: Only allow direct cancellation if status is Pending (1)
-        if ($order->status_id != 1) {
-            return response()->json([
-                'message' => 'Pesanan tidak dapat dibatalkan langsung karena sudah diproses. Silakan ajukan permintaan pembatalan.'
-            ], 400);
+        // And if total_paid == 0. If they have paid anything, they MUST request cancellation.
+        if ($order->status_id !== 1) {
+            return response()->json(['message' => 'Pesanan tidak dapat dibatalkan secara langsung karena sudah diproses.'], 403);
+        }
+
+        if ((float)$order->total_paid > 0) {
+            return response()->json(['message' => 'Pesanan yang sudah dibayar (walaupun sebagian) tidak bisa dibatalkan secara langsung. Silakan ajukan permintaan pembatalan.'], 403);
         }
 
         $oldStatusName = $order->status->status_name ?? 'Pending';
@@ -321,6 +324,7 @@ class OrderController extends Controller
             'order_id' => $order->order_id,
             'user_id' => $order->user_id,
             'remaining_balance' => (float)$order->remaining_balance,
+            'total_payable' => (float)$order->total_payable,
         ]);
     }
 

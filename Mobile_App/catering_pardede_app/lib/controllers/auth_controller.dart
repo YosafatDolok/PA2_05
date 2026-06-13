@@ -2,7 +2,6 @@ import '/core/services/auth_service.dart';
 import '/core/utils/helpers.dart';
 import 'package:flutter/material.dart';
 import '/core/services/push_notification_service.dart';
-import '/core/services/location_service.dart';
 
 class AuthController {
   // Login
@@ -118,7 +117,6 @@ class AuthController {
       message: 'Apakah Anda yakin ingin keluar dari akun Anda?',
       confirmText: 'Ya, Keluar',
       onConfirm: () async {
-        LocationService.stopTracking();
         await AuthService.logout();
         if (context.mounted) {
           Navigator.pushNamedAndRemoveUntil(context, '/landing', (route) => false);
