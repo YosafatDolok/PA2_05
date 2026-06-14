@@ -72,7 +72,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
         // Logistics Dashboard
         Route::get('/logistics', [\App\Http\Controllers\Admin\LogisticsController::class, 'index'])->name('admin.logistics.index');
-        Route::get('/logistics/updates', [\App\Http\Controllers\Admin\LogisticsController::class, 'getLiveUpdates'])->name('admin.logistics.updates');
         Route::resource('drivers', DriverController::class);
         Route::post('drivers/{driver}/resend', [DriverController::class, 'resendInvitation'])->name('drivers.resend');
         Route::post('drivers/{driver}/reset-link', [DriverController::class, 'sendResetLink'])->name('drivers.reset-link');

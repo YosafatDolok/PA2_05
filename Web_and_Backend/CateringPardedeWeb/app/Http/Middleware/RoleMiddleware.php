@@ -9,22 +9,30 @@ use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, $role): Response
+    /**
+     * Role ID mapping:
+     *  1 = admin
+     *  2 = user (customer)
+     *  3 = driver
+     */
+    private const ROLE_MAP = [
+        'admin'  => 1,
+        'user'   => 2,
+        'driver' => 3,
+    ];
+
+    public function handle(Request $request, Closure $next, string $role): Response
     {
         if (!Auth::check()) {
             return redirect('/login');
         }
 
-        $user = Auth::user();
+        $requiredRoleId = self::ROLE_MAP[$role] ?? null;
 
-        if ($role === 'admin' && $user->role_id === 1) {
+        if ($requiredRoleId !== null && Auth::user()->role_id === $requiredRoleId) {
             return $next($request);
         }
 
-        if ($role === 'user' && $user->role_id === 2) {
-            return $next($request);
-        }
-
-        return redirect('/login')->with('error', 'Akses ditolak.');
+        abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk halaman ini.');
     }
 }

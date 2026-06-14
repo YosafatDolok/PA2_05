@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OrderAdditionController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\OrderMessageController;
 use App\Http\Controllers\Api\AdminDashboardController;
+use App\Http\Controllers\Api\CheckoutTokenController;
 
 
 Route::post('/register/otp', [AuthController::class, 'requestRegistrationOtp']);
@@ -43,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/update/resend-otp', [ProfileController::class, 'resendProfileOtp']); 
     Route::post('/user/fcm-token', [ProfileController::class, 'updateFcmToken']); 
     Route::post('/user/password', [ProfileController::class, 'updatePassword']); 
+    Route::delete('/user', [ProfileController::class, 'destroy']); 
     
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -54,6 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::get('/orders/{id}/checkout-token', [CheckoutTokenController::class, 'generateToken']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/orders/{id}/request-cancel', [OrderController::class, 'requestCancel']);
     Route::post('/orders/{id}/review', [ReviewController::class, 'store']);
@@ -65,7 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{order}/messages', [OrderMessageController::class, 'index']);
     Route::post('/orders/{order}/messages', [OrderMessageController::class, 'store']);
     Route::post('/orders/{order}/messages/read', [OrderMessageController::class, 'markAsRead']);
-    Route::post('/orders/{order}/messages/{message}/accept', [OrderMessageController::class, 'acceptProposal']);
+
 
     // Delivery Messaging
     Route::get('/orders/{order}/delivery-messages', [\App\Http\Controllers\Api\DeliveryChatController::class, 'index']);
@@ -90,7 +93,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('driver')->group(function () {
         Route::get('/orders', [\App\Http\Controllers\Api\DriverController::class, 'myOrders']);
         Route::get('/inbox', [\App\Http\Controllers\Api\DriverController::class, 'inbox']);
-        Route::post('/location', [\App\Http\Controllers\Api\DriverController::class, 'updateLocation']);
         Route::post('/orders/{id}/status', [\App\Http\Controllers\Api\DriverController::class, 'updateStatus']);
     });
 });

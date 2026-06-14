@@ -13,7 +13,7 @@ class AdminController extends ChangeNotifier {
     final result = await AdminService.getStats();
     if (result != null) {
       stats = result;
-      print('Admin Stats Loaded: Pending=${stats?.pendingProposals}, Unread=${stats?.unreadMessages}');
+      print('Admin Stats Loaded: Unread=${stats?.unreadMessages}');
     }
 
     isLoading = false;

@@ -20,7 +20,6 @@ class OrderModel {
   final String? notes;
   final DateTime? startedDeliveryAt;
   final DateTime? deliveredAt;
-  final String? deliveryNotes;
   final String? deliveryProofImage;
   final bool isCancelling;
   final String? cancelReason;
@@ -49,7 +48,6 @@ class OrderModel {
     this.notes,
     this.startedDeliveryAt,
     this.deliveredAt,
-    this.deliveryNotes,
     this.deliveryProofImage,
     this.isCancelling = false,
     this.cancelReason,
@@ -84,7 +82,6 @@ class OrderModel {
       deliveredAt: json['delivered_at'] != null
           ? DateTime.parse(json['delivered_at'])
           : null,
-      deliveryNotes: json['delivery_notes'],
       deliveryProofImage: json['delivery_proof_image'],
       isCancelling: json['is_cancelling'] == 1 || json['is_cancelling'] == true,
       cancelReason: json['cancel_reason'],

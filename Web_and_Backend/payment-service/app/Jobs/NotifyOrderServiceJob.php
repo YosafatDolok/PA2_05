@@ -58,4 +58,18 @@ class NotifyOrderServiceJob implements ShouldQueue
             'payment_status' => $this->paymentStatus
         ]);
     }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::critical('DEAD LETTER QUEUE: Order status notification completely failed after all retries. Manual reconciliation required.', [
+            'order_id' => $this->orderId,
+            'payment_status' => $this->paymentStatus,
+            'amount' => $this->amount,
+            'external_id' => $this->externalId,
+            'error_message' => $exception->getMessage()
+        ]);
+    }
 }

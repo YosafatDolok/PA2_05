@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\DriverLocation;
 use App\Models\DeliveryMessage;
 use App\Http\Resources\DeliveryInboxResource;
 use Illuminate\Http\Request;
@@ -53,31 +52,7 @@ class DriverController extends Controller
         return DeliveryInboxResource::collection($conversations);
     }
 
-    /**
-     * 2. UPDATE GPS LOCATION
-     */
-    public function updateLocation(Request $request)
-    {
-        if ($request->user()->role_id != 3) {
-            return response()->json(['message' => 'Unauthorized. Drivers only.'], 403);
-        }
 
-        $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-        ]);
-
-        $location = DriverLocation::updateOrCreate(
-            ['user_id' => $request->user()->user_id],
-            [
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'updated_at' => now(),
-            ]
-        );
-
-        return response()->json(['message' => 'Location updated', 'data' => $location]);
-    }
 
     /**
      * 3. UPDATE TRIP STATUS & PROOF

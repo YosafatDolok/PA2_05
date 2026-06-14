@@ -8,7 +8,7 @@ class ApiEndpoints {
   // To use real-time chat via Ngrok, you need a second Ngrok tunnel: ngrok http 8080
   // If you are using an Android Emulator, set this to: '10.0.2.2' and port 8080
   // If you are using a Physical Device, set this to your computer's IP (e.g., '192.168.1.x')
-  static String get pusherHost => '10.98.231.229'; // Bypassing Ngrok entirely for WebSockets!
+  static String get pusherHost => '10.0.2.2'; // Bypassing Ngrok entirely for WebSockets!
   static int get pusherPort => 8080;
   static String get pusherScheme => 'ws';
 
@@ -36,13 +36,12 @@ class ApiEndpoints {
   static const String unreadChatCount = '$baseUrl/messages/unread-count';
   static const String adminStats = '$baseUrl/admin/stats';
   static const String adminInbox = '$baseUrl/admin/inbox';
-  static const String driverInbox = '$baseUrl/driver/inbox';
   static const String forgotPassword = '$baseUrl/password/forgot';
   static const String resetPassword = '$baseUrl/password/reset';
   static const String payments = "$basePayment/payments";
   
   // Driver Endpoints
   static const String driverOrders = '$baseUrl/driver/orders';
-  static const String driverLocation = '$baseUrl/driver/location';
+  static const String driverInbox = '$baseUrl/driver/inbox';
   static String driverUpdateStatus(int id) => '$baseUrl/driver/orders/$id/status';
 }

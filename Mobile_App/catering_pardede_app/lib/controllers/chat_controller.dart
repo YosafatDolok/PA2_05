@@ -151,42 +151,7 @@ class ChatController extends ChangeNotifier {
     }
   }
 
-  Future<void> sendProposal(int orderId, String note, double price) async {
-    try {
-      final newMessage = await ChatService.sendProposal(orderId, note, price);
-      if (newMessage != null && !messages.any((m) => m.messageId == newMessage.messageId)) {
-        messages.add(newMessage);
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint("Send Proposal Error: $e");
-    }
-  }
 
-  Future<void> acceptProposal(BuildContext context, int orderId, int messageId) async {
-    try {
-      await ChatService.acceptProposal(orderId, messageId);
-      final index = messages.indexWhere((m) => m.messageId == messageId);
-      if (index != -1) {
-        messages[index] = OrderMessageModel(
-          messageId: messages[index].messageId,
-          orderId: messages[index].orderId,
-          senderId: messages[index].senderId,
-          message: messages[index].message,
-          isRead: messages[index].isRead,
-          type: messages[index].type,
-          proposedPrice: messages[index].proposedPrice,
-          proposalStatus: 'accepted',
-          createdAt: messages[index].createdAt,
-          sender: messages[index].sender,
-        );
-        notifyListeners();
-      }
-      Helpers.showSnackBar(context, 'Penawaran diterima! Total harga diperbarui.');
-    } catch (e) {
-      Helpers.showSnackBar(context, 'Gagal menerima penawaran');
-    }
-  }
   Future<void> markAsRead(int orderId) async {
     try {
       await ChatService.markMessagesAsRead(orderId);
@@ -201,9 +166,6 @@ class ChatController extends ChangeNotifier {
             senderId: messages[i].senderId,
             message: messages[i].message,
             isRead: true,
-            type: messages[i].type,
-            proposedPrice: messages[i].proposedPrice,
-            proposalStatus: messages[i].proposalStatus,
             createdAt: messages[i].createdAt,
             sender: messages[i].sender,
           );

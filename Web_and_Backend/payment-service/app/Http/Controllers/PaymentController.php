@@ -12,53 +12,37 @@ use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
+    private function verifyCheckoutToken($token) {
+        if (!$token) return null;
+        $parts = explode('.', $token);
+        if (count($parts) !== 2) return null;
+        
+        $expectedSignature = hash_hmac('sha256', $parts[0], env('INTERNAL_SERVICE_KEY', 'PARDEDE_INTERNAL_SECRET_2026'));
+        if (!hash_equals($expectedSignature, $parts[1])) return null;
+        
+        $billing = json_decode(base64_decode($parts[0]), true);
+        if ($billing['exp'] < time()) return null;
+        
+        return $billing;
+    }
+
     /**
      * 1. Inisialisasi Pembayaran (Dipanggil dari Flutter)
      */
     public function store(Request $request)
     {
         $request->validate([
-            'order_id' => 'required',
+            'checkout_token' => 'required|string',
             'amount' => 'nullable|numeric|min:10000' // Midtrans minimum is usually 10,000
         ]);
 
-        $user = $request->attributes->get('authenticated_user');
-        if (!$user) {
-            return response()->json(['message' => 'User tidak terautentikasi.'], 401);
-        }
-
-        // Ambil info billing secara aman dari backend utama
-        try {
-            $mainAppUrl = env('MAIN_APP_URL', 'http://localhost:8000');
-            $response = Http::withHeaders([
-                'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key'),
-                'Accept' => 'application/json'
-            ])->timeout(10)->get($mainAppUrl . '/api/orders/' . $request->order_id . '/billing');
-
-            if (!$response->successful()) {
-                return response()->json(['message' => 'Gagal mendapatkan data tagihan pesanan.'], 400);
-            }
-
-            $billing = $response->json();
-        } catch (\Exception $e) {
-            Log::error('Gagal memanggil API billing internal: ' . $e->getMessage());
-            return response()->json(['message' => 'Kesalahan koneksi ke server utama.'], 500);
-        }
-
-        // Verifikasi kepemilikan pesanan
-        if ((int)$billing['user_id'] !== (int)$user['user_id']) {
-            return response()->json(['message' => 'Anda tidak memiliki hak untuk membayar pesanan ini.'], 403);
+        $billing = $this->verifyCheckoutToken($request->checkout_token);
+        if (!$billing) {
+            return response()->json(['message' => 'Checkout token tidak valid atau sudah kadaluarsa.'], 403);
         }
 
         $remainingBalance = (float)$billing['remaining_balance'];
-
-        // Cek jika pesanan sudah lunas
-        if ($remainingBalance <= 0) {
-            return response()->json(['message' => 'Pesanan ini sudah lunas.'], 400);
-        }
-
-        $totalPayable = (float)($billing['total_payable'] ?? $remainingBalance);
-        $minDpAmount = $totalPayable * 0.5;
+        $minPaymentAllowed = (float)$billing['min_payment_allowed'];
 
         $paymentAmount = $remainingBalance;
         if ($request->has('amount') && $request->amount > 0) {
@@ -66,14 +50,14 @@ class PaymentController extends Controller
             if ($paymentAmount > $remainingBalance) {
                 return response()->json(['message' => 'Nominal pembayaran tidak boleh melebihi sisa tagihan.'], 400);
             }
-            if ($paymentAmount < $minDpAmount && $remainingBalance >= $minDpAmount) {
-                return response()->json(['message' => 'Minimal pembayaran DP adalah 50% dari total tagihan.'], 400);
+            if ($paymentAmount < $minPaymentAllowed) {
+                return response()->json(['message' => 'Minimal pembayaran untuk pesanan ini adalah Rp ' . number_format($minPaymentAllowed, 0, ',', '.')], 400);
             }
         }
 
         // Buat rekaman pembayaran baru menggunakan nominal terverifikasi
         $payment = Payment::create([
-            'order_id' => $request->order_id,
+            'order_id' => $billing['order_id'],
             'amount' => $paymentAmount,
             'payment_method' => 'midtrans',
             'status' => 'pending',
@@ -89,6 +73,7 @@ class PaymentController extends Controller
     public function createTransaction(Request $request, $id)
     {
         $request->validate([
+            'checkout_token' => 'required|string',
             'payment_type' => 'required|string',
             'bank' => 'nullable|string'
         ]);
@@ -99,35 +84,19 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Payment record not found'], 404);
         }
 
-        $user = $request->attributes->get('authenticated_user');
-        if (!$user) {
-            return response()->json(['message' => 'User tidak terautentikasi.'], 401);
+        // Verifikasi kepemilikan pesanan via token lokal (no HTTP request)
+        $billing = $this->verifyCheckoutToken($request->checkout_token);
+        if (!$billing) {
+            return response()->json(['message' => 'Checkout token tidak valid atau sudah kadaluarsa.'], 403);
         }
 
-        // Verifikasi kepemilikan pesanan dari backend utama
-        try {
-            $mainAppUrl = env('MAIN_APP_URL', 'http://localhost:8000');
-            $response = Http::withHeaders([
-                'X-Internal-Secret' => env('INTERNAL_SERVICE_KEY', 'default_secret_key'),
-                'Accept' => 'application/json'
-            ])->timeout(10)->get($mainAppUrl . '/api/orders/' . $payment->order_id . '/billing');
-
-            if (!$response->successful()) {
-                return response()->json(['message' => 'Gagal memverifikasi tagihan pesanan.'], 400);
-            }
-
-            $billing = $response->json();
-            if ((int)$billing['user_id'] !== (int)$user['user_id']) {
-                return response()->json(['message' => 'Anda tidak memiliki hak untuk mengakses pembayaran ini.'], 403);
-            }
-        } catch (\Exception $e) {
-            Log::error('Gagal memverifikasi kepemilikan pembayaran: ' . $e->getMessage());
-            return response()->json(['message' => 'Kesalahan koneksi ke server utama.'], 500);
+        if ((int)$billing['order_id'] !== (int)$payment->order_id) {
+            return response()->json(['message' => 'Anda tidak memiliki hak untuk mengakses pembayaran ini.'], 403);
         }
 
         // Konfigurasi Midtrans
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        Config::$isProduction = false;
+        Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
@@ -141,9 +110,9 @@ class PaymentController extends Controller
                 'gross_amount' => (int) $payment->amount,
             ],
             'customer_details' => [
-                'first_name' => $user['name'] ?? 'Customer',
-                'email' => $user['email'] ?? 'customer@example.com',
-                'phone' => $user['phone_number'] ?? '',
+                'first_name' => $billing['user_name'] ?? 'Customer',
+                'email' => $billing['user_email'] ?? 'customer@example.com',
+                'phone' => $billing['user_phone'] ?? '',
             ],
         ];
 

@@ -36,6 +36,11 @@ class DeliveryChatController extends ChangeNotifier {
         },
       );
 
+      pusherClient!.onConnectionEstablished.listen((_) {
+        debugPrint("Delivery Pusher WebSocket Connected Successfully! Subscribing now...");
+        _currentChannel?.subscribe();
+      });
+
       final authUrl = "${ApiEndpoints.baseUrl}/broadcasting/auth";
       
       _currentChannel = pusherClient!.privateChannel(
@@ -74,7 +79,6 @@ class DeliveryChatController extends ChangeNotifier {
         debugPrint("Mobile Delivery Pusher Subscription Error: ${event.data}");
       });
 
-      _currentChannel!.subscribe();
       pusherClient!.connect();
       
     } catch (e) {

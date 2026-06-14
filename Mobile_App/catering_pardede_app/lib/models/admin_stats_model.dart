@@ -1,11 +1,9 @@
 class AdminStatsModel {
-  final int pendingProposals;
   final int unreadMessages;
   final int todayOrders;
   final List<AdminActivity> recentActivity;
 
   AdminStatsModel({
-    required this.pendingProposals,
     required this.unreadMessages,
     required this.todayOrders,
     required this.recentActivity,
@@ -13,7 +11,6 @@ class AdminStatsModel {
 
   factory AdminStatsModel.fromJson(Map<String, dynamic> json) {
     return AdminStatsModel(
-      pendingProposals: json['pending_proposals'] ?? 0,
       unreadMessages: json['unread_messages'] ?? 0,
       todayOrders: json['today_orders'] ?? 0,
       recentActivity: (json['recent_activity'] as List?)

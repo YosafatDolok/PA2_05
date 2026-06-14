@@ -119,9 +119,6 @@ class _OrderChatPageState extends State<OrderChatPage> {
                     // Strict ID comparison for correct alignment
                     final isMe = _currentUserId != null && 
                                  message.senderId.toString() == _currentUserId.toString();
-                    if (message.type == 'proposal') {
-                      return _buildProposalCard(message, isMe);
-                    }
                     return _buildMessageBubble(message, isMe);
                   },
                 );
@@ -207,22 +204,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (_userRole == 'admin')
-              Padding(
-                padding: const EdgeInsets.only(right: 12, bottom: 4),
-                child: GestureDetector(
-                  onTap: _showProposalDialog,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                    ),
-                    child: const Icon(Icons.request_quote_rounded, color: AppColors.primary, size: 22),
-                  ),
-                ),
-              ),
+
             Expanded(
               child: Container(
                 constraints: const BoxConstraints(maxHeight: 120),
@@ -271,112 +253,6 @@ class _OrderChatPageState extends State<OrderChatPage> {
                   child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showProposalDialog() {
-    final priceController = TextEditingController();
-    final noteController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Kirim Penawaran Harga"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: priceController,
-              decoration: const InputDecoration(labelText: "Harga Baru (Rp)", hintText: "Contoh: 5000000"),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: noteController,
-              decoration: const InputDecoration(labelText: "Catatan Penawaran", hintText: "Contoh: Harga setelah diskon menu."),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
-          ElevatedButton(
-            onPressed: () {
-              final price = double.tryParse(priceController.text);
-              if (price != null) {
-                _chatController.sendProposal(widget.orderId, noteController.text, price);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text("Kirim"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProposalCard(OrderMessageModel message, bool isMe) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.all(12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.amber.shade50,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.amber.shade300, width: 2),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5)),
-          ],
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.request_quote_outlined, color: Colors.amber, size: 40),
-            const SizedBox(height: 8),
-            const Text("PENAWARAN HARGA", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, letterSpacing: 1.2)),
-            const SizedBox(height: 12),
-            Text(message.message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14)),
-            const Divider(height: 24),
-            Text(
-              "Rp ${message.proposedPrice?.toStringAsFixed(0)}",
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.primary),
-            ),
-            const SizedBox(height: 16),
-            if (message.proposalStatus == 'pending' && !isMe)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _chatController.acceptProposal(context, widget.orderId, message.messageId!),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text("TERIMA PENAWARAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              )
-            else if (message.proposalStatus == 'accepted')
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green, size: 18),
-                    SizedBox(width: 8),
-                    Text("DITERIMA", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ],
-                ),
-              ),
-            const SizedBox(height: 8),
-            Text(
-              _formatTime(message.createdAt),
-              style: const TextStyle(color: Colors.black38, fontSize: 10),
             ),
           ],
         ),

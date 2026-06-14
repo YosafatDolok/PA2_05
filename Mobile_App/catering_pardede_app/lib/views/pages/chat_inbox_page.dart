@@ -10,6 +10,7 @@ import '../../core/utils/helpers.dart';
 import '../widgets/custom_header.dart';
 import '/core/services/push_notification_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/storage/local_storage.dart';
 
 class ChatInboxPage extends StatefulWidget {
   const ChatInboxPage({super.key});
@@ -23,6 +24,7 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   bool isLoading = true;
   String? errorMessage;
   bool _isDriver = false;
+  bool isGuest = false;
 
   @override
   void initState() {
@@ -45,10 +47,22 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   }
 
   Future<void> _fetchInbox() async {
+    final token = await LocalStorage.getToken();
+    if (token == null) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          isGuest = true;
+        });
+      }
+      return;
+    }
+
     _isDriver = await AuthService.isDriver();
     setState(() {
       isLoading = true;
       errorMessage = null;
+      isGuest = false;
     });
     
     try {
@@ -118,9 +132,11 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : errorMessage != null
-                    ? _buildErrorState()
-                    : chats.isEmpty
+                : isGuest
+                    ? _buildGuestState()
+                    : errorMessage != null
+                        ? _buildErrorState()
+                        : chats.isEmpty
                         ? _buildEmptyState()
                         : RefreshIndicator(
                             onRefresh: _fetchInbox,
@@ -165,10 +181,14 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
             if (_isDriver) {
               Helpers.pushNamedSafe(context, '/delivery-chat', arguments: chat.orderId);
             } else {
-              final data = await ApiService.get('${ApiEndpoints.orders}/${chat.orderId}');
-              final order = OrderModel.fromJson(data);
-              if (mounted) {
-                Helpers.pushNamedSafe(context, '/order-detail', arguments: order);
+              if (chat.chatType == 'driver') {
+                Helpers.pushNamedSafe(context, '/delivery-chat', arguments: chat.orderId);
+              } else {
+                final data = await ApiService.get('${ApiEndpoints.orders}/${chat.orderId}');
+                final order = OrderModel.fromJson(data);
+                if (mounted) {
+                  Helpers.pushNamedSafe(context, '/order-detail', arguments: order);
+                }
               }
             }
           } catch (e) {
@@ -195,10 +215,12 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(
-                      chat.userName.isNotEmpty ? chat.userName.substring(0, 1).toUpperCase() : 'P',
-                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 18),
-                    ),
+                    child: chat.chatType == 'driver' 
+                      ? const Icon(Icons.local_shipping_rounded, color: AppColors.primary, size: 24)
+                      : Text(
+                          chat.userName.isNotEmpty ? chat.userName.substring(0, 1).toUpperCase() : 'P',
+                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 18),
+                        ),
                   ),
                 ),
               ),
@@ -313,6 +335,38 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
     );
   }
 
+  Widget _buildGuestState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline_rounded, size: 64, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            const Text(
+              'Silakan login terlebih dahulu untuk melihat pesan Anda.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Helpers.pushNamedSafe(context, '/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Login Sekarang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildErrorState() {
     return Center(
       child: Padding(
@@ -327,7 +381,7 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
             ElevatedButton(
               onPressed: _fetchInbox,
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Coba Lagi'),
+              child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

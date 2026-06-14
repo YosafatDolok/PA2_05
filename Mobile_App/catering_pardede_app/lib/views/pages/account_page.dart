@@ -175,10 +175,17 @@ class _AccountPageState extends State<AccountPage> {
                 final updated = await Helpers.pushSafe(context, MaterialPageRoute(builder: (context) => EditProfilePage(user: user!)));
                 if (updated == true) _fetchAccountData();
               }, delay: 5),
+              _accountTile(
+                Icons.delete_outline_rounded,
+                "Hapus Akun",
+                _showDeleteConfirmation,
+                delay: 6,
+                isDestructive: true,
+              ),
             ]),
             const SizedBox(height: 32),
             const _EntranceAnimation(
-              delay: 6,
+              delay: 7,
               child: Text(
                 "HUBUNGI & IKUTI KAMI",
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5),
@@ -190,22 +197,157 @@ class _AccountPageState extends State<AccountPage> {
                 Icons.camera_alt_rounded,
                 "Instagram @pardede_catering",
                 () => Helpers.launchURL("https://www.instagram.com/pardede_catering"),
-                delay: 7,
+                delay: 8,
               ),
               _accountTile(
                 Icons.chat_bubble_outline_rounded,
                 "WhatsApp (Hubungi Kami)",
                 () => Helpers.launchURL("https://wa.me/6281234567890"),
-                delay: 8,
+                delay: 9,
               ),
             ]),
             const SizedBox(height: 32),
             _EntranceAnimation(
-              delay: 9,
+              delay: 10,
               child: _buildLogoutButton(),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.warning_rounded, color: Colors.red, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              "Hapus Akun",
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: Color(0xFF2D0A0A),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan.\n\nMasukkan password Anda untuk mengonfirmasi:",
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: TextField(
+                controller: passwordController,
+                obscureText: true,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF2D0A0A)),
+                decoration: InputDecoration(
+                  hintText: 'Password',
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13, fontWeight: FontWeight.w500),
+                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 18),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "BATAL",
+              style: TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final password = passwordController.text.trim();
+              if (password.isEmpty) {
+                Helpers.showSnackBar(context, "Password wajib diisi.");
+                return;
+              }
+
+              Navigator.pop(context); // Close dialog
+              
+              // Show loading overlay
+              showDialog(
+                context: context, 
+                barrierDismissible: false,
+                builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              );
+              
+              final response = await AuthService.deleteAccount(password);
+              
+              if (!mounted) return;
+              Navigator.pop(context); // Close loading overlay
+              
+              if (response['success']) {
+                Helpers.showSnackBar(context, response['message']);
+                Navigator.of(context).pushNamedAndRemoveUntil('/landing', (route) => false);
+              } else {
+                Helpers.showSnackBar(context, "Gagal menghapus akun: ${response['message']}");
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text(
+              "HAPUS AKUN",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -281,7 +423,18 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _accountTile(IconData icon, String title, VoidCallback onTap, {required int delay, int badgeCount = 0}) {
+  Widget _accountTile(
+    IconData icon, 
+    String title, 
+    VoidCallback onTap, {
+    required int delay, 
+    int badgeCount = 0,
+    bool isDestructive = false,
+  }) {
+    final iconColor = isDestructive ? Colors.red : AppColors.primary;
+    final textColor = isDestructive ? Colors.red.shade700 : const Color(0xFF2D0A0A);
+    final bgColor = isDestructive ? Colors.red.withValues(alpha: 0.05) : AppColors.primary.withValues(alpha: 0.05);
+
     return _EntranceAnimation(
       delay: delay,
       child: TapScale(
@@ -293,16 +446,16 @@ class _AccountPageState extends State<AccountPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.05),
+                  color: bgColor,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 22),
+                child: Icon(icon, color: iconColor, size: 22),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF2D0A0A)),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: textColor),
                 ),
               ),
               if (badgeCount > 0)

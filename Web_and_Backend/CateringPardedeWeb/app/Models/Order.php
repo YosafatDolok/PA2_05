@@ -32,7 +32,6 @@ class Order extends Model
         'notes',
         'started_delivery_at',
         'delivered_at',
-        'delivery_notes',
         'delivery_proof_image',
     ];
 

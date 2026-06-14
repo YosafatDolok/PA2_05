@@ -26,6 +26,29 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   String selectedPaymentMethod = "bank_transfer"; // bank_transfer, gopay, shopeepay
   String selectedBank = "bca"; // bca, mandiri, bni, bri, permata
   bool isLoading = false;
+  bool isInitializing = true;
+  String? checkoutToken;
+  double minPaymentAllowed = 10000;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCheckoutToken();
+  }
+
+  Future<void> _fetchCheckoutToken() async {
+    try {
+      final response = await ApiService.get("${ApiEndpoints.orders}/${widget.order.id}/checkout-token");
+      setState(() {
+        checkoutToken = response['checkout_token'];
+        minPaymentAllowed = (response['min_payment_allowed'] as num).toDouble();
+        isInitializing = false;
+      });
+    } catch (e) {
+      Helpers.showSnackBar(context, "Gagal mendapatkan sesi pembayaran: $e");
+      if (mounted) Navigator.pop(context);
+    }
+  }
 
   @override
   void dispose() {
@@ -37,8 +60,14 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
     setState(() => isLoading = true);
 
     try {
+      if (checkoutToken == null) {
+        Helpers.showSnackBar(context, "Sesi pembayaran belum siap. Silakan coba lagi.");
+        setState(() => isLoading = false);
+        return;
+      }
+
       Map<String, dynamic> paymentBody = {
-        "order_id": widget.order.id,
+        "checkout_token": checkoutToken,
       };
 
       if (paymentType == "partial") {
@@ -50,10 +79,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
         }
         
         final parsedAmount = int.parse(amountText);
-        final minDpAmount = (widget.order.totalPayable * 0.5).toInt();
         
-        if (parsedAmount < minDpAmount && widget.order.remainingBalance >= minDpAmount) {
-          Helpers.showSnackBar(context, "Minimal pembayaran DP adalah Rp ${Helpers.formatNumber(minDpAmount)} (50% dari total).");
+        if (parsedAmount < minPaymentAllowed) {
+          Helpers.showSnackBar(context, "Minimal pembayaran adalah Rp ${Helpers.formatNumber(minPaymentAllowed)}.");
           setState(() => isLoading = false);
           return;
         }
@@ -73,6 +101,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       final res = await ApiService.post(
         "${ApiEndpoints.basePayment}/payments/$paymentId/midtrans",
         {
+          "checkout_token": checkoutToken,
           "payment_type": selectedPaymentMethod,
           "bank": selectedPaymentMethod == 'bank_transfer' ? selectedBank : null
         },
@@ -167,6 +196,15 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (isInitializing) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -308,7 +346,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                               decoration: InputDecoration(
                                 prefixText: "Rp ",
                                 prefixStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
-                                hintText: "Min. Rp ${Helpers.formatNumber((widget.order.totalPayable * 0.5).toInt())}",
+                                hintText: "Min. Rp ${Helpers.formatNumber(minPaymentAllowed)}",
                                 filled: true,
                                 fillColor: Colors.white,
                                 border: OutlineInputBorder(

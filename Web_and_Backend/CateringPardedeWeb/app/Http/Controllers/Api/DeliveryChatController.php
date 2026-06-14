@@ -16,8 +16,8 @@ class DeliveryChatController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
-        // Ensure user is authorized (Customer, Driver, or Admin)
-        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id() && (int)Auth::user()->role_id !== 1) {
+        // Ensure user is authorized (Customer or Driver ONLY)
+        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -33,8 +33,8 @@ class DeliveryChatController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
-        // Ensure user is authorized (Customer, Driver, or Admin)
-        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id() && (int)Auth::user()->role_id !== 1) {
+        // Ensure user is authorized (Customer or Driver ONLY)
+        if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -63,15 +63,6 @@ class DeliveryChatController extends Controller
         // 2. Notify Driver (if assigned, and sender is not Driver)
         if ($order->driver_id && $senderId !== (int)$order->driver_id) {
             $recipients[] = $order->driver_id;
-        }
-
-        // 3. Notify Admin (if sender is not Admin)
-        $admin = \App\Models\User::whereHas('role', function($q) {
-            $q->where('name', 'admin');
-        })->first();
-        
-        if ($admin && $senderId !== (int)$admin->user_id) {
-            $recipients[] = $admin->user_id;
         }
 
         foreach ($recipients as $recipientId) {

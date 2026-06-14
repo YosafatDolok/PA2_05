@@ -78,16 +78,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   children: [
                     Expanded(
                       child: _buildUrgentCard(
-                        title: 'Butuh Harga',
-                        count: stats?.pendingProposals ?? 0,
-                        icon: Icons.request_quote,
-                        color: AppColors.primary,
-                        onTap: () => Helpers.pushNamedSafe(context, '/orders', arguments: {'filter': 'pending_proposal'}),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildUrgentCard(
                         title: 'Chat Belum Dibaca',
                         count: stats?.unreadMessages ?? 0,
                         icon: Icons.chat_bubble,

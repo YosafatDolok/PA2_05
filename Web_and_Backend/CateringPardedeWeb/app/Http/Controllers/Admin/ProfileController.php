@@ -278,4 +278,31 @@ class ProfileController extends Controller
 
         return back()->with('password_success', 'Password updated successfully!');
     }
+
+    public function destroy(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password yang Anda masukkan salah.',
+            ], 403);
+        }
+
+        // Revoke all tokens to log the user out across devices
+        $user->tokens()->delete();
+
+        // Perform soft delete
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Akun berhasil dihapus.',
+        ]);
+    }
 }

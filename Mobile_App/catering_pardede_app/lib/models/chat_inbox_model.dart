@@ -4,6 +4,7 @@ class ChatInboxModel {
   final String? lastMessage;
   final int unreadCount;
   final DateTime lastMessageTime;
+  final String chatType;
 
   ChatInboxModel({
     required this.orderId,
@@ -11,6 +12,7 @@ class ChatInboxModel {
     this.lastMessage,
     required this.unreadCount,
     required this.lastMessageTime,
+    this.chatType = 'admin',
   });
 
   factory ChatInboxModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class ChatInboxModel {
         userName: json['user']?['name'] ?? 'Pelanggan',
         lastMessage: json['latest_message']?['message'] ?? '...',
         unreadCount: json['unread_count'] ?? 0,
+        chatType: json['chat_type'] ?? 'admin',
         lastMessageTime: json['latest_message']?['created_at'] != null 
             ? DateTime.parse(json['latest_message']['created_at'])
             : (json['updated_at'] != null ? DateTime.parse(json['updated_at']) : DateTime.now()),

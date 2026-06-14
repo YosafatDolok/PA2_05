@@ -1,8 +1,4 @@
-@extends('layouts.app', [
-    'class' => 'login-page',
-    'page' => __('Activation Success'),
-    'contentClass' => 'login-page'
-])
+@extends('layouts.guest', ['title' => 'Account Activated'])
 
 @section('content')
     <div class="auth-card text-center">

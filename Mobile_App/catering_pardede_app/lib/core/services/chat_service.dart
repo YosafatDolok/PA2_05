@@ -44,32 +44,6 @@ class ChatService {
     }
   }
 
-  static Future<bool> acceptProposal(int orderId, int messageId) async {
-    try {
-      final response = await ApiService.post('${ApiEndpoints.baseUrl}/orders/$orderId/messages/$messageId/accept', {});
-      return response != null;
-    } catch (e) {
-      print('Error accepting proposal: $e');
-      return false;
-    }
-  }
-
-  static Future<OrderMessageModel?> sendProposal(int orderId, String message, double price) async {
-    try {
-      final response = await ApiService.post(ApiEndpoints.orderMessages(orderId), {
-        'message': message,
-        'type': 'proposal',
-        'proposed_price': price,
-      });
-      if (response != null) {
-        return OrderMessageModel.fromJson(response);
-      }
-      return null;
-    } catch (e) {
-      print('Error sending proposal: $e');
-      return null;
-    }
-  }
   static Future<bool> markMessagesAsRead(int orderId) async {
     try {
       final response = await ApiService.post('${ApiEndpoints.orderMessages(orderId)}/read', {});

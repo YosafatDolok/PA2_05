@@ -5,7 +5,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../widgets/shimmer_loading.dart';
 import 'package:intl/intl.dart';
-import '../../core/services/location_service.dart';
 import '../widgets/tap_scale.dart';
 import '../../core/services/push_notification_service.dart';
 import '../../core/utils/helpers.dart';

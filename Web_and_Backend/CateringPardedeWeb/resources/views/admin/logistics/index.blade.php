@@ -39,9 +39,7 @@
                             <h6 class="m-0 text-white font-weight-bold">{{ $driver->name }}</h6>
                         </div>
                     </div>
-                    @if($driver->location)
-                        <p class="small text-muted mb-0"><i class="fas fa-clock me-1"></i> Terakhir dilihat: {{ \Carbon\Carbon::parse($driver->location->updated_at)->diffForHumans() }}</p>
-                    @endif
+
                 </div>
                 @empty
                 <div class="text-center py-5">

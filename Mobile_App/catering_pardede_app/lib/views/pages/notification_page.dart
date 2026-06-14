@@ -9,6 +9,7 @@ import '../../models/notification_model.dart';
 import '../../models/order_model.dart';
 import '../../core/utils/helpers.dart';
 import '../../core/services/push_notification_service.dart';
+import '../../core/storage/local_storage.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -20,6 +21,7 @@ class NotificationPage extends StatefulWidget {
 class _NotificationPageState extends State<NotificationPage> {
   List<NotificationModel> notifications = [];
   bool isLoading = true;
+  bool isGuest = false;
 
   @override
   void initState() {
@@ -28,7 +30,21 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _fetchNotifications() async {
-    setState(() => isLoading = true);
+    final token = await LocalStorage.getToken();
+    if (token == null) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          isGuest = true;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      isGuest = false;
+    });
     try {
       final data = await ApiService.get(ApiEndpoints.notifications);
       if (mounted) {
@@ -103,9 +119,11 @@ class _NotificationPageState extends State<NotificationPage> {
               color: AppColors.primary,
               child: isLoading
                   ? _buildShimmerList()
-                  : notifications.isEmpty
-                      ? _buildEmptyState()
-                      : _buildNotificationList(),
+                  : isGuest
+                      ? _buildGuestState()
+                      : notifications.isEmpty
+                          ? _buildEmptyState()
+                          : _buildNotificationList(),
             ),
           ),
         ],
@@ -122,6 +140,38 @@ class _NotificationPageState extends State<NotificationPage> {
           const SizedBox(height: 16),
           Text("Belum ada notifikasi", style: TextStyle(color: Colors.grey[500], fontSize: 16)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGuestState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline_rounded, size: 64, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            const Text(
+              'Silakan login terlebih dahulu untuk melihat notifikasi Anda.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Helpers.pushNamedSafe(context, '/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Login Sekarang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,8 +1,4 @@
-@extends('layouts.app', [
-    'class' => 'login-page',
-    'page' => __('Set Password'),
-    'contentClass' => 'login-page'
-])
+@extends('layouts.guest', ['title' => 'Activate Account'])
 
 @section('content')
     <div class="auth-card">

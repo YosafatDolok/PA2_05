@@ -14,13 +14,7 @@ class AdminDashboardController extends Controller
 {
     public function getStats()
     {
-        // 1. Orders needing a price proposal (final_price is 0 or NULL and not cancelled/delivered)
-        // We look for status_id 1 (Pending) which usually means it's a new order
-        $pendingProposals = Order::where(function($query) {
-                $query->whereNull('final_price')->orWhere('final_price', 0);
-            })
-            ->whereIn('status_id', [1]) // 1 is Pending
-            ->count();
+
 
         // 2. Total unread messages not sent by the current admin
         $unreadMessages = OrderMessage::where('is_read', false)
@@ -39,7 +33,6 @@ class AdminDashboardController extends Controller
             ->get(['title', 'message', 'created_at']);
 
         return response()->json([
-            'pending_proposals' => $pendingProposals,
             'unread_messages' => $unreadMessages,
             'today_orders' => $todayOrders,
             'recent_activity' => $recentActivity,

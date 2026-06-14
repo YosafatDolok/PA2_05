@@ -131,6 +131,28 @@ class AuthService {
     return false;
   }
 
+  static Future<Map<String, dynamic>> deleteAccount(String password) async {
+    try {
+      final data = await ApiService.delete(
+        ApiEndpoints.user,
+        body: {'password': password},
+      );
+
+      // Clear the local token since the user is deleted
+      await LocalStorage.clearToken();
+
+      return {
+        'success': true,
+        'message': data['message'] ?? 'Akun berhasil dihapus',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
+    }
+  }
+
   static Future<void> logout() async {
     try {
       await ApiService.post(ApiEndpoints.logout, {});

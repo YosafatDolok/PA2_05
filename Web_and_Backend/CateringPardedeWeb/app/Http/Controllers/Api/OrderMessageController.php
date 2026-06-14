@@ -55,17 +55,12 @@ class OrderMessageController extends Controller
 
         $request->validate([
             'message' => 'required|string',
-            'type' => 'nullable|string|in:text,proposal',
-            'proposed_price' => 'nullable|numeric|min:0',
         ]);
 
         $message = $order->messages()->create([
             'sender_id' => Auth::id(),
             'message' => $request->message,
             'is_read' => false,
-            'type' => $request->type ?? 'text',
-            'proposed_price' => $request->proposed_price,
-            'proposal_status' => ($request->type === 'proposal') ? 'pending' : null,
         ]);
 
         // Broadcast the message to others on the channel
@@ -98,34 +93,7 @@ class OrderMessageController extends Controller
         return response()->json($message->load('sender:user_id,name,profile_picture'), 201);
     }
 
-    public function acceptProposal($orderId, $messageId)
-    {
-        $order = Order::findOrFail($orderId);
-        $message = OrderMessage::findOrFail($messageId);
 
-        // Only the order owner or admin can accept a proposal
-        if ((int)Auth::user()->role_id !== 1 && (int)$order->user_id !== (int)Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        if ($message->type !== 'proposal' || $message->proposal_status !== 'pending') {
-            return response()->json(['message' => 'Invalid proposal'], 400);
-        }
-
-        if ((int)$message->sender_id === (int)Auth::id()) {
-            return response()->json(['message' => 'Anda tidak bisa menyetujui proposal Anda sendiri.'], 403);
-        }
-
-        $message->update(['proposal_status' => 'accepted']);
-        
-        // Update the order final price
-        $order->update(['final_price' => $message->proposed_price]);
-
-        // Broadcast the status update so the other side sees it accepted
-        broadcast(new \App\Events\MessageSent($message->load('sender.role')))->toOthers();
-
-        return response()->json(['message' => 'Proposal accepted', 'order' => $order]);
-    }
 
     public function markAsRead($orderId)
     {
@@ -147,9 +115,6 @@ class OrderMessageController extends Controller
 
         if ($isAdmin) {
             $count = OrderMessage::where('is_read', false)
-                ->where('sender_id', '!=', $userId)
-                ->count();
-            $count += DeliveryMessage::where('is_read', false)
                 ->where('sender_id', '!=', $userId)
                 ->count();
         } else if ((int)Auth::user()->role_id === 3) {

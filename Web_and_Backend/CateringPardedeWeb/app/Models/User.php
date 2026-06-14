@@ -48,6 +48,8 @@ class User extends Authenticatable
         'phone_number',
         'profile_picture',
         'fcm_token',
+        'invite_token',
+        'invite_expires_at',
     ];
 
     /**
@@ -81,11 +83,6 @@ class User extends Authenticatable
     public function menus()
     {
         return $this->hasMany(Menu::class, 'category_id');
-    }
-
-    public function location()
-    {
-        return $this->hasOne(DriverLocation::class, 'user_id', 'user_id');
     }
 
     public function assignedOrders()
