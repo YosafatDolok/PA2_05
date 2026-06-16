@@ -28,10 +28,24 @@ class OrderMessageController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // Include soft-deleted messages so deleted bubbles can be rendered as placeholders
         $messages = $order->messages()
+            ->withTrashed()
             ->with('sender:user_id,name,profile_picture')
             ->oldest()
-            ->get();
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'message_id' => $msg->message_id,
+                    'order_id'   => $msg->order_id,
+                    'sender_id'  => $msg->sender_id,
+                    'message'    => $msg->deleted_at ? null : $msg->message,
+                    'is_read'    => $msg->is_read,
+                    'is_deleted' => !is_null($msg->deleted_at),
+                    'created_at' => $msg->created_at,
+                    'sender'     => $msg->sender,
+                ];
+            });
 
         return response()->json($messages);
     }
@@ -79,7 +93,8 @@ class OrderMessageController extends Controller
             $recipientId = $order->user_id;
         }
 
-        $recipient = $recipientId ? \App\Models\User::find($recipientId) : null;
+        // Prevent self-notifications
+        $recipient = ($recipientId && (int)$recipientId !== (int)Auth::id()) ? \App\Models\User::find($recipientId) : null;
 
         if ($recipient && $recipient->fcm_token) {
             dispatch(new \App\Jobs\SendPushNotification(
@@ -93,7 +108,29 @@ class OrderMessageController extends Controller
         return response()->json($message->load('sender:user_id,name,profile_picture'), 201);
     }
 
+    public function destroy($orderId, $messageId)
+    {
+        $order   = Order::findOrFail($orderId);
+        $message = OrderMessage::where('order_id', $order->order_id)
+            ->findOrFail($messageId);
 
+        // Only the original sender can delete
+        if ((int)$message->sender_id !== (int)Auth::id()) {
+            return response()->json(['message' => 'Anda hanya dapat menghapus pesan Anda sendiri.'], 403);
+        }
+
+        // Can only delete if the receiver has NOT read it yet
+        if ($message->is_read) {
+            return response()->json(['message' => 'Pesan sudah dibaca dan tidak dapat dihapus.'], 403);
+        }
+
+        $message->delete(); // Soft delete — sets deleted_at
+
+        // Notify the other participant's screen in real-time
+        broadcast(new \App\Events\MessageDeleted($message))->toOthers();
+
+        return response()->json(['success' => true, 'message_id' => $message->message_id]);
+    }
 
     public function markAsRead($orderId)
     {

@@ -188,8 +188,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        // Revoke the specific token used for the request
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        if ($user) {
+            $user->update(['fcm_token' => null]);
+            $user->currentAccessToken()->delete();
+        }
         return response()->json(['message' => 'Keluar berhasil']);
     }
 }

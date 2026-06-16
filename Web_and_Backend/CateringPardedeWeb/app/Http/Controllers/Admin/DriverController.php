@@ -65,13 +65,24 @@ class DriverController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$driver->user_id.',user_id',
             'phone_number' => 'nullable|string|max:20',
+            'admin_password' => 'required|string',
+        ], [
+            'admin_password.required' => 'Password admin wajib diisi.',
         ]);
+
+        // Verify currently logged in administrator password
+        if (!Hash::check($request->admin_password, auth()->user()->password)) {
+            return back()->withErrors(['admin_password' => 'Password admin yang Anda masukkan salah.'])->withInput();
+        }
+
+        $oldEmail = $driver->email;
+        $newEmail = $request->email;
+        $emailChanged = $newEmail !== $oldEmail;
 
         $driver->update([
             'name' => $request->name,
-            'email' => $request->email,
+            'email' => $newEmail,
             'phone_number' => $request->phone_number,
-            // role_id is intentionally omitted here to prevent tampering
         ]);
 
         if ($request->filled('password')) {
@@ -79,6 +90,16 @@ class DriverController extends Controller
                 'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()->symbols()]
             ]);
             $driver->update(['password' => Hash::make($request->password)]);
+        }
+
+        // Notify old email of the change
+        if ($emailChanged) {
+            try {
+                Mail::to($oldEmail)->send(new \App\Mail\DriverEmailChangedMail($driver, $oldEmail, $newEmail));
+            } catch (\Exception $e) {
+                // Log mail sending failures but don't crash the request
+                logger()->error("Failed to send driver email change notification: " . $e->getMessage());
+            }
         }
 
         return redirect()->route('drivers.index')->with('success', 'Data Driver berhasil diperbarui.');

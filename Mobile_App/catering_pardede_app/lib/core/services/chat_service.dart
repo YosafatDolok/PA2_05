@@ -31,6 +31,14 @@ class ChatService {
     }
   }
 
+  /// Soft-deletes a message. Throws with a user-friendly message on failure (e.g. 403).
+  static Future<bool> deleteMessage(int orderId, int messageId) async {
+    final response = await ApiService.delete(
+      ApiEndpoints.deleteOrderMessage(orderId, messageId),
+    );
+    return response != null;
+  }
+
   static Future<Map<String, dynamic>> authorizeChannel(String url, String channelName, String socketId) async {
     try {
       final response = await ApiService.post(url, {
@@ -54,3 +62,4 @@ class ChatService {
     }
   }
 }
+

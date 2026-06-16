@@ -31,6 +31,14 @@ class DeliveryChatService {
     }
   }
 
+  /// Soft-deletes a delivery message. Throws with a user-friendly message on failure (e.g. 403).
+  static Future<bool> deleteMessage(int orderId, int messageId) async {
+    final response = await ApiService.delete(
+      ApiEndpoints.deleteDeliveryMessage(orderId, messageId),
+    );
+    return response != null;
+  }
+
   static Future<bool> markMessagesAsRead(int orderId) async {
     try {
       final response = await ApiService.post('${ApiEndpoints.deliveryMessages(orderId)}/read', {});
@@ -41,3 +49,4 @@ class DeliveryChatService {
     }
   }
 }
+

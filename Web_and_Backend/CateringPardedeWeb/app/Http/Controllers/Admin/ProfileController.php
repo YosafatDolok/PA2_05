@@ -243,6 +243,11 @@ class ProfileController extends Controller
             'token' => $request->fcm_token
         ]);
         
+        // Nullify this token for any other user to prevent sending notifications to the wrong account/same device
+        \App\Models\User::where('fcm_token', $request->fcm_token)
+            ->where('user_id', '!=', $user->user_id)
+            ->update(['fcm_token' => null]);
+
         $user->update(['fcm_token' => $request->fcm_token]);
 
         return response()->json(['message' => 'FCM token updated successfully']);

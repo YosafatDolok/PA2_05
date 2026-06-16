@@ -69,12 +69,9 @@
                                         <div class="fw-bold text-warning mb-1">Status: Menunggu Aktivasi</div>
                                         <div class="small text-muted">Undangan kedaluwarsa pada: {{ \Carbon\Carbon::parse($driver->invite_expires_at)->format('d M Y, H:i') }}</div>
                                     </div>
-                                    <form action="{{ route('drivers.resend', $driver) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn btn-aura-outline btn-sm">
-                                            <i class="fas fa-paper-plane me-2"></i> KIRIM ULANG UNDANGAN
-                                        </button>
-                                    </form>
+                                    <button type="submit" form="resend-invite-form" class="btn btn-aura-outline btn-sm">
+                                        <i class="fas fa-paper-plane me-2"></i> KIRIM ULANG UNDANGAN
+                                    </button>
                                 </div>
                             </div>
                             @else
@@ -88,23 +85,43 @@
                                         <div class="fw-bold text-success mb-1">Akun Aktif</div>
                                         <div class="small text-muted">Pengguna telah mengatur kata sandi dan mengaktifkan profil mereka.</div>
                                     </div>
-                                    <form action="{{ route('drivers.reset-link', $driver) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn btn-aura-outline btn-sm text-danger border-danger">
-                                            <i class="fas fa-key me-2"></i> KIRIM LINK RESET PASSWORD
-                                        </button>
-                                    </form>
+                                    <button type="submit" form="reset-password-form" class="btn btn-aura-outline btn-sm text-danger border-danger">
+                                        <i class="fas fa-key me-2"></i> KIRIM LINK RESET PASSWORD
+                                    </button>
                                 </div>
                             </div>
                             @endif
 
-                            <div class="col-12 mt-5">
+                            {{-- ADMIN PASSWORD CONFIRMATION --}}
+                            <div class="col-12 mt-4 pt-4 border-top border-secondary border-opacity-10">
+                                <div class="form-group mb-0">
+                                    <label class="text-danger fw-bold">KONFIRMASI PASSWORD ADMIN</label>
+                                    <input type="password" name="admin_password" class="form-control form-control-aura @error('admin_password') is-invalid @enderror" placeholder="Masukkan password admin Anda untuk mengonfirmasi perubahan" required>
+                                    @error('admin_password')
+                                        <span class="invalid-feedback d-block">{{ $message }}</span>
+                                    @enderror
+                                    <small class="text-muted d-block mt-1">Konfirmasi password admin Anda diperlukan sebelum mengubah data mitra driver.</small>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-4">
                                 <button type="submit" class="btn btn-primary w-100 py-3 font-weight-bold">
                                     PERBARUI DATA UTAMA
                                 </button>
                             </div>
                         </div>
                     </form>
+
+                    {{-- Move nested forms outside to keep HTML structure valid --}}
+                    @if($driver->invite_token)
+                        <form id="resend-invite-form" action="{{ route('drivers.resend', $driver) }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
+                    @else
+                        <form id="reset-password-form" action="{{ route('drivers.reset-link', $driver) }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>

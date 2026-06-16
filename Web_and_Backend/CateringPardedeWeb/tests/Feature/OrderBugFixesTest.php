@@ -46,32 +46,6 @@ class OrderBugFixesTest extends TestCase
         $this->assertEquals('Rejected', $json['status_text']);
     }
 
-    /** @test */
-    public function user_cannot_accept_their_own_negotiation_proposal()
-    {
-        $order = Order::first();
-        $user = $order->user;
-
-        // Create a proposal message from the user
-        $message = OrderMessage::create([
-            'order_id' => $order->order_id,
-            'sender_id' => $user->user_id,
-            'message' => 'Proposed custom price',
-            'type' => 'proposal',
-            'proposed_price' => 500000,
-            'proposal_status' => 'pending'
-        ]);
-
-        // Act: attempt to accept own proposal
-        $response = $this->actingAs($user, 'sanctum')
-            ->postJson("/api/orders/{$order->order_id}/messages/{$message->message_id}/accept");
-
-        // Assert: 403 forbidden
-        $response->assertStatus(403);
-        $response->assertJson([
-            'message' => 'Anda tidak bisa menyetujui proposal Anda sendiri.'
-        ]);
-    }
 
     /** @test */
     public function driver_assigned_to_order_can_view_order_details()

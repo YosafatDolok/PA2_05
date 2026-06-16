@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderMessage extends Model
 {
+    use SoftDeletes;
+
     protected $primaryKey = 'message_id';
 
     protected $fillable = [
@@ -13,9 +16,6 @@ class OrderMessage extends Model
         'sender_id',
         'message',
         'is_read',
-        'type',
-        'proposed_price',
-        'proposal_status',
     ];
 
     protected $casts = [

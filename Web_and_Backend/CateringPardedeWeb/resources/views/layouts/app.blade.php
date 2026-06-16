@@ -52,7 +52,7 @@
             </section>
 
             <footer class="aura-footer text-center py-4 mt-auto">
-                <p class="text-muted small mb-0">&copy; {{ date('Y') }} Catering Pardede. Crafted for visual excellence.</p>
+                <p class="text-muted small mb-0">Catering Pardede</p>
             </footer>
         </main>
     </div>

@@ -1,5 +1,3 @@
-import 'menu_model.dart';
-
 class OrderAdditionRequest {
   final int id;
   final int orderId;

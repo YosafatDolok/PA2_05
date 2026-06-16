@@ -4,6 +4,7 @@ import '/core/theme/app_colors.dart';
 import '/core/theme/app_text_styles.dart';
 import '/models/delivery_message_model.dart';
 import '/core/services/auth_service.dart';
+import '/core/utils/helpers.dart';
 
 class DeliveryChatPage extends StatefulWidget {
   final int orderId;
@@ -67,6 +68,125 @@ class _DeliveryChatPageState extends State<DeliveryChatPage> {
     super.dispose();
   }
 
+  void _onLongPressMessage(DeliveryMessageModel message, bool isMe) {
+    // Only own unread messages may be deleted
+    if (!isMe || message.isRead || message.isDeleted) return;
+
+    if (_chatController.isOffline) {
+      Helpers.showSnackBar(context, 'Koneksi internet diperlukan untuk menghapus pesan');
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+              title: const Text('Hapus Pesan',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+              subtitle: const Text('Pesan yang belum dibaca dapat dihapus.',
+                style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmDelete(message);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(DeliveryMessageModel message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Hapus Pesan?',
+          style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Pesan akan dihapus untuk semua peserta. Tindakan ini tidak dapat dibatalkan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Batal', style: TextStyle(color: Colors.grey.shade600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _chatController.deleteMessage(context, widget.orderId, message.messageId!);
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFailedOptions(DeliveryMessageModel message) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+              title: const Text('Kirim Ulang',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                _chatController.retrySendMessage(context, widget.orderId, message.messageId!);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+              title: const Text('Hapus dari Daftar',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                _chatController.discardFailedMessage(widget.orderId, message.messageId!);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,6 +205,30 @@ class _DeliveryChatPageState extends State<DeliveryChatPage> {
       ),
       body: Column(
         children: [
+          ListenableBuilder(
+            listenable: _chatController,
+            builder: (context, _) {
+              if (_chatController.isOffline) {
+                return Container(
+                  width: double.infinity,
+                  color: Colors.amber.shade700,
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.wifi_off_rounded, color: Colors.white, size: 16),
+                      SizedBox(width: 8),
+                      Text(
+                        'Mode Offline. Pesan akan dikirim otomatis saat terhubung.',
+                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           Expanded(
             child: ListenableBuilder(
               listenable: _chatController,
@@ -116,7 +260,10 @@ class _DeliveryChatPageState extends State<DeliveryChatPage> {
                     final message = _chatController.messages[index];
                     final isMe = _currentUserId != null && 
                                  message.senderId.toString() == _currentUserId.toString();
-                    return _buildMessageBubble(message, isMe);
+                    return GestureDetector(
+                      onLongPress: () => _onLongPressMessage(message, isMe),
+                      child: _buildMessageBubble(message, isMe),
+                    );
                   },
                 );
               },
@@ -129,61 +276,130 @@ class _DeliveryChatPageState extends State<DeliveryChatPage> {
   }
 
   Widget _buildMessageBubble(DeliveryMessageModel message, bool isMe) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : AppColors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 16),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
+    // Deleted message placeholder
+    if (message.isDeleted) {
+      return Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 0),
+              bottomRight: Radius.circular(isMe ? 0 : 16),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isMe && message.sender != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  message.sender!.name,
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.block_rounded, size: 14, color: Colors.grey.shade500),
+              const SizedBox(width: 6),
+              Text(
+                'Pesan dihapus',
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
-            Text(
-              message.message,
-              style: TextStyle(
-                color: isMe ? Colors.white : AppColors.textPrimary,
-                fontSize: 15,
+            ],
+          ),
+        ),
+      );
+    }
+
+    final isSending = message.sendStatus == 'sending';
+    final isFailed = message.sendStatus == 'failed';
+
+    final bubbleWidget = Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: isMe ? AppColors.primary.withValues(alpha: isSending ? 0.7 : 1.0) : AppColors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(16),
+          topRight: const Radius.circular(16),
+          bottomLeft: Radius.circular(isMe ? 16 : 0),
+          bottomRight: Radius.circular(isMe ? 0 : 16),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isMe && message.sender != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                message.sender!.name,
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(message.createdAt),
-              style: TextStyle(
-                color: isMe ? Colors.white70 : AppColors.textSecondary,
-                fontSize: 10,
+          Text(
+            message.message ?? '',
+            style: TextStyle(
+              color: isMe ? Colors.white : AppColors.textPrimary,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isSending) ...[
+                const Icon(Icons.access_time_rounded, color: Colors.white70, size: 10),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                _formatTime(message.createdAt),
+                style: TextStyle(
+                  color: isMe ? Colors.white70 : AppColors.textSecondary,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (isFailed) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: () => _showFailedOptions(message),
+              child: const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(Icons.error_outline_rounded, color: Colors.red, size: 22),
               ),
             ),
+            bubbleWidget,
           ],
         ),
-      ),
+      );
+    }
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: bubbleWidget,
     );
   }
 

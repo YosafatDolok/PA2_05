@@ -5,10 +5,7 @@ class ApiEndpoints {
 
   static final Uri _baseUri = Uri.parse(baseUrl);
   
-  // To use real-time chat via Ngrok, you need a second Ngrok tunnel: ngrok http 8080
-  // If you are using an Android Emulator, set this to: '10.0.2.2' and port 8080
-  // If you are using a Physical Device, set this to your computer's IP (e.g., '192.168.1.x')
-  static String get pusherHost => '10.0.2.2'; // Bypassing Ngrok entirely for WebSockets!
+  static String get pusherHost => '10.0.2.2';
   static int get pusherPort => 8080;
   static String get pusherScheme => 'ws';
 
@@ -32,7 +29,10 @@ class ApiEndpoints {
 
   static String menuReviews(int id) => '$baseUrl/menus/$id/reviews';
   static String orderMessages(int id) => '$baseUrl/orders/$id/messages';
+  static String deleteOrderMessage(int orderId, int messageId) => '$baseUrl/orders/$orderId/messages/$messageId';
   static String deliveryMessages(int id) => '$baseUrl/orders/$id/delivery-messages';
+  static String deleteDeliveryMessage(int orderId, int messageId) => '$baseUrl/orders/$orderId/delivery-messages/$messageId';
+
   static const String unreadChatCount = '$baseUrl/messages/unread-count';
   static const String adminStats = '$baseUrl/admin/stats';
   static const String adminInbox = '$baseUrl/admin/inbox';

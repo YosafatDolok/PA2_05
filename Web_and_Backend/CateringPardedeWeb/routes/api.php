@@ -68,12 +68,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{order}/messages', [OrderMessageController::class, 'index']);
     Route::post('/orders/{order}/messages', [OrderMessageController::class, 'store']);
     Route::post('/orders/{order}/messages/read', [OrderMessageController::class, 'markAsRead']);
+    Route::delete('/orders/{order}/messages/{message}', [OrderMessageController::class, 'destroy']);
 
 
     // Delivery Messaging
     Route::get('/orders/{order}/delivery-messages', [\App\Http\Controllers\Api\DeliveryChatController::class, 'index']);
     Route::post('/orders/{order}/delivery-messages', [\App\Http\Controllers\Api\DeliveryChatController::class, 'store']);
     Route::post('/orders/{order}/delivery-messages/read', [\App\Http\Controllers\Api\DeliveryChatController::class, 'markAsRead']);
+    Route::delete('/orders/{order}/delivery-messages/{message}', [\App\Http\Controllers\Api\DeliveryChatController::class, 'destroy']);
+
     
     // Admin Inbox
     Route::get('/admin/inbox', [\App\Http\Controllers\Api\AdminChatController::class, 'inbox']);
@@ -103,3 +106,4 @@ Route::middleware('internal.service')->group(function () {
     Route::get('/orders/{id}/billing', [OrderController::class, 'getBillingDetails']);
     Route::post('/orders/{id}/payments', [OrderController::class, 'receivePaymentNotification']);
 });
+

@@ -79,7 +79,9 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          errorMessage = 'Gagal memuat pesan: $e';
+          errorMessage = Helpers.isConnectionError(e) 
+              ? Helpers.toFriendlyError(e) 
+              : 'Gagal memuat pesan: ${Helpers.toFriendlyError(e)}';
           isLoading = false;
         });
       }
@@ -193,7 +195,8 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
             }
           } catch (e) {
             if (mounted) {
-              Helpers.showSnackBar(context, 'Gagal membuka pesanan: $e');
+              final friendlyError = Helpers.toFriendlyError(e);
+              Helpers.showSnackBar(context, 'Gagal membuka pesanan: $friendlyError');
             }
           }
         },

@@ -23,6 +23,37 @@ class Helpers {
     }
   }
 
+  /// Checks if the error represents a connection or network issue.
+  static bool isConnectionError(dynamic error) {
+    if (error == null) return false;
+    final lowercaseError = error.toString().toLowerCase();
+    return lowercaseError.contains('socketexception') ||
+        lowercaseError.contains('clientexception') ||
+        lowercaseError.contains('networkisunreachable') ||
+        lowercaseError.contains('connection failed') ||
+        lowercaseError.contains('connection timed out') ||
+        lowercaseError.contains('socketfailed') ||
+        lowercaseError.contains('host lookup') ||
+        lowercaseError.contains('no address associated with hostname') ||
+        lowercaseError.contains('failed host lookup') ||
+        lowercaseError.contains('connection reset') ||
+        lowercaseError.contains('connection closed') ||
+        lowercaseError.contains('software caused connection abort') ||
+        lowercaseError.contains('koneksi internet terputus');
+  }
+
+  /// Converts any exception/error into a friendly Indonesian error message.
+  static String toFriendlyError(dynamic error) {
+    if (error == null) return '';
+    if (isConnectionError(error)) {
+      return 'Koneksi internet terputus. Silakan periksa jaringan Anda.';
+    }
+    final errorStr = error.toString();
+    return errorStr
+        .replaceFirst(RegExp(r'^Exception:\s*', caseSensitive: false), '')
+        .replaceFirst(RegExp(r'^Exception\s*', caseSensitive: false), '');
+  }
+
   /// Upgraded SnackBar that now uses our Premium AppAlerts system.
   /// It automatically detects if the message is a Success or an Error.
   static void showSnackBar(
@@ -32,12 +63,17 @@ class Helpers {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
-    // Clean up technical exception messages
-    final cleanMessage = message
-        .replaceAll('Exception: ', '')
-        .replaceAll('exception: ', '')
-        .replaceAll('Exception', '')
-        .replaceAll('exception', '');
+    // Clean up technical exception messages and handle network offline states
+    String cleanMessage;
+    if (isConnectionError(message)) {
+      cleanMessage = 'Koneksi internet terputus. Silakan periksa jaringan Anda.';
+    } else {
+      cleanMessage = message
+          .replaceAll('Exception: ', '')
+          .replaceAll('exception: ', '')
+          .replaceAll('Exception', '')
+          .replaceAll('exception', '');
+    }
 
     // Smart detection for colors
     final lowercaseMessage = cleanMessage.toLowerCase();
@@ -64,11 +100,16 @@ class Helpers {
 
   /// Use this for critical errors that need user attention
   static void showErrorDialog(BuildContext context, String title, String message, {VoidCallback? onConfirm}) {
-    final cleanMessage = message
-        .replaceAll('Exception: ', '')
-        .replaceAll('exception: ', '')
-        .replaceAll('Exception', '')
-        .replaceAll('exception', '');
+    String cleanMessage;
+    if (isConnectionError(message)) {
+      cleanMessage = 'Koneksi internet terputus. Silakan periksa jaringan Anda.';
+    } else {
+      cleanMessage = message
+          .replaceAll('Exception: ', '')
+          .replaceAll('exception: ', '')
+          .replaceAll('Exception', '')
+          .replaceAll('exception', '');
+    }
 
     AppAlerts.showDialogError(
       context: context,

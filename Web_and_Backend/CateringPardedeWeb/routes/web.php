@@ -31,8 +31,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     
     Route::prefix('admin')->group(function () {
-        // Existing routes...
-        // Menu Soft Deletes
         Route::get('menus/trashed', [MenuController::class, 'trashed'])->name('menus.trashed');
         Route::post('menus/{id}/restore', [MenuController::class, 'restore'])->name('menus.restore');
         
@@ -44,7 +42,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::post('/profile/confirm', [ProfileController::class, 'confirmUpdate'])->name('profile.confirm');
         
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-        // Custom route for Excel export
+
         Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
         Route::get('/messages', [OrderController::class, 'messages'])->name('admin.messages');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
@@ -73,7 +71,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         // Logistics Dashboard
         Route::get('/logistics', [\App\Http\Controllers\Admin\LogisticsController::class, 'index'])->name('admin.logistics.index');
         Route::resource('drivers', DriverController::class);
-        Route::post('drivers/{driver}/resend', [DriverController::class, 'resendInvitation'])->name('drivers.resend');
-        Route::post('drivers/{driver}/reset-link', [DriverController::class, 'sendResetLink'])->name('drivers.reset-link');
+        Route::post('drivers/{driver}/resend', [DriverController::class, 'resendInvitation'])->name('drivers.resend')->middleware('throttle:6,1');
+        Route::post('drivers/{driver}/reset-link', [DriverController::class, 'sendResetLink'])->name('drivers.reset-link')->middleware('throttle:6,1');
     });
 });

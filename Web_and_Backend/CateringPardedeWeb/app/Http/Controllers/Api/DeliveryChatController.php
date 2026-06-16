@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\FirebaseService;
 use App\Events\DeliveryMessageSent;
+use App\Events\DeliveryMessageDeleted;
 
 class DeliveryChatController extends Controller
 {
@@ -21,10 +22,24 @@ class DeliveryChatController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // Include soft-deleted messages so deleted bubbles can be rendered as placeholders
         $messages = $order->deliveryMessages()
+            ->withTrashed()
             ->with('sender:user_id,name,profile_picture,role_id')
             ->oldest()
-            ->get();
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'message_id' => $msg->message_id,
+                    'order_id'   => $msg->order_id,
+                    'sender_id'  => $msg->sender_id,
+                    'message'    => $msg->deleted_at ? null : $msg->message,
+                    'is_read'    => $msg->is_read,
+                    'is_deleted' => !is_null($msg->deleted_at),
+                    'created_at' => $msg->created_at,
+                    'sender'     => $msg->sender,
+                ];
+            });
 
         return response()->json($messages);
     }
@@ -66,6 +81,11 @@ class DeliveryChatController extends Controller
         }
 
         foreach ($recipients as $recipientId) {
+            // Defensive check to prevent self-notification
+            if ((int)$recipientId === $senderId) {
+                continue;
+            }
+
             $recipient = \App\Models\User::find($recipientId);
             if ($recipient && $recipient->fcm_token) {
                 dispatch(new \App\Jobs\SendPushNotification(
@@ -78,6 +98,30 @@ class DeliveryChatController extends Controller
         }
 
         return response()->json($message->load('sender:user_id,name,profile_picture,role_id'), 201);
+    }
+
+    public function destroy($orderId, $messageId)
+    {
+        $order   = Order::findOrFail($orderId);
+        $message = DeliveryMessage::where('order_id', $order->order_id)
+            ->findOrFail($messageId);
+
+        // Only the original sender can delete
+        if ((int)$message->sender_id !== (int)Auth::id()) {
+            return response()->json(['message' => 'Anda hanya dapat menghapus pesan Anda sendiri.'], 403);
+        }
+
+        // Can only delete if the receiver has NOT read it yet
+        if ($message->is_read) {
+            return response()->json(['message' => 'Pesan sudah dibaca dan tidak dapat dihapus.'], 403);
+        }
+
+        $message->delete(); // Soft delete — sets deleted_at
+
+        // Notify all other participants' screens in real-time
+        broadcast(new DeliveryMessageDeleted($message))->toOthers();
+
+        return response()->json(['success' => true, 'message_id' => $message->message_id]);
     }
 
     public function markAsRead($orderId)

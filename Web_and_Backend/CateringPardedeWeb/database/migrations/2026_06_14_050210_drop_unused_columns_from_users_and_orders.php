@@ -12,21 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn([
-                'delivery_notes', 
-                'reconciled_at', 
-                'reconciled_by', 
-                'payment_proof_image', 
-                'payment_type'
-            ]);
+            $cols = ['delivery_notes', 'reconciled_at', 'reconciled_by', 'payment_proof_image', 'payment_type'];
+            $colsToDrop = array_filter($cols, function ($col) {
+                return Schema::hasColumn('orders', $col);
+            });
+            if (!empty($colsToDrop)) {
+                $table->dropColumn($colsToDrop);
+            }
         });
 
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn([
-                'cash_on_hand', 
-                'remember_token', 
-                'email_verified_at'
-            ]);
+            $cols = ['cash_on_hand', 'remember_token', 'email_verified_at'];
+            $colsToDrop = array_filter($cols, function ($col) {
+                return Schema::hasColumn('users', $col);
+            });
+            if (!empty($colsToDrop)) {
+                $table->dropColumn($colsToDrop);
+            }
         });
     }
 

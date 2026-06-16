@@ -142,6 +142,13 @@
                         priceEl.innerText = `Rp ${new Intl.NumberFormat('id-ID').format(data.proposed_price)}`;
                     }
                 }
+            })
+            .listen('.message.deleted', (data) => {
+                const bubble = document.getElementById(`msg-${data.message_id}`);
+                if (bubble) {
+                    bubble.outerHTML = buildDeletedPlaceholder(data.message_id, bubble.classList.contains('justify-content-end'));
+                    scrollToBottom();
+                }
             });
     };
 
@@ -211,34 +218,114 @@
         const isMe = msg.sender_id == currentUserId;
         const div = document.createElement('div');
         div.id = `msg-${msg.message_id}`;
-        div.className = `message-bubble-wrapper d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-3`;
+        div.className = `message-bubble-wrapper d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-3 align-items-center`;
         
-        let contentHtml = '';
-        if (msg.type === 'proposal') {
-            contentHtml = `
-                <div class="proposal-bubble p-3 rounded shadow-sm text-center" style="background: rgba(255, 193, 7, 0.1); border: 2px solid #ffc107; max-width: 80%;">
-                    <i class="fas fa-file-invoice-dollar text-warning mb-2" style="font-size: 1.5rem;"></i>
-                    <p class="small font-weight-bold text-warning uppercase m-0">PRICE PROPOSAL</p>
-                    <h4 class="font-weight-bold text-white my-2">Rp ${new Intl.NumberFormat('id-ID').format(msg.proposed_price)}</h4>
-                    <p class="small text-muted mb-3 italic">"${msg.message}"</p>
-                    <span class="badge ${msg.proposal_status === 'accepted' ? 'bg-success' : (msg.proposal_status === 'declined' ? 'bg-danger' : 'bg-warning')} small px-3">
-                        ${(msg.proposal_status || 'PENDING').toUpperCase()}
-                    </span>
+        if (msg.is_deleted) {
+            div.innerHTML = `
+                <div class="message-bubble p-3 rounded shadow-sm" style="background: #f5f5f5; border: 1px dashed #ccc; max-width: 70%; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-ban" style="color:#aaa; font-size:0.8rem;"></i>
+                    <em style="color:#aaa; font-size:0.9rem;">Pesan dihapus</em>
                 </div>
             `;
         } else {
-            contentHtml = `
-                <div class="message-bubble p-3 rounded shadow-sm" style="background: ${isMe ? 'var(--aura-crimson)' : 'var(--aura-bg)'}; border: ${isMe ? 'none' : '1px solid var(--aura-border)'}; max-width: 70%;">
-                    <p class="m-0" style="color: ${isMe ? '#ffffff' : 'var(--aura-text-main)'};">${msg.message}</p>
-                    <div class="text-right mt-1">
-                        <small style="font-size: 0.65rem; color: ${isMe ? 'rgba(255,255,255,0.7)' : 'var(--aura-text-muted)'};">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+            let deleteBtnHtml = '';
+            if (isMe && !msg.is_read) {
+                deleteBtnHtml = `
+                    <button class="btn btn-link text-danger p-0 me-2 delete-msg-btn" onclick="confirmDelete(${msg.message_id})" style="display: none; align-self: center;" title="Hapus pesan">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+            }
+
+            let contentHtml = '';
+            if (msg.type === 'proposal') {
+                contentHtml = `
+                    ${deleteBtnHtml}
+                    <div class="proposal-bubble p-3 rounded shadow-sm text-center" style="background: rgba(255, 193, 7, 0.1); border: 2px solid #ffc107; max-width: 80%;">
+                        <i class="fas fa-file-invoice-dollar text-warning mb-2" style="font-size: 1.5rem;"></i>
+                        <p class="small font-weight-bold text-warning uppercase m-0">PRICE PROPOSAL</p>
+                        <h4 class="font-weight-bold text-white my-2">Rp ${new Intl.NumberFormat('id-ID').format(msg.proposed_price)}</h4>
+                        <p class="small text-muted mb-3 italic">"${msg.message}"</p>
+                        <span class="badge ${msg.proposal_status === 'accepted' ? 'bg-success' : (msg.proposal_status === 'declined' ? 'bg-danger' : 'bg-warning')} small px-3">
+                            ${(msg.proposal_status || 'PENDING').toUpperCase()}
+                        </span>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                contentHtml = `
+                    ${deleteBtnHtml}
+                    <div class="message-bubble p-3 rounded shadow-sm" style="background: ${isMe ? 'var(--aura-crimson)' : 'var(--aura-bg)'}; border: ${isMe ? 'none' : '1px solid var(--aura-border)'}; max-width: 70%;">
+                        <p class="m-0" style="color: ${isMe ? '#ffffff' : 'var(--aura-text-main)'};">${msg.message}</p>
+                        <div class="text-right mt-1">
+                            <small style="font-size: 0.65rem; color: ${isMe ? 'rgba(255,255,255,0.7)' : 'var(--aura-text-muted)'};">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                        </div>
+                    </div>
+                `;
+            }
+            div.innerHTML = contentHtml;
         }
 
-        div.innerHTML = contentHtml;
         chatContainer.appendChild(div);
+    }
+
+    function buildDeletedPlaceholder(messageId, isMe) {
+        return `<div id="msg-${messageId}" class="message-bubble-wrapper d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-3 align-items-center">
+            <div class="message-bubble p-3 rounded shadow-sm" style="background: #f5f5f5; border: 1px dashed #ccc; max-width: 70%; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-ban" style="color:#aaa; font-size:0.8rem;"></i>
+                <em style="color:#aaa; font-size:0.9rem;">Pesan dihapus</em>
+            </div>
+        </div>`;
+    }
+
+    function confirmDelete(messageId) {
+        Swal.fire({
+            title: 'Hapus Pesan?',
+            text: 'Apakah Anda yakin ingin menghapus pesan ini? Tindakan ini tidak dapat dibatalkan.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal',
+            background: 'var(--aura-bg)',
+            color: 'var(--aura-text-main)'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/orders/${orderId}/messages/${messageId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.message || 'Gagal menghapus pesan.'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const bubble = document.getElementById(`msg-${messageId}`);
+                        if (bubble) {
+                            bubble.outerHTML = buildDeletedPlaceholder(messageId, true);
+                            scrollToBottom();
+                        }
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Gagal',
+                        text: error.message || 'Terjadi kesalahan saat menghapus pesan.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545',
+                        background: 'var(--aura-bg)',
+                        color: 'var(--aura-text-main)'
+                    });
+                });
+            }
+        });
     }
 
     function scrollToBottom() {
@@ -274,6 +361,23 @@
     
     .avatar-circle {
         flex-shrink: 0;
+    }
+
+    .delete-msg-btn {
+        opacity: 0.6;
+        transition: opacity 0.2s, transform 0.2s;
+        border: none;
+        background: none;
+        cursor: pointer;
+        outline: none;
+    }
+    .delete-msg-btn:hover {
+        opacity: 1;
+        transform: scale(1.1);
+        color: #dc3545 !important;
+    }
+    .message-bubble-wrapper:hover .delete-msg-btn {
+        display: inline-block !important;
     }
 </style>
 @endpush
