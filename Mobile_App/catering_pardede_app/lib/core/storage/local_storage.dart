@@ -61,11 +61,11 @@ class LocalStorage {
     final prefs = await SharedPreferences.getInstance();
     List<String> history = prefs.getStringList(_viewedKey) ?? [];
     
-    // Remove if already exists to move it to the front
+    // Hapus jika sudah ada untuk memindahkannya ke antrean depan
     history.removeWhere((item) => item == menuJson);
     history.insert(0, menuJson);
     
-    // Limit to 5 items
+    // Batasi hingga 5 item
     if (history.length > 5) {
       history = history.sublist(0, 5);
     }

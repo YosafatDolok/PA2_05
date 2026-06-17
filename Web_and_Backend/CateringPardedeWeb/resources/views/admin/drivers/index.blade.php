@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
             <h2 class="m-0 font-weight-bold">Manajemen Sopir</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Kelola armada pengiriman Anda</p>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Kelola sopir dalam perusahaan anda</p>
         </div>
         <a href="{{ route('drivers.create') }}" class="btn btn-primary rounded-pill px-4">
             <i class="fas fa-plus me-2"></i> DAFTAR SOPIR BARU

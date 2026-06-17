@@ -10,38 +10,38 @@ use Illuminate\Support\Facades\Log;
 class CheckoutTokenController extends Controller
 {
     /**
-     * Generate a signed checkout token for the payment service.
+     * Buat token checkout yang telah ditandatangani untuk layanan pembayaran.
      */
     public function generateToken(Request $request, $id)
     {
         $user = $request->user();
         $order = Order::findOrFail($id);
 
-        // Verify ownership
+        //Verifikasi kepemilikan pesanan
         if ((int)$order->user_id !== (int)$user->user_id) {
             return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
 
-        // Check if fully paid
+        // Periksa apakah pesanan sudah lunas
         $remainingBalance = (float)$order->remaining_balance;
         if ($remainingBalance <= 0) {
             return response()->json(['message' => 'Pesanan ini sudah lunas.'], 400);
         }
 
-        // Calculate minimum payment allowed
+        // Hitung jumlah pembayaran minimum yang diperbolehkan
         $totalPayable = (float)$order->total_payable;
         $totalPaid = (float)$order->total_paid;
         
         $minTotalDp = $totalPayable * 0.5;
         $shortfall = $minTotalDp - $totalPaid;
         
-        $minPaymentAllowed = max(10000, $shortfall); // Midtrans min is 10k
+        $minPaymentAllowed = max(10000, $shortfall);
         
         if ($minPaymentAllowed > $remainingBalance) {
             $minPaymentAllowed = $remainingBalance;
         }
 
-        // Create Payload
+        // Buat payload token
         $payload = [
             'order_id' => $order->order_id,
             'user_id' => $order->user_id,
@@ -50,10 +50,10 @@ class CheckoutTokenController extends Controller
             'user_phone' => $user->phone_number,
             'remaining_balance' => $remainingBalance,
             'min_payment_allowed' => $minPaymentAllowed,
-            'exp' => time() + (15 * 60) // Token valid for 15 minutes
+            'exp' => time() + (15 * 60) // Token berlaku selama 15 menit
         ];
 
-        // Sign Payload
+        // Tandatangani payload
         $secretKey = config('services.internal_key', 'PARDEDE_INTERNAL_SECRET_2026');
 
         $base64Payload = base64_encode(json_encode($payload));

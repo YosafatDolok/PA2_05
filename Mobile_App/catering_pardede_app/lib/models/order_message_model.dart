@@ -4,7 +4,7 @@ class OrderMessageModel {
   final int? messageId;
   final int orderId;
   final int senderId;
-  final String? message; // null when the message has been deleted
+  final String? message; // bernilai null ketika pesan telah dihapus
   final bool isRead;
   final bool isDeleted;
   final String? createdAt;
@@ -37,7 +37,7 @@ class OrderMessageModel {
     );
   }
 
-  /// Returns a copy of this message marked as deleted (for local optimistic update).
+  /// Mengembalikan salinan pesan ini yang ditandai sebagai dihapus (untuk pembaruan optimistik lokal).
   OrderMessageModel copyAsDeleted() {
     return copyWith(
       message: null,

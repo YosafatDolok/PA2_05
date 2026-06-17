@@ -31,7 +31,7 @@ class ChatService {
     }
   }
 
-  /// Soft-deletes a message. Throws with a user-friendly message on failure (e.g. 403).
+  /// Menghapus pesan secara logis (soft-delete). Melemparkan exception dengan pesan ramah pengguna jika gagal (misalnya 403).
   static Future<bool> deleteMessage(int orderId, int messageId) async {
     final response = await ApiService.delete(
       ApiEndpoints.deleteOrderMessage(orderId, messageId),

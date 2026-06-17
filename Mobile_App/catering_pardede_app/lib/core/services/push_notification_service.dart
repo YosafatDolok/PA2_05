@@ -9,16 +9,16 @@ class PushNotificationService {
   static final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   
-  // Single source of truth for notification count
+  // Sumber data tunggal (single source of truth) untuk jumlah notifikasi
   static final ValueNotifier<int> unreadCount = ValueNotifier<int>(0);
   static final ValueNotifier<int> unreadChatCount = ValueNotifier<int>(0);
 
   static Future<void> initialize() async {
-    // Fetch initial count
+    // Ambil jumlah notifikasi awal
     updateUnreadCount();
     updateUnreadChatCount();
 
-    // Request permission for Android 13+ and iOS
+    // Meminta izin notifikasi untuk Android 13+ dan iOS
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       announcement: false,
@@ -31,7 +31,7 @@ class PushNotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       debugPrint('🔔 FCM: Permission granted');
-      // Sync token immediately after permission is granted
+      // Sinkronisasi token segera setelah izin diberikan
       syncToken();
     } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
       debugPrint('🔔 FCM: Provisional permission granted');
@@ -39,21 +39,21 @@ class PushNotificationService {
       debugPrint('🔔 FCM: Permission denied');
     }
 
-    // Listen to token refresh
+    // Dengarkan pembaruan token (refresh)
     _fcm.onTokenRefresh.listen((newToken) {
       debugPrint('🔔 FCM Token Refreshed: $newToken');
       syncToken();
     });
 
-    // Handle background messages
+    // Tangani pesan di latar belakang (background)
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Handle foreground messages
+    // Tangani pesan di latar depan (foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('🔔 FCM Foreground Message: ${message.notification?.title}');
       debugPrint('📦 Message Data: ${message.data}');
 
-      // Always update count when message arrives
+      // Selalu perbarui jumlah notifikasi saat pesan masuk
       updateUnreadCount();
       updateUnreadChatCount();
 
@@ -132,7 +132,7 @@ class PushNotificationService {
       }
     });
 
-    // Handle notification click when app is in background but not terminated
+    // Tangani klik notifikasi saat aplikasi di latar belakang tetapi tidak ditutup sepenuhnya
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('Notification clicked: ${message.data}');
       
@@ -167,7 +167,7 @@ class PushNotificationService {
       }
     });
 
-    // Handle notification click when app is terminated
+    // Tangani klik notifikasi saat aplikasi ditutup sepenuhnya (terminated)
     _fcm.getInitialMessage().then((RemoteMessage? message) {
       if (message != null) {
         debugPrint('Terminated app launched from notification: ${message.data}');
@@ -249,7 +249,7 @@ class PushNotificationService {
   }
 }
 
-// Background handler must be a top-level function
+// Handler latar belakang harus merupakan fungsi tingkat atas (top-level function)
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('Handling background message: ${message.messageId}');
 }

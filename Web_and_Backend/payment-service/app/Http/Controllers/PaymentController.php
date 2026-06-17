@@ -26,14 +26,12 @@ class PaymentController extends Controller
         return $billing;
     }
 
-    /**
-     * 1. Inisialisasi Pembayaran (Dipanggil dari Flutter)
-     */
+    //Inisialisasi Pembayaran
     public function store(Request $request)
     {
         $request->validate([
             'checkout_token' => 'required|string',
-            'amount' => 'nullable|numeric|min:10000' // Midtrans minimum is usually 10,000
+            'amount' => 'nullable|numeric|min:10000'
         ]);
 
         $billing = $this->verifyCheckoutToken($request->checkout_token);
@@ -61,15 +59,13 @@ class PaymentController extends Controller
             'amount' => $paymentAmount,
             'payment_method' => 'midtrans',
             'status' => 'pending',
-            'external_id' => 'ORD-' . $request->order_id . '-' . strtoupper(Str::random(5)) . '-' . time(),
+            'external_id' => 'ORD-' . $billing['order_id'] . '-' . strtoupper(Str::random(5)) . '-' . time(),
         ]);
 
         return response()->json($payment, 201);
     }
 
-    /**
-     * 2. Buat Token Snap Midtrans
-     */
+    //Buat Token Snap Midtrans
     public function createTransaction(Request $request, $id)
     {
         $request->validate([
@@ -166,9 +162,8 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * 3. Ambil Data Pembayaran Berdasarkan ID Pesanan
-     */
+
+    //Ambil Data Pembayaran Berdasarkan ID Pesanan
     public function getByOrder($orderId)
     {
         $payment = Payment::where('order_id', $orderId)->first();
@@ -178,9 +173,8 @@ class PaymentController extends Controller
         return response()->json($payment);
     }
 
-    /**
-     * 4. Callback Midtrans (Proses Status Pembayaran & Notifikasi Backend)
-     */
+
+    //4. Callback Midtrans (Proses Status Pembayaran & Notifikasi Backend)
     public function callback(Request $request)
     {
         $data = $request->all();

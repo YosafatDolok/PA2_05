@@ -34,26 +34,26 @@ class ProfileController extends Controller
             'profile_picture.image' => 'File harus berupa gambar.',
         ]);
 
-        // Handle image upload
+        //Menangani unggahan gambar
         if ($request->hasFile('profile_picture')) {
 
-            // Delete old image
+            //Hapus gambar lama
             if ($user->profile_picture) {
                 Storage::disk('public')->delete($user->profile_picture);
             }
 
-            // Save new image
+            //Simpan gambar baru
             $user->profile_picture = $request
                 ->file('profile_picture')
                 ->store('profiles', 'public');
         }
 
-        // Check if email or phone changed
+        //Periksa apakah email atau nomor telepon berubah
         $emailChanged = $request->email !== $user->email;
         $phoneChanged = $request->phone_number !== $user->phone_number;
 
         if ($request->wantsJson() && ($emailChanged || $phoneChanged)) {
-            // Save to pending_profile_updates
+            //Simpan ke tabel pending_profile_updates
             $otp = (string) rand(100000, 999999);
             $expiresAt = \Carbon\Carbon::now()->addMinutes(5);
 
@@ -69,13 +69,13 @@ class ProfileController extends Controller
                 ]
             );
 
-            // Send OTP to the NEW email if email changed, otherwise to CURRENT email
+            // Kirim OTP ke email BARU jika email berubah, jika tidak kirim ke email SAAT INI
             $targetEmail = $emailChanged ? $request->email : $user->email;
             
             try {
                 \Illuminate\Support\Facades\Mail::to($targetEmail)->send(new \App\Mail\ProfileUpdateOtpMail($otp, $user->name));
                 
-                // Update name and profile picture immediately
+                //Perbarui nama dan foto profil secara langsung
                 $user->update([
                     'name' => $request->name,
                     'profile_picture' => $user->profile_picture,
@@ -91,7 +91,7 @@ class ProfileController extends Controller
             }
         }
 
-        // Handle web update requiring password confirmation if email/phone changed
+        //Tangani pembaruan melalui web yang memerlukan konfirmasi kata sandi jika email atau nomor telepon berubah
         if (!$request->wantsJson() && ($emailChanged || $phoneChanged)) {
             session([
                 'pending_email' => $request->email,
@@ -102,7 +102,7 @@ class ProfileController extends Controller
             return redirect()->route('profile.edit')->with('info', 'Harap masukkan password Anda untuk mengonfirmasi perubahan.');
         }
 
-        // Normal update (only name/picture changed or mobile request)
+        // Pembaruan normal (hanya nama/foto profil yang berubah atau permintaan dari aplikasi mobile)
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
@@ -127,7 +127,7 @@ class ProfileController extends Controller
             return back()->with('error', 'Password yang Anda masukkan salah. Perubahan profil dibatalkan.');
         }
 
-        // Apply pending changes from session
+        //Terapkan perubahan yang tertunda dari sesi
         $pendingEmail = session('pending_email');
         $pendingPhone = session('pending_phone');
 
@@ -137,7 +137,7 @@ class ProfileController extends Controller
                 'phone_number' => $pendingPhone ?? $user->phone_number,
             ]);
 
-            // Clear session data
+            //Hapus data session
             session()->forget(['pending_email', 'pending_phone', 'requires_password_confirmation']);
 
             return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui dengan aman.');
@@ -167,14 +167,14 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Kode verifikasi telah kadaluarsa.'], 422);
         }
 
-        // Apply the updates
+        //Terapkan pembaruan
         $updates = [];
         if ($pending->new_email) $updates['email'] = $pending->new_email;
         if ($pending->new_phone_number) $updates['phone_number'] = $pending->new_phone_number;
 
         $user->update($updates);
 
-        // Delete pending request
+        //Hapus permintaan yang tertunda
         \Illuminate\Support\Facades\DB::table('pending_profile_updates')->where('user_id', $user->user_id)->delete();
 
         return response()->json([
@@ -243,7 +243,7 @@ class ProfileController extends Controller
             'token' => $request->fcm_token
         ]);
         
-        // Nullify this token for any other user to prevent sending notifications to the wrong account/same device
+        //Kosongkan token ini pada pengguna lain untuk mencegah pengiriman notifikasi ke akun yang salah atau ke perangkat yang sama
         \App\Models\User::where('fcm_token', $request->fcm_token)
             ->where('user_id', '!=', $user->user_id)
             ->update(['fcm_token' => null]);
@@ -299,10 +299,10 @@ class ProfileController extends Controller
             ], 403);
         }
 
-        // Revoke all tokens to log the user out across devices
+        //Cabut seluruh token untuk mengeluarkan pengguna dari semua perangkat
         $user->tokens()->delete();
 
-        // Perform soft delete
+        //soft delete
         $user->delete();
 
         return response()->json([

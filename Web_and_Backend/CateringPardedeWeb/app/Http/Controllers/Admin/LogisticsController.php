@@ -11,17 +11,17 @@ class LogisticsController extends Controller
 {
     public function index()
     {
-        // 🏰 Pardede Base (The Shop)
+        //Lokasi Catering Pardede
         $baseLocation = [
             'lat' => 2.437190,
             'lng' => 99.157618,
             'name' => 'Catering Pardede Base'
         ];
 
-        // 1. Get all active drivers
+        // 1. lihat driver aktif
         $drivers = User::where('role_id', 3)->get();
 
-        // 2. Get active orders (Out for delivery or Preparing)
+        // 2. lihat order aktif yang akan dikirim
         $activeOrders = Order::whereIn('status_id', [2, 3])
             ->with(['user', 'driver', 'status'])
             ->get();

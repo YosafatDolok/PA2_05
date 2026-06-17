@@ -13,7 +13,7 @@ class FirebaseService
 
     public function __construct()
     {
-        // Place your Firebase Service Account JSON file here
+        //Firebase Service Account JSON file
         $this->credentialsPath = storage_path('app/firebase-auth.json');
     }
 
@@ -33,7 +33,7 @@ class FirebaseService
             $token = $credentials->fetchAuthToken(HttpHandlerFactory::build());
             $accessToken = $token['access_token'];
 
-            // Get project_id from the JSON file
+            //project_id dari JSON file
             $json = json_decode(file_get_contents($this->credentialsPath), true);
             $projectId = $json['project_id'];
 

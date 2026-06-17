@@ -44,16 +44,20 @@ class DeliveryChatController extends ChangeNotifier {
         try {
           final sentMsg = await DeliveryChatService.sendMessage(orderId, text);
           if (sentMsg != null) {
-            // Success! Remove from pending queue
+            // Berhasil! Hapus dari antrean tertunda
             pending.removeAt(0);
             await LocalStorage.savePendingMessages(orderId, pending);
 
-            // Update local list
+            // Perbarui daftar lokal
             final idx = messages.indexWhere((m) => m.messageId == tempId);
             if (idx != -1) {
-              messages[idx] = sentMsg; // Replace temporary message with server message
+              messages[idx] = sentMsg; // Ganti pesan sementara dengan pesan dari server
             } else {
-              messages.add(sentMsg);
+              // Jika tempId sudah diganti oleh listener Pusher, periksa apakah pesan asli sudah ada di daftar
+              final exists = messages.any((m) => m.messageId == sentMsg.messageId);
+              if (!exists) {
+                messages.add(sentMsg);
+              }
             }
             isOffline = false;
             notifyListeners();
@@ -68,9 +72,9 @@ class DeliveryChatController extends ChangeNotifier {
           if (isConnectionError) {
             isOffline = true;
             notifyListeners();
-            break; // Pause worker
+            break; // Hentikan sementara pekerja
           } else {
-            // Server side error: remove from queue and set status to failed
+            // Error dari sisi server: hapus dari antrean dan atur status ke gagal
             pending.removeAt(0);
             await LocalStorage.savePendingMessages(orderId, pending);
 
@@ -146,9 +150,9 @@ class DeliveryChatController extends ChangeNotifier {
         debugPrint("Delivery Pusher WebSocket Connected Successfully! Subscribing now...");
         _currentChannel?.subscribe();
 
-        // Push any pending offline messages when connection is established/restored
+        // Kirim semua pesan offline yang tertunda ketika koneksi terhubung kembali
         _processPendingQueue(orderId);
-        // Sync messages to get missed broadcasts
+        // Sinkronisasi pesan untuk mendapatkan pesan siaran yang terlewat
         fetchMessages(orderId);
       });
 
@@ -165,31 +169,44 @@ class DeliveryChatController extends ChangeNotifier {
         ),
       );
 
-      // Listen for new messages
+      // Dengarkan pesan baru
       _currentChannel!.bind('delivery.message.sent').listen((event) {
         final data = event.data;
         if (data != null) {
-          final Map<String, dynamic> jsonData = (data is String) ? jsonDecode(data) : data;
+          final Map<String, dynamic> jsonData = (data is String) ? jsonDecode(data) : Map<String, dynamic>.from(data);
           final newMessage = DeliveryMessageModel.fromJson(jsonData);
-          
           final index = messages.indexWhere((m) => m.messageId == newMessage.messageId);
           if (index != -1) {
             messages[index] = newMessage;
             notifyListeners();
           } else {
-            messages.add(newMessage);
-            notifyListeners();
-            onNewMessage?.call();
+            // Check if it matches a pending optimistic message (same sender, same message text, negative temporary ID)
+            final pendingIndex = messages.indexWhere((m) =>
+                m.messageId != null &&
+                m.messageId! < 0 &&
+                m.senderId == newMessage.senderId &&
+                m.message != null &&
+                newMessage.message != null &&
+                m.message!.trim() == newMessage.message!.trim());
+
+            if (pendingIndex != -1) {
+              messages[pendingIndex] = newMessage;
+              notifyListeners();
+            } else {
+              messages.add(newMessage);
+              notifyListeners();
+              onNewMessage?.call();
+            }
           }
         }
       });
 
-      // Listen for deleted messages — update local bubble to placeholder
+      // Dengarkan pesan yang dihapus — perbarui gelembung chat lokal ke placeholder
       _currentChannel!.bind('delivery.message.deleted').listen((event) {
         final data = event.data;
         if (data != null) {
           try {
-            final Map<String, dynamic> jsonData = (data is String) ? jsonDecode(data) : data;
+            final Map<String, dynamic> jsonData = (data is String) ? jsonDecode(data) : Map<String, dynamic>.from(data);
             final deletedId = jsonData['message_id'] as int?;
             if (deletedId == null) return;
 
@@ -228,7 +245,7 @@ class DeliveryChatController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    // 1. Load from cache first
+    // 1. Muat dari penyimpanan cache terlebih dahulu
     try {
       final cachedData = await LocalStorage.getChatCache(orderId);
       if (cachedData.isNotEmpty) {
@@ -239,7 +256,7 @@ class DeliveryChatController extends ChangeNotifier {
       debugPrint("Error loading delivery chat cache: $e");
     }
 
-    // 2. Fetch fresh messages
+    // 2. Ambil pesan terbaru
     try {
       final freshMessages = await DeliveryChatService.getMessages(orderId);
       messages = freshMessages;
@@ -255,18 +272,18 @@ class DeliveryChatController extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
 
-    // 3. Process queue
+    // 3. Proses antrean
     _processPendingQueue(orderId);
   }
 
   Future<void> sendMessage(BuildContext context, int orderId, String message) async {
     if (message.trim().isEmpty) return;
     
-    // Get current user ID
+    // Dapatkan ID pengguna saat ini
     final userData = await AuthService.getUser();
     final currentUserId = userData != null ? (userData['user_id'] ?? userData['id']) as int : 0;
     
-    // Create optimistic message
+    // Buat pesan optimistik
     final tempId = -DateTime.now().millisecondsSinceEpoch;
     final optimisticMessage = DeliveryMessageModel(
       messageId: tempId,
@@ -279,12 +296,12 @@ class DeliveryChatController extends ChangeNotifier {
       sendStatus: 'sending',
     );
     
-    // Add to local list and notify
+    // Tambahkan ke daftar lokal dan beri tahu pendengar
     messages.add(optimisticMessage);
     notifyListeners();
     onNewMessage?.call();
 
-    // Save to queue and cache
+    // Simpan ke antrean dan cache
     try {
       final pending = await LocalStorage.getPendingMessages(orderId);
       pending.add({
@@ -300,28 +317,28 @@ class DeliveryChatController extends ChangeNotifier {
       debugPrint("Failed to queue pending message: $e");
     }
 
-    // Process pending queue
+    // Proses antrean tertunda
     _processPendingQueue(orderId);
   }
 
-  /// Soft-deletes a delivery message. Optimistically updates the local list,
-  /// then confirms with the server. On failure, restores the original.
+  /// Menghapus pesan pengiriman secara lunak (soft delete). Memperbarui daftar lokal secara optimistik,
+  /// kemudian melakukan konfirmasi ke server. Jika gagal, memulihkan pesan asli.
   Future<void> deleteMessage(BuildContext context, int orderId, int messageId) async {
     final index = messages.indexWhere((m) => m.messageId == messageId);
     if (index == -1) return;
 
     final original = messages[index];
 
-    // Optimistic update
+    // Pembaruan optimistik
     messages[index] = original.copyAsDeleted();
     notifyListeners();
 
     try {
       await DeliveryChatService.deleteMessage(orderId, messageId);
-      // Server confirmed — Pusher event will update the other user's screen.
+      // Konfirmasi server berhasil — event Pusher akan memperbarui layar pengguna lain.
       await _saveToCache(orderId);
     } catch (e) {
-      // Rollback on failure
+      // Batalkan pembaruan jika gagal
       messages[index] = original;
       notifyListeners();
       final msg = e.toString().replaceFirst('Exception: ', '');
@@ -332,7 +349,7 @@ class DeliveryChatController extends ChangeNotifier {
   Future<void> markAsRead(int orderId) async {
     try {
       await DeliveryChatService.markMessagesAsRead(orderId);
-      // Sync global chat notification count if applicable
+      // Sinkronisasi jumlah notifikasi chat global jika berlaku
       PushNotificationService.updateUnreadChatCount();
       
       for (var i = 0; i < messages.length; i++) {

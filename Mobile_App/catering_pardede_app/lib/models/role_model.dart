@@ -9,7 +9,7 @@ class RoleModel {
 
   factory RoleModel.fromJson(Map<String, dynamic> json) {
     return RoleModel(
-      // ✅ Handle both 'id' and 'role_id', and fallback to 0 if neither is provided by the WebSocket
+      // Tangani baik 'id' maupun 'role_id', dan kembali ke nilai 0 jika tidak ada yang disediakan oleh WebSocket
       id: json['id'] ?? json['role_id'] ?? 0,
       name: json['name'] ?? '',
     );

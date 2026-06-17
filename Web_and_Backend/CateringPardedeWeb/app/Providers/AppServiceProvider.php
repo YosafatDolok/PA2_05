@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
                 $pendingOrdersCount = \App\Models\Order::where('status_id', 1)->count();
                 $pendingAdditionsCount = \App\Models\OrderAdditionRequest::where('status_id', 1)->count();
                 
-                // Fix: Count unique orders with unread messages instead of raw message count
+                //Perbaikan: Hitung jumlah order unik yang memiliki pesan belum dibaca, bukan jumlah pesan mentah
                 $unreadMessagesTotalCount = \App\Models\Order::whereHas('messages', function($query) {
                     $query->where('is_read', false)
                           ->where('sender_id', '!=', auth()->id());

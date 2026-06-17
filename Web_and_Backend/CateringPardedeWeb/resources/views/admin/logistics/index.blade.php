@@ -9,8 +9,8 @@
     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="m-0 font-weight-bold text-white">Pusat Kendali Logistik</h2>
-            <p class="text-muted small uppercase letter-spacing-1 mb-0">Pelacakan sopir secara langsung dan manajemen pengiriman</p>
+            <h2 class="m-0 font-weight-bold text-white">Lokasi Pesanan</h2>
+            <p class="text-muted small uppercase letter-spacing-1 mb-0">Destinasi Sopir</p>
         </div>
         <div class="d-flex gap-2">
         </div>
@@ -100,12 +100,12 @@
             iconAnchor: [11, 11]
         });
 
-        // 🏰 Add Pardede Base Marker
+        // Add Pardede Base Marker
         L.marker([{{ $baseLocation['lat'] }}, {{ $baseLocation['lng'] }}], {icon: baseIcon})
             .addTo(map)
             .bindPopup("<b>{{ $baseLocation['name'] }}</b><br>Pickup Point");
 
-        // 🛣️ Add Destination Markers and Routes
+        // Add Destination Markers and Routes
         @foreach($activeOrders as $order)
             @if($order->event_latitude && $order->event_longitude)
                 // Marker

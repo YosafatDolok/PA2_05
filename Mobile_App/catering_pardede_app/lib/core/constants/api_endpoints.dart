@@ -40,7 +40,7 @@ class ApiEndpoints {
   static const String resetPassword = '$baseUrl/password/reset';
   static const String payments = "$basePayment/payments";
   
-  // Driver Endpoints
+  // Titik Akhir (Endpoint) Kurir
   static const String driverOrders = '$baseUrl/driver/orders';
   static const String driverInbox = '$baseUrl/driver/inbox';
   static String driverUpdateStatus(int id) => '$baseUrl/driver/orders/$id/status';

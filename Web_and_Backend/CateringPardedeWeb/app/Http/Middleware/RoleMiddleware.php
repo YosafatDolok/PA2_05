@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class RoleMiddleware
 {
     /**
-     * Role ID mapping:
+     * Role ID
      *  1 = admin
      *  2 = user (customer)
      *  3 = driver

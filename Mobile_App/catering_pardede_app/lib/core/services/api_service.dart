@@ -60,10 +60,10 @@ class ApiService {
     final request = http.MultipartRequest('POST', Uri.parse(url));
     request.headers.addAll(await _headers());
     
-    // Add text fields
+    // Tambahkan bidang teks
     request.fields.addAll(fields);
     
-    // Add image if provided
+    // Tambahkan gambar jika disediakan
     if (filePath != null) {
       request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
     }
@@ -77,14 +77,14 @@ class ApiService {
   static dynamic _handleResponse(http.Response response, String url) {
     final data = jsonDecode(response.body);
 
-    // 🔥 Handle 401 errors intelligently
+    // Tangani error 401 secara cerdas
     if (response.statusCode == 401) {
-      // If it's NOT a login or register attempt, clear token and expire session
+      // Jika BUKAN upaya login atau registrasi, hapus token dan kedaluwarsa sesi
       if (!url.contains('/login') && !url.contains('/register')) {
         LocalStorage.clearToken();
         throw Exception('Session expired');
       }
-      // If it IS a login/register attempt, let the "Invalid Credentials" message through
+      // Jika MERUPAKAN upaya login/registrasi, biarkan pesan kesalahan kredensial diteruskan
     }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {

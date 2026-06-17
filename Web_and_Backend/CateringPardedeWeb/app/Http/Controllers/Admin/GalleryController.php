@@ -77,7 +77,7 @@ class GalleryController extends Controller
         return response()->json($galleries);
     }
 
-public function apiShow($id)
+    public function apiShow($id)
    {
         $gallery = Gallery::findOrFail($id);
         return response()->json($gallery);

@@ -18,21 +18,21 @@ class InternalServiceMiddleware
         $secret = $request->header('X-Internal-Secret');
         $expectedSecret = config('services.internal_key');
 
-        // 1. Validate Secret
+        // 1.Validasi secret key
         if (!$secret || $secret !== $expectedSecret) {
             return response()->json([
                 'message' => 'Unauthorized service access. Invalid Secret.'
             ], 403);
         }
 
-        // 2. Validate IP / Origin (Basic Whitelist)
+        //Validasi alamat IP atau asal layanan
         $allowedIps = ['127.0.0.1', '::1'];
         if ($envIp = env('PAYMENT_SERVICE_IP')) {
             $allowedIps[] = $envIp;
         }
 
         if (!in_array($request->ip(), $allowedIps) && env('APP_ENV') !== 'local') {
-            // In production, enforce IP whitelisting strictly
+            //production, pembatasan alamat IP diterapkan secara ketat
             return response()->json([
                 'message' => 'Unauthorized service origin IP.'
             ], 403);

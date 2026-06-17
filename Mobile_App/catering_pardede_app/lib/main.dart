@@ -9,7 +9,6 @@ import '/core/services/push_notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Note: This will fail until google-services.json is added
   try {
     await Firebase.initializeApp(
       options: const FirebaseOptions(

@@ -17,12 +17,12 @@ class DeliveryChatController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
-        // Ensure user is authorized (Customer or Driver ONLY)
+        // Pastikan pengguna memiliki hak akses (hanya Pelanggan atau Driver)
         if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Include soft-deleted messages so deleted bubbles can be rendered as placeholders
+        // Sertakan pesan yang telah dihapus sementara agar dapat ditampilkan sebagai placeholder
         $messages = $order->deliveryMessages()
             ->withTrashed()
             ->with('sender:user_id,name,profile_picture,role_id')
@@ -48,7 +48,7 @@ class DeliveryChatController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
-        // Ensure user is authorized (Customer or Driver ONLY)
+        //Pastikan pengguna memiliki hak akses (hanya Pelanggan atau Driver)
         if ((int)$order->user_id !== (int)Auth::id() && (int)$order->driver_id !== (int)Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -63,25 +63,25 @@ class DeliveryChatController extends Controller
             'is_read' => false,
         ]);
 
-        // Broadcast the message
+        // Broadcast pesan
         broadcast(new DeliveryMessageSent($message))->toOthers();
 
-        // Send Push Notification via FCM to the OTHER participants
+        //Kirim notifikasi push melalui FCM kepada peserta lain dalam percakapan
         $recipients = [];
         $senderId = (int)Auth::id();
 
-        // 1. Notify Customer (if sender is not Customer)
+        //Kirim notifikasi ke Pelanggan (jika pengirim bukan Pelanggan)
         if ($senderId !== (int)$order->user_id) {
             $recipients[] = $order->user_id;
         }
 
-        // 2. Notify Driver (if assigned, and sender is not Driver)
+        //Kirim notifikasi ke Driver (jika telah ditugaskan dan pengirim bukan Driver)
         if ($order->driver_id && $senderId !== (int)$order->driver_id) {
             $recipients[] = $order->driver_id;
         }
 
         foreach ($recipients as $recipientId) {
-            // Defensive check to prevent self-notification
+            //Pemeriksaan tambahan untuk mencegah pengirim menerima notifikasi sendiri
             if ((int)$recipientId === $senderId) {
                 continue;
             }
@@ -106,19 +106,19 @@ class DeliveryChatController extends Controller
         $message = DeliveryMessage::where('order_id', $order->order_id)
             ->findOrFail($messageId);
 
-        // Only the original sender can delete
+        // Hanya pengirim asli yang dapat menghapus pesan
         if ((int)$message->sender_id !== (int)Auth::id()) {
             return response()->json(['message' => 'Anda hanya dapat menghapus pesan Anda sendiri.'], 403);
         }
 
-        // Can only delete if the receiver has NOT read it yet
+        //Pesan hanya dapat dihapus jika belum dibaca oleh penerima
         if ($message->is_read) {
             return response()->json(['message' => 'Pesan sudah dibaca dan tidak dapat dihapus.'], 403);
         }
 
-        $message->delete(); // Soft delete — sets deleted_at
+        $message->delete(); // Soft delete
 
-        // Notify all other participants' screens in real-time
+        // Beri tahu peserta lain secara real-time bahwa pesan telah dihapus
         broadcast(new DeliveryMessageDeleted($message))->toOthers();
 
         return response()->json(['success' => true, 'message_id' => $message->message_id]);
@@ -128,7 +128,7 @@ class DeliveryChatController extends Controller
     {
         $order = Order::findOrFail($orderId);
 
-        // Mark all messages from others as read
+        //Tandai seluruh pesan dari pengguna lain sebagai telah dibaca
         $order->deliveryMessages()
             ->where('sender_id', '!=', Auth::id())
             ->where('is_read', false)

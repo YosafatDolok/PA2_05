@@ -26,12 +26,12 @@ class OrderAdditionController extends Controller
 
         $order = Order::findOrFail($orderId);
         
-        // 🛡️ Security Lock: Only the owner of the order can add items
+        //Aturan Keamanan: Hanya pemilik pesanan yang dapat menambahkan menu
         if ((int)$order->user_id !== (int)auth()->id()) {
             return response()->json(['message' => 'Akses ditolak. Anda hanya dapat menambah menu pada pesanan Anda sendiri.'], 403);
         }
 
-        // 🛡️ Guardrail: Block additions on orders that are finished or in transit
+        // Pembatasan: Cegah penambahan menu pada pesanan yang sedang dikirim, telah sampai, atau dibatalkan
         // 3: Out for Delivery, 4: Delivered, 9: Cancelled
         if (in_array((int)$order->status_id, [3, 4, 9])) {
             return response()->json([
@@ -39,14 +39,14 @@ class OrderAdditionController extends Controller
             ], 422);
         }
 
-        // Create the request
+        // Buat permintaan penambahan menu
         $additionRequest = OrderAdditionRequest::create([
             'order_id' => $order->order_id,
             'status_id' => 1, // Pending
             'notes' => $request->notes,
         ]);
 
-        // Create the items
+        // Tambahkan item menu ke dalam permintaan
         foreach ($request->menu_ids as $menuId) {
             OrderAdditionItem::create([
                 'request_id' => $additionRequest->id,
@@ -54,7 +54,7 @@ class OrderAdditionController extends Controller
             ]);
         }
 
-        // Notify Admin
+        // Kirim notifikasi kepada admin
         Notification::create([
             'user_id' => 1, // Admin
             'type' => 'new_order',
@@ -83,12 +83,12 @@ class OrderAdditionController extends Controller
     {
         $request = OrderAdditionRequest::findOrFail($id);
 
-        // Check if pending
+        // Periksa apakah permintaan masih berstatus menunggu
         if ($request->status_id != 1) {
             return response()->json(['message' => 'Hanya permintaan pending yang dapat dibatalkan'], 422);
         }
 
-        $request->delete(); // This will cascade delete items due to migration foreignId cascade
+        $request->delete();// Item terkait akan ikut terhapus karena relasi cascade pada foreign key
 
         return response()->json(['message' => 'Permintaan tambahan dibatalkan']);
     }

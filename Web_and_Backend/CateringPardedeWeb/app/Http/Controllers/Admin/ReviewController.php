@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 class ReviewController extends Controller
 {
     /**
-     * Display a listing of the reviews.
+     * Tampilkan daftar ulasan
      */
     public function index()
     {
@@ -21,7 +21,7 @@ class ReviewController extends Controller
     }
 
     /**
-     * Toggle the visibility of a review.
+     * Ubah status visibilitas ulasan
      */
     public function toggleVisibility($id)
     {

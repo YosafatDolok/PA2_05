@@ -16,17 +16,17 @@ class AdminDashboardController extends Controller
     {
 
 
-        // 2. Total unread messages not sent by the current admin
+        //Hitung total pesan yang belum dibaca dan tidak dikirim oleh admin yang sedang masuk
         $unreadMessages = OrderMessage::where('is_read', false)
             ->where('sender_id', '!=', auth()->id())
             ->count();
 
-        // 3. Orders scheduled for today
+        // Hitung jumlah pesanan yang dijadwalkan untuk hari ini
         $todayOrders = Order::whereDate('event_date', Carbon::today())
             ->where('status_id', '!=', 9) // 9 is Cancelled
             ->count();
 
-        // 4. Recent Activity (Last 5 notifications)
+       // Ambil aktivitas terbaru (5 notifikasi terakhir)
         $recentActivity = Notification::where('user_id', auth()->id())
             ->latest()
             ->take(5)

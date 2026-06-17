@@ -4,12 +4,12 @@ import 'package:intl/intl.dart';
 import 'app_alerts.dart';
 
 class Helpers {
-  /// Formats a number with thousands separator (e.g., 1000 -> 1.000).
+  /// Memformat angka dengan pemisah ribuan (contoh: 1000 -> 1.000).
   static String formatNumber(num number) {
     final formatter = NumberFormat("#,###", "id_ID");
     return formatter.format(number).replaceAll(',', '.');
   }
-  /// Launches an external map application with the specified coordinates.
+  /// Membuka aplikasi peta eksternal dengan koordinat yang ditentukan.
   static Future<void> launchMap(double lat, double lng) async {
     final Uri googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
     final Uri appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
@@ -23,7 +23,7 @@ class Helpers {
     }
   }
 
-  /// Checks if the error represents a connection or network issue.
+  /// Memeriksa apakah error merupakan masalah koneksi atau jaringan.
   static bool isConnectionError(dynamic error) {
     if (error == null) return false;
     final lowercaseError = error.toString().toLowerCase();
@@ -42,7 +42,7 @@ class Helpers {
         lowercaseError.contains('koneksi internet terputus');
   }
 
-  /// Converts any exception/error into a friendly Indonesian error message.
+  /// Mengubah exception/error menjadi pesan error bahasa Indonesia yang mudah dipahami.
   static String toFriendlyError(dynamic error) {
     if (error == null) return '';
     if (isConnectionError(error)) {
@@ -54,8 +54,8 @@ class Helpers {
         .replaceFirst(RegExp(r'^Exception\s*', caseSensitive: false), '');
   }
 
-  /// Upgraded SnackBar that now uses our Premium AppAlerts system.
-  /// It automatically detects if the message is a Success or an Error.
+  /// SnackBar yang ditingkatkan untuk menggunakan sistem AppAlerts Premium.
+  /// Otomatis mendeteksi apakah pesan berupa Sukses atau Error.
   static void showSnackBar(
     BuildContext context, 
     String message, {
@@ -63,7 +63,7 @@ class Helpers {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
-    // Clean up technical exception messages and handle network offline states
+    // Membersihkan pesan exception teknis dan menangani status offline jaringan
     String cleanMessage;
     if (isConnectionError(message)) {
       cleanMessage = 'Koneksi internet terputus. Silakan periksa jaringan Anda.';
@@ -75,7 +75,7 @@ class Helpers {
           .replaceAll('exception', '');
     }
 
-    // Smart detection for colors
+    // Deteksi pintar untuk warna
     final lowercaseMessage = cleanMessage.toLowerCase();
     final errorState = isError ?? !(
       lowercaseMessage.contains('berhasil') || 
@@ -98,7 +98,7 @@ class Helpers {
     }
   }
 
-  /// Use this for critical errors that need user attention
+  /// Gunakan ini untuk error kritis yang membutuhkan perhatian pengguna
   static void showErrorDialog(BuildContext context, String title, String message, {VoidCallback? onConfirm}) {
     String cleanMessage;
     if (isConnectionError(message)) {
@@ -119,7 +119,7 @@ class Helpers {
     );
   }
 
-  /// Use this for final confirmations (e.g. Success registration, Success payment)
+  /// Gunakan ini untuk konfirmasi akhir (contoh: Pendaftaran sukses, Pembayaran sukses)
   static void showSuccessDialog(BuildContext context, String title, String message, {VoidCallback? onConfirm}) {
     AppAlerts.showDialogSuccess(
       context: context,
@@ -129,7 +129,7 @@ class Helpers {
     );
   }
 
-  /// Use this for user choices (e.g. "Batalkan Pesanan?", "Hapus Item?")
+  /// Gunakan ini untuk pilihan pengguna (contoh: "Batalkan Pesanan?", "Hapus Item?")
   static void showConfirmDialog(
     BuildContext context, {
     required String title,
@@ -148,7 +148,7 @@ class Helpers {
 
   static DateTime? _lastNavigatedTime;
 
-  /// Safely pushes a named route, debouncing rapid taps within 500ms.
+  /// Berpindah ke route bernama secara aman, menghindari ketukan ganda dalam waktu 500ms.
   static Future<T?> pushNamedSafe<T>(
     BuildContext context, 
     String routeName, {
@@ -163,7 +163,7 @@ class Helpers {
     return Navigator.pushNamed<T>(context, routeName, arguments: arguments);
   }
 
-  /// Safely pushes a direct Route route, debouncing rapid taps within 500ms.
+  /// Berpindah ke Route langsung secara aman, menghindari ketukan ganda dalam waktu 500ms.
   static Future<T?> pushSafe<T>(BuildContext context, Route<T> route) async {
     final now = DateTime.now();
     if (_lastNavigatedTime != null && 
@@ -174,7 +174,7 @@ class Helpers {
     return Navigator.push<T>(context, route);
   }
 
-  /// Launches any external URL safely.
+  /// Membuka URL eksternal secara aman.
   static Future<void> launchURL(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (await canLaunchUrl(url)) {

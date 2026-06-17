@@ -7,8 +7,8 @@
 
 
     <application
-        android:label="catering_pardede_app"
-        android:icon="@mipmap/ic_launcher"
+        android:label="Catering Pardede"
+        android:icon="@mipmap/catering_pardede_logo"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"

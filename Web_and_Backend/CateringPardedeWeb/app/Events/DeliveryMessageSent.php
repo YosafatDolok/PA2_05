@@ -17,16 +17,13 @@ class DeliveryMessageSent implements ShouldBroadcastNow
 
     public $message;
 
-    /**
-     * Create a new event instance.
-     */
     public function __construct(DeliveryMessage $message)
     {
         $this->message = $message->load('sender:user_id,name,role_id');
     }
 
     /**
-     * Get the channels the event should broadcast on.
+     *
      *
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */

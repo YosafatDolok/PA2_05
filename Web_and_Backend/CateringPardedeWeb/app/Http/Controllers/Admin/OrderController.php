@@ -57,22 +57,22 @@ class OrderController extends Controller
             }])
             ->get()
             ->sortBy(function ($driver) {
-                // Sort priorities:
-                // 1. Available (0 deliveries)
-                // 2. Busy (1-2 deliveries)
-                // 3. Full Capacity (3+ deliveries)
+                // berdasarkan prioritas:
+                // 1. Available (0 pengiriman)
+                // 2. Busy (1-2 pengiriman)
+                // 3. Full Capacity (>3 pengiriman)
                 if ($driver->active_deliveries == 0) return 1;
                 if ($driver->active_deliveries < 3) return 2;
                 return 3;
             });
 
-        // MARK AS READ: When admin opens order details, mark all customer messages as read
+        //mark as read
         \App\Models\OrderMessage::where('order_id', $id)
             ->where('sender_id', '!=', auth()->id())
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
-        // MARK AS READ: Also mark general notifications related to this order as read
+        //mark as read(notifikasi)
         \App\Models\Notification::where('related_id', $id)
             ->where('user_id', auth()->id())
             ->where('is_read', false)
@@ -100,7 +100,7 @@ class OrderController extends Controller
     {
         $order = Order::with(['user', 'status', 'items.menu'])->findOrFail($id);
 
-        // MARK AS READ: When admin opens chat, mark all customer messages as read
+        //mark as read ketika admin membuka chat
         \App\Models\OrderMessage::where('order_id', $id)
             ->where('sender_id', '!=', auth()->id())
             ->where('is_read', false)
@@ -154,7 +154,7 @@ class OrderController extends Controller
                 'status_id' => 9, // Cancelled
                 'is_cancelling' => false,
                 'forfeited_amount' => $order->forfeited_amount + $forfeited,
-                'total_paid' => 0, // Clear total_paid so it doesn't count as active revenue
+                'total_paid' => 0, //total_paid menjadi 0
             ]);
 
             $desc = "Permintaan pembatalan DISETUJUI oleh Admin.";
@@ -221,7 +221,7 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
         
-        // 🛡️ Security Rule: Only allow cancellation (9) if order is Pending (1)
+        //Aturan Keamanan: Hanya izinkan pembatalan (9) jika pesanan masih berstatus Menunggu (1)
         if ($request->status_id == 9 && $order->status_id != 1) {
             return redirect()->back()->with('error', 'Hanya pesanan berstatus Pending yang dapat dibatalkan.');
         }
@@ -230,16 +230,16 @@ class OrderController extends Controller
         $oldStatusId = $order->status_id;
         $order->status_id = $request->status_id;
 
-        // AUTO-PAID TRANSITION: Check if order is fully paid when marking as Delivered (4)
+        //Transisi Pembayaran Otomatis: Periksa apakah pesanan telah dibayar lunas saat ditandai sebagai Terkirim (4)
         if ($order->status_id == 4 && $order->remaining_balance <= 0) {
             $order->status_id = 5; // Paid
         }
 
         $order->save();
 
-        // LOG ACTIVITIES
+        //log activities
         
-        // 1. Status Change Activity
+        // 1.Status Change Activity
         if ($oldStatusId != $order->status_id) {
             $oldStatusName = OrderStatus::find($oldStatusId)->status_name ?? 'N/A';
             $newStatusName = $order->status->status_name;
@@ -253,7 +253,7 @@ class OrderController extends Controller
                 'new_value' => $newStatusName,
             ]);
 
-            // Notify User
+            //notifikasi user
             $notification = Notification::create([
                 'user_id' => $order->user_id,
                 'type' => 'order_status',
@@ -285,7 +285,7 @@ class OrderController extends Controller
         $oldPrice = $order->final_price;
         $sum = 0;
 
-        // Update each item price
+        //Perbarui harga setiap item
         foreach ($order->items as $item) {
             if (isset($request->prices[$item->order_item_id])) {
                 $item->final_price = $request->prices[$item->order_item_id];
@@ -294,7 +294,7 @@ class OrderController extends Controller
             $sum += $item->final_price;
         }
 
-        // Add approved additions to the sum
+        //Tambahkan tambahan yang telah disetujui ke dalam total pembayaran
         foreach ($order->additions->where('status_id', 2) as $addition) {
             $sum += $addition->items->sum('final_price');
         }
@@ -312,7 +312,7 @@ class OrderController extends Controller
                 'new_value' => $order->final_price,
             ]);
 
-            // Notify User
+            //notifikasi user
             $notification = \App\Models\Notification::create([
                 'user_id' => $order->user_id,
                 'type' => 'order_price',
@@ -390,7 +390,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Helper to send push notification safely to a specific user
+     * Helper untuk mengirim notifikasi push secara aman kepada pengguna tertentu
      */
     private function sendPush($recipient, $notification, $orderId)
     {

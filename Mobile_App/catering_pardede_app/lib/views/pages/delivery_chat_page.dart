@@ -27,13 +27,13 @@ class _DeliveryChatPageState extends State<DeliveryChatPage> {
     _loadUser();
     _chatController.fetchMessages(widget.orderId);
     _chatController.initPusher(widget.orderId);
-    _chatController.markAsRead(widget.orderId); // Mark as read when entering
+    _chatController.markAsRead(widget.orderId); // Tandai sebagai dibaca saat masuk
     _chatController.addListener(_scrollToAndRead);
   }
 
   void _scrollToAndRead() {
     _scrollToBottom();
-    // If a new message arrives while we are on the page, mark it as read
+    // Jika pesan baru tiba saat kita berada di halaman ini, tandai sebagai dibaca
     if (_chatController.messages.isNotEmpty && !_chatController.messages.last.isRead) {
        _chatController.markAsRead(widget.orderId);
     }
@@ -69,7 +69,7 @@ class _DeliveryChatPageState extends State<DeliveryChatPage> {
   }
 
   void _onLongPressMessage(DeliveryMessageModel message, bool isMe) {
-    // Only own unread messages may be deleted
+    // Hanya pesan belum dibaca milik sendiri yang dapat dihapus
     if (!isMe || message.isRead || message.isDeleted) return;
 
     if (_chatController.isOffline) {
@@ -276,7 +276,7 @@ class _DeliveryChatPageState extends State<DeliveryChatPage> {
   }
 
   Widget _buildMessageBubble(DeliveryMessageModel message, bool isMe) {
-    // Deleted message placeholder
+    // Penampung (placeholder) untuk pesan yang dihapus
     if (message.isDeleted) {
       return Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,

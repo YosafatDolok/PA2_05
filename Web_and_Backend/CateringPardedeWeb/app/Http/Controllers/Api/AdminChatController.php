@@ -11,20 +11,20 @@ use Illuminate\Http\Request;
 class AdminChatController extends Controller
 {
     /**
-     * Get a list of all active conversations for the admin inbox.
+     * Ambil daftar seluruh percakapan aktif untuk kotak masuk admin.
      */
     public function inbox(Request $request)
     {
         $user = auth()->user();
         $roleId = (int)$user->role_id;
 
-        // 🛡️ Security Guardrail: Only Admin (1) and Customer (2) can access this endpoint. Drivers (3) have their own.
+        //Aturan Keamanan: Hanya Admin (1) dan Pelanggan (2) yang dapat mengakses endpoint ini. Driver (3) memiliki endpoint tersendiri.
         if ($roleId !== 1 && $roleId !== 2) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         if ($roleId === 1) {
-            // Admin Inbox: all conversations
+            // Kotak Masuk Admin: menampilkan seluruh percakapan
             $orderIds = OrderMessage::distinct()->pluck('order_id');
 
             $conversations = Order::withoutGlobalScopes()
@@ -42,7 +42,7 @@ class AdminChatController extends Controller
                 
             return ChatInboxResource::collection($conversations);
         } else {
-            // Customer Inbox: merge order messages (Admin) and delivery messages (Driver)
+            //Kotak Masuk Pelanggan: gabungkan pesan pesanan (Admin) dan pesan pengantaran (Driver)
             $orders = Order::where('user_id', $user->user_id)
                 ->where(function($q) {
                     $q->has('messages')->orHas('deliveryMessages');

@@ -137,7 +137,6 @@ class AuthController extends Controller
             'role_id' => $userRole->id,
         ]);
 
-        // Delete pending registration
         \Illuminate\Support\Facades\DB::table('pending_registrations')->where('email', $pending->email)->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;

@@ -13,7 +13,7 @@ use Carbon\Carbon;
 class DriverController extends Controller
 {
     /**
-     * 1. GET ASSIGNED ORDERS
+     * Ambil pesanan yang ditugaskan kepada driver.
      */
     public function myOrders(Request $request)
     {
@@ -26,16 +26,16 @@ class DriverController extends Controller
     }
 
     /**
-     * Get active delivery chats for the driver inbox.
+     * Ambil percakapan pengantaran yang aktif untuk kotak masuk driver.
      */
     public function inbox(Request $request)
     {
         $driverId = $request->user()->user_id;
 
-        // 1. Get unique order IDs that have delivery messages
+        //Ambil daftar order_id unik yang memiliki pesan pengantaran
         $orderIds = DeliveryMessage::distinct()->pluck('order_id');
 
-        // 2. Fetch orders specifically assigned to this driver
+        //Ambil pesanan yang secara khusus ditugaskan kepada driver ini
         $conversations = Order::where('driver_id', $driverId)
             ->whereIn('order_id', $orderIds)
             ->with(['user', 'latestDeliveryMessage'])
@@ -55,7 +55,7 @@ class DriverController extends Controller
 
 
     /**
-     * 3. UPDATE TRIP STATUS & PROOF
+     * Perbarui status pengantaran dan bukti pengiriman.
      */
     public function updateStatus(Request $request, $id)
     {
@@ -71,9 +71,9 @@ class DriverController extends Controller
         $order->status_id = $request->status_id;
 
         // Logistics Timestamps
-        if ($request->status_id == 3) { // 3 is "Out for Delivery"
+        if ($request->status_id == 3) { // 3 adalah "Out for Delivery"
             $order->started_delivery_at = now();
-        } elseif ($request->status_id == 4) { // 4 is "Delivered"
+        } elseif ($request->status_id == 4) { // 4 adalah "Delivered"
             if (!$order->delivered_at) {
                 $order->delivered_at = now();
             }
@@ -83,7 +83,7 @@ class DriverController extends Controller
                 $order->delivery_proof_image = $path;
             }
 
-            // AUTO-PAID: Auto-finalize to Paid (5) if the order is fully paid online
+            // Pembayaran Otomatis: Ubah status menjadi Lunas (5) jika pesanan telah dibayar penuh secara online
             if ($order->remaining_balance <= 0) {
                 $order->status_id = 5; // Paid
             }

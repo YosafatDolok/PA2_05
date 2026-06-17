@@ -41,7 +41,7 @@ class OrderAdditionController extends Controller
         $additionRequest->update(['status_id' => 2]); // Approved
         $additionRequest->load('items');
 
-        // LOG ACTIVITY
+        //log activity
         OrderActivity::create([
             'order_id' => $additionRequest->order_id,
             'user_id' => auth()->id(),
@@ -50,7 +50,7 @@ class OrderAdditionController extends Controller
             'new_value' => 'Approved',
         ]);
 
-        // Notify User
+        //notifikasi user
         $order = $additionRequest->order;
         $notification = Notification::create([
             'user_id' => $order->user_id,
@@ -82,7 +82,7 @@ class OrderAdditionController extends Controller
         
         $additionRequest->load('items');
 
-        // LOG ACTIVITY
+        //log aktivitas
         OrderActivity::create([
             'order_id' => $additionRequest->order_id,
             'user_id' => auth()->id(),
@@ -99,7 +99,7 @@ class OrderAdditionController extends Controller
         $additionRequest = OrderAdditionRequest::findOrFail($id);
         $additionRequest->update(['status_id' => 3]); // Rejected
 
-        // LOG ACTIVITY
+        //log aktivitas
         OrderActivity::create([
             'order_id' => $additionRequest->order_id,
             'user_id' => auth()->id(),
@@ -108,7 +108,7 @@ class OrderAdditionController extends Controller
             'new_value' => 'Rejected',
         ]);
 
-        // Notify User
+        //notifikasi user
         $order = $additionRequest->order;
         $notification = Notification::create([
             'user_id' => $order->user_id,
@@ -122,9 +122,7 @@ class OrderAdditionController extends Controller
         return back()->with('success', 'Permintaan tambahan berhasil ditolak');
     }
 
-    /**
-     * Helper to send push notification safely to a specific user
-     */
+    //Helper untuk push notifikasi ke user
     private function sendPush($recipient, $notification, $orderId)
     {
         \Log::info('Attempting Push Notification (Addition)', [

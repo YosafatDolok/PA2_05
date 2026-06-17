@@ -51,7 +51,6 @@ class DriverController extends Controller
 
     public function edit(User $driver)
     {
-        // Ensure we only edit drivers here
         if ($driver->role_id !== 3) abort(403);
         
         return view('admin.drivers.edit', compact('driver'));
@@ -70,7 +69,7 @@ class DriverController extends Controller
             'admin_password.required' => 'Password admin wajib diisi.',
         ]);
 
-        // Verify currently logged in administrator password
+        //Verifikasi admin yang telah log in
         if (!Hash::check($request->admin_password, auth()->user()->password)) {
             return back()->withErrors(['admin_password' => 'Password admin yang Anda masukkan salah.'])->withInput();
         }
@@ -92,12 +91,12 @@ class DriverController extends Controller
             $driver->update(['password' => Hash::make($request->password)]);
         }
 
-        // Notify old email of the change
+        //Notifikasi email lama
         if ($emailChanged) {
             try {
                 Mail::to($oldEmail)->send(new \App\Mail\DriverEmailChangedMail($driver, $oldEmail, $newEmail));
             } catch (\Exception $e) {
-                // Log mail sending failures but don't crash the request
+
                 logger()->error("Failed to send driver email change notification: " . $e->getMessage());
             }
         }
@@ -109,7 +108,7 @@ class DriverController extends Controller
     {
         if ($driver->role_id !== 3) abort(403);
 
-        // Check for active orders (Status: 1-Pending, 2-Preparing, 3-Out for Delivery)
+        // Check orders yang aktif
         $activeOrdersCount = \App\Models\Order::where('driver_id', $driver->user_id)
             ->whereIn('status_id', [1, 2, 3])
             ->count();

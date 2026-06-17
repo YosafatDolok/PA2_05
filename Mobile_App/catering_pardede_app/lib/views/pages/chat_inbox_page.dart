@@ -30,7 +30,7 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
   void initState() {
     super.initState();
     _fetchInbox();
-    // Refresh inbox in real-time when new chat notifications arrive via FCM
+    // Memperbarui kotak masuk secara real-time saat notifikasi chat baru tiba via FCM
     PushNotificationService.unreadChatCount.addListener(_onUnreadChatCountChanged);
   }
 
@@ -88,7 +88,7 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
     }
   }
 
-  // Refreshes the inbox silently without showing the loading spinner or hiding the list
+  // Memperbarui kotak masuk di latar belakang tanpa memicu spinner loading atau menyembunyikan daftar
   Future<void> _refreshInboxInBackground() async {
     try {
       final endpoint = _isDriver ? ApiEndpoints.driverInbox : ApiEndpoints.adminInbox;
@@ -101,7 +101,7 @@ class _ChatInboxPageState extends State<ChatInboxPage> {
         });
       }
     } catch (e) {
-      // Ignore background errors
+      // Abaikan error di latar belakang
     }
   }
 

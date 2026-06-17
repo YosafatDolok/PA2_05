@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $averageRating = \App\Models\Review::avg('rating') ?: 0;
         $totalReviews = \App\Models\Review::count();
 
-        // --- Data Grafik & Statistik Asli dari Layanan Pembayaran ---
+        //Data Grafik & Statistik Asli dari Layanan Pembayaran
         $stats = [
             'total_revenue' => 0,
             'growth_percent' => 0,
@@ -90,7 +90,6 @@ class DashboardController extends Controller
         $query = $request->get('query');
         if (empty($query)) return response()->json([]);
 
-        // Clean query for Order ID search (Remove ORD- and leading zeros)
         $cleanId = preg_replace('/[^0-9]/', '', ltrim(str_replace('ORD-', '', strtoupper($query)), '0'));
 
         $menus = Menu::whereRaw('LOWER(name) LIKE ?', ["%".strtolower($query)."%"])

@@ -27,9 +27,9 @@ class _OrderChatPageState extends State<OrderChatPage> {
     _loadUser();
     _chatController.fetchMessages(widget.orderId).then((_) => _scrollToBottom());
     _chatController.initPusher(widget.orderId);
-    _chatController.markAsRead(widget.orderId); // Mark as read when entering
+    _chatController.markAsRead(widget.orderId); // Tandai sebagai dibaca saat masuk
     
-    // Safely trigger scroll when controller says so
+    // Memicu gulir layar secara aman saat diinstruksikan oleh controller
     _chatController.onNewMessage = () {
       if (mounted) _scrollToBottom();
     };
@@ -39,7 +39,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
     final userData = await AuthService.getUser();
     if (userData != null) {
       setState(() {
-        // Use user_id specifically as it matches the sender_id in messages
+        // Gunakan user_id secara spesifik karena cocok dengan sender_id pada pesan
         _currentUserId = userData['user_id'] ?? userData['id'];
       });
     }
@@ -68,7 +68,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
   }
 
   void _onLongPressMessage(OrderMessageModel message, bool isMe) {
-    // Only own unread messages may be deleted
+    // Hanya pesan belum dibaca milik sendiri yang dapat dihapus
     if (!isMe || message.isRead || message.isDeleted) return;
 
     if (_chatController.isOffline) {
@@ -257,7 +257,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
                   itemCount: _chatController.messages.length,
                   itemBuilder: (context, index) {
                     final message = _chatController.messages[index];
-                    // Strict ID comparison for correct alignment
+                    // Perbandingan ID secara ketat untuk penataan posisi yang benar
                     final isMe = _currentUserId != null && 
                                  message.senderId.toString() == _currentUserId.toString();
                     return GestureDetector(
@@ -276,7 +276,7 @@ class _OrderChatPageState extends State<OrderChatPage> {
   }
 
   Widget _buildMessageBubble(OrderMessageModel message, bool isMe) {
-    // Deleted message placeholder
+    // Penampung (placeholder) untuk pesan yang dihapus
     if (message.isDeleted) {
       return Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
