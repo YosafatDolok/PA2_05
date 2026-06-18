@@ -35,9 +35,4 @@ class OrderService {
     final response = await ApiService.get(ApiEndpoints.reviews);
     return response['data'];
   }
-
-  static Future<List<dynamic>> getMenuReviews(int menuId) async {
-    final response = await ApiService.get(ApiEndpoints.menuReviews(menuId));
-    return response['data'];
-  }
 }

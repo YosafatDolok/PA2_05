@@ -64,7 +64,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
         Route::patch('/reviews/{id}/toggle', [ReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle');
 
-        Route::get('/global-search', [DashboardController::class, 'globalSearch'])->name('admin.global-search');
         Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notifications.index');
         Route::post('/notifications/mark-read', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.markAllRead');
 
