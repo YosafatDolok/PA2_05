@@ -48,6 +48,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/{id}/invoice', [OrderController::class, 'exportInvoice'])->name('orders.invoice');
         Route::get('/orders/{id}/chat', [OrderController::class, 'chat'])->name('orders.chat');
+        Route::get('/orders/{order}/messages', [\App\Http\Controllers\Api\OrderMessageController::class, 'index']);
+        Route::post('/orders/{order}/messages', [\App\Http\Controllers\Api\OrderMessageController::class, 'store']);
+        Route::delete('/orders/{order}/messages/{message}', [\App\Http\Controllers\Api\OrderMessageController::class, 'destroy']);
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
         Route::post('/orders/{id}/item-prices', [OrderController::class, 'updateItemPrices'])->name('orders.updateItemPrices');
         Route::post('/orders/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');

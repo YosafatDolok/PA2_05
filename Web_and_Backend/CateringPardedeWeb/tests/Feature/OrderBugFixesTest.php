@@ -80,4 +80,35 @@ class OrderBugFixesTest extends TestCase
 
         \Illuminate\Support\Facades\Bus::assertDispatched(\App\Jobs\SendPushNotification::class);
     }
+
+    /** @test */
+    public function admin_can_manage_chat_messages_via_web_routes()
+    {
+        $order = Order::first();
+        $admin = User::where('role_id', 1)->first();
+
+        // 1. Get messages
+        $response = $this->actingAs($admin)
+            ->get("/admin/orders/{$order->order_id}/messages");
+        $response->assertStatus(200);
+
+        // 2. Send message
+        $response = $this->actingAs($admin)
+            ->postJson("/admin/orders/{$order->order_id}/messages", [
+                'message' => 'Hello from Admin via Web'
+            ]);
+        $response->assertStatus(201);
+        $messageId = $response->json('message_id');
+        $this->assertDatabaseHas('order_messages', [
+            'message_id' => $messageId,
+            'message' => 'Hello from Admin via Web'
+        ]);
+
+        // 3. Delete message
+        $response = $this->actingAs($admin)
+            ->deleteJson("/admin/orders/{$order->order_id}/messages/{$messageId}");
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+    }
 }
+

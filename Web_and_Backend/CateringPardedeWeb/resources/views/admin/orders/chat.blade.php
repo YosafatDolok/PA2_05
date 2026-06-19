@@ -155,7 +155,7 @@
     initEchoChat();
 
     // Load initial messages
-    fetch(`/api/orders/${orderId}/messages`, {
+    fetch(`/admin/orders/${orderId}/messages`, {
         headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
@@ -197,7 +197,7 @@
     });
 
     function sendMessage(payload) {
-        fetch(`/api/orders/${orderId}/messages`, {
+        fetch(`/admin/orders/${orderId}/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -291,7 +291,7 @@
             color: 'var(--aura-text-main)'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`/api/orders/${orderId}/messages/${messageId}`, {
+                fetch(`/admin/orders/${orderId}/messages/${messageId}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
