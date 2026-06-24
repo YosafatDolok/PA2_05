@@ -21,7 +21,6 @@ class PaymentMethodPage extends StatefulWidget {
 
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
   String paymentType = "full"; // full atau partial
-  final TextEditingController _amountController = TextEditingController();
   
   String selectedPaymentMethod = "bank_transfer"; // bank_transfer, gopay, shopeepay
   String selectedBank = "bca"; // bca, mandiri, bni, bri, permata
@@ -29,6 +28,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   bool isInitializing = true;
   String? checkoutToken;
   double minPaymentAllowed = 10000;
+  Map<String, dynamic>? allowedAmounts;
 
   @override
   void initState() {
@@ -42,18 +42,15 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       setState(() {
         checkoutToken = response['checkout_token'];
         minPaymentAllowed = (response['min_payment_allowed'] as num).toDouble();
+        allowedAmounts = response['allowed_amounts'] != null ? Map<String, dynamic>.from(response['allowed_amounts']) : null;
         isInitializing = false;
       });
     } catch (e) {
       Helpers.showSnackBar(context, "Gagal mendapatkan sesi pembayaran: $e");
-      if (mounted) Navigator.pop(context);
+      if (mounted && ModalRoute.of(context)?.isCurrent == true) {
+        Navigator.pop(context);
+      }
     }
-  }
-
-  @override
-  void dispose() {
-    _amountController.dispose();
-    super.dispose();
   }
 
   Future<void> _pay() async {
@@ -71,22 +68,18 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       };
 
       if (paymentType == "partial") {
-        final amountText = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
-        if (amountText.isEmpty) {
-          Helpers.showSnackBar(context, "Masukkan nominal pembayaran DP terlebih dahulu.");
+        if (allowedAmounts == null || allowedAmounts!['dp'] == null) {
+          Helpers.showSnackBar(context, "Sesi DP tidak tersedia. Silakan pilih opsi lain.");
           setState(() => isLoading = false);
           return;
         }
-        
-        final parsedAmount = int.parse(amountText);
-        
-        if (parsedAmount < minPaymentAllowed) {
-          Helpers.showSnackBar(context, "Minimal pembayaran adalah Rp ${Helpers.formatNumber(minPaymentAllowed)}.");
-          setState(() => isLoading = false);
-          return;
+        paymentBody['amount'] = (allowedAmounts!['dp'] as num).toDouble();
+      } else {
+        if (allowedAmounts != null && allowedAmounts!['full'] != null) {
+          paymentBody['amount'] = (allowedAmounts!['full'] as num).toDouble();
+        } else {
+          paymentBody['amount'] = widget.order.remainingBalance;
         }
-        
-        paymentBody['amount'] = parsedAmount;
       }
 
       // 1. Buat data pembayaran di microservice pembayaran
@@ -118,7 +111,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
         // Jika user mengklik "Saya sudah bayar"
         if (result == true && mounted) {
-          Navigator.pop(context, true); // Kembali ke rincian pesanan dan segarkan halaman
+          if (ModalRoute.of(context)?.isCurrent == true) {
+            Navigator.pop(context, true); // Kembali ke rincian pesanan dan segarkan halaman
+          }
         }
       }
     } catch (e) {
@@ -280,7 +275,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                           ),
                           const Spacer(),
                           Text(
-                            "Rp ${Helpers.formatNumber(widget.order.remainingBalance)}",
+                            "Rp ${Helpers.formatNumber(allowedAmounts != null && allowedAmounts!['full'] != null ? (allowedAmounts!['full'] as num).toDouble() : widget.order.remainingBalance)}",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -292,78 +287,45 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                     ),
                   ),
                   
-                  // Bayar Sebagian
-                  TapScale(
-                    onTap: () => setState(() => paymentType = "partial"),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: paymentType == "partial" ? AppColors.primary.withValues(alpha: 0.1) : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: paymentType == "partial" ? AppColors.primary : Colors.grey[200]!,
-                          width: 2,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                paymentType == "partial" ? Icons.radio_button_checked : Icons.radio_button_off,
-                                color: paymentType == "partial" ? AppColors.primary : Colors.grey[400],
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                "Bayar Sebagian (DP)",
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                  // Bayar DP 50%
+                  if (allowedAmounts == null || allowedAmounts!['dp'] != null)
+                    TapScale(
+                      onTap: () => setState(() => paymentType = "partial"),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: paymentType == "partial" ? AppColors.primary.withValues(alpha: 0.1) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: paymentType == "partial" ? AppColors.primary : Colors.grey[200]!,
+                            width: 2,
                           ),
-                          if (paymentType == "partial") ...[
-                            const SizedBox(height: 16),
-                            TextField(
-                              controller: _amountController,
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) {
-                                String cleanStr = value.replaceAll(RegExp(r'[^0-9]'), '');
-                                if (cleanStr.isEmpty) {
-                                  _amountController.value = const TextEditingValue(
-                                    text: '',
-                                    selection: TextSelection.collapsed(offset: 0),
-                                  );
-                                  return;
-                                }
-                                int val = int.parse(cleanStr);
-                                String formatted = Helpers.formatNumber(val);
-                                _amountController.value = TextEditingValue(
-                                  text: formatted,
-                                  selection: TextSelection.collapsed(offset: formatted.length),
-                                );
-                              },
-                              cursorColor: AppColors.primary,
-                              decoration: InputDecoration(
-                                prefixText: "Rp ",
-                                prefixStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary),
-                                hintText: "Min. Rp ${Helpers.formatNumber(minPaymentAllowed)}",
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                                ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              paymentType == "partial" ? Icons.radio_button_checked : Icons.radio_button_off,
+                              color: paymentType == "partial" ? AppColors.primary : Colors.grey[400],
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              "Bayar DP 50%",
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            const Spacer(),
+                            Text(
+                              "Rp ${Helpers.formatNumber(allowedAmounts != null && allowedAmounts!['dp'] != null ? (allowedAmounts!['dp'] as num).toDouble() : (widget.order.totalPayable * 0.5))}",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: paymentType == "partial" ? AppColors.primary : Colors.grey[600],
                               ),
                             ),
-                          ]
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                   
                   const SizedBox(height: 40),
                   
@@ -387,8 +349,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                             ),
                             Text(
                               paymentType == "full" 
-                                ? "Rp ${Helpers.formatNumber(widget.order.remainingBalance)}"
-                                : "Sesuai Input Nominal",
+                                ? "Rp ${Helpers.formatNumber(allowedAmounts != null && allowedAmounts!['full'] != null ? (allowedAmounts!['full'] as num).toDouble() : widget.order.remainingBalance)}"
+                                : "Rp ${Helpers.formatNumber(allowedAmounts != null && allowedAmounts!['dp'] != null ? (allowedAmounts!['dp'] as num).toDouble() : (widget.order.totalPayable * 0.5))}",
                               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primary),
                             ),
                           ],

@@ -72,6 +72,11 @@
             <div class="aura-card h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="m-0 text-white font-weight-bold">Pertumbuhan Pendapatan</h5>
+                    <select id="revenueFilter" class="form-control text-white border-secondary bg-dark" style="width: auto; display: inline-block; cursor: pointer; padding: 2px 10px; height: auto;" onchange="location.href='?filter='+this.value">
+                        <option value="weekly" {{ request('filter') == 'weekly' ? 'selected' : '' }}>Mingguan</option>
+                        <option value="monthly" {{ request('filter') == 'monthly' || !request('filter') ? 'selected' : '' }}>Bulanan</option>
+                        <option value="yearly" {{ request('filter') == 'yearly' ? 'selected' : '' }}>Tahunan</option>
+                    </select>
                 </div>
                 <div id="revenueChart" style="min-height: 350px;"></div>
             </div>

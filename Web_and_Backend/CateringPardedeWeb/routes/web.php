@@ -53,6 +53,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::delete('/orders/{order}/messages/{message}', [\App\Http\Controllers\Api\OrderMessageController::class, 'destroy']);
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
         Route::post('/orders/{id}/item-prices', [OrderController::class, 'updateItemPrices'])->name('orders.updateItemPrices');
+        Route::post('/orders/{id}/confirm-price', [OrderController::class, 'confirmPrice'])->name('orders.confirmPrice');
         Route::post('/orders/{id}/assign-driver', [OrderController::class, 'assignDriver'])->name('orders.assignDriver');
         Route::post('/orders/{id}/cancel-request', [App\Http\Controllers\Admin\OrderController::class, 'handleCancelRequest'])->name('orders.cancel-request');
         Route::get('/payments', [AdminPaymentController::class, 'index'])->name('admin.payments.index');

@@ -68,6 +68,20 @@ class DriverController extends Controller
             'proof_image' => 'nullable|image|max:5120', // Max 5MB
         ]);
 
+        // Validasi Pembayaran (defense-in-depth)
+        if (in_array((int)$request->status_id, [2, 3, 4, 5])) {
+            if ((float)$order->total_payable <= 0) {
+                return response()->json(['message' => 'Pesanan tidak dapat diproses karena harga final belum ditentukan oleh Admin.'], 400);
+            }
+            
+            $minRequired = (float)$order->total_payable * 0.5;
+            if ((float)$order->total_paid < $minRequired) {
+                return response()->json([
+                    'message' => 'Pesanan tidak dapat diproses karena pembayaran belum mencapai minimal DP 50% atau Lunas.'
+                ], 400);
+            }
+        }
+
         $order->status_id = $request->status_id;
 
         // Logistics Timestamps

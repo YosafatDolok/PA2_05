@@ -221,6 +221,21 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
         
+        // Aturan Pembayaran sebelum diproses
+        if (in_array((int)$request->status_id, [2, 3, 4, 5])) {
+            if (!$order->is_price_confirmed) {
+                return redirect()->back()->with('error', 'Pesanan tidak dapat diproses karena harga belum dikonfirmasi oleh Admin.');
+            }
+            if ((float)$order->total_payable <= 0) {
+                return redirect()->back()->with('error', 'Pesanan tidak dapat diproses karena harga final belum ditentukan oleh Admin.');
+            }
+            
+            $minRequired = (float)$order->total_payable * 0.5;
+            if ((float)$order->total_paid < $minRequired) {
+                return redirect()->back()->with('error', 'Pesanan tidak dapat diproses karena pembayaran belum mencapai minimal DP 50% atau Lunas. (Telah dibayar: Rp ' . number_format($order->total_paid, 0, ',', '.') . ' dari minimal: Rp ' . number_format($minRequired, 0, ',', '.') . ')');
+            }
+        }
+        
         //Aturan Keamanan: Hanya izinkan pembatalan (9) jika pesanan masih berstatus Menunggu (1)
         if ($request->status_id == 9 && $order->status_id != 1) {
             return redirect()->back()->with('error', 'Hanya pesanan berstatus Pending yang dapat dibatalkan.');
@@ -278,8 +293,8 @@ class OrderController extends Controller
 
         $order = Order::with(['items', 'additions.items'])->findOrFail($id);
 
-        if ($order->status_id > 1) {
-            return redirect()->back()->with('error', 'Harga tidak dapat diubah karena pesanan sudah diproses.');
+        if ($order->status_id > 1 || $order->is_price_confirmed) {
+            return redirect()->back()->with('error', 'Harga tidak dapat diubah karena pesanan sudah diproses atau harga sudah dikonfirmasi.');
         }
 
         $oldPrice = $order->final_price;
@@ -420,5 +435,56 @@ class OrderController extends Controller
         } else {
             \Log::warning('Push skipped: No FCM token for user ' . $recipient->user_id);
         }
+    }
+
+    public function confirmPrice(Request $request, $id)
+    {
+        $request->validate([
+            'prices' => 'required|array',
+            'prices.*' => 'nullable|numeric|min:0',
+        ]);
+
+        $order = Order::with(['items', 'additions.items'])->findOrFail($id);
+
+        if ($order->status_id > 1 || $order->is_price_confirmed) {
+            return redirect()->back()->with('error', 'Harga tidak dapat dikonfirmasi karena pesanan sudah diproses atau harga sudah dikonfirmasi.');
+        }
+
+        $sum = 0;
+        foreach ($order->items as $item) {
+            if (isset($request->prices[$item->order_item_id])) {
+                $item->final_price = $request->prices[$item->order_item_id];
+                $item->save();
+            }
+            $sum += $item->final_price;
+        }
+
+        foreach ($order->additions->where('status_id', 2) as $addition) {
+            $sum += $addition->items->sum('final_price');
+        }
+
+        $order->final_price = $sum;
+        $order->is_price_confirmed = true;
+        $order->save();
+
+        OrderActivity::create([
+            'order_id' => $order->order_id,
+            'user_id' => auth()->id(),
+            'type' => 'price_confirmed',
+            'description' => "Harga final pesanan dikonfirmasi dan dikunci sebesar Rp " . number_format($order->final_price, 0, ',', '.'),
+            'old_value' => null,
+            'new_value' => $order->final_price,
+        ]);
+
+        $notification = \App\Models\Notification::create([
+            'user_id' => $order->user_id,
+            'type' => 'order_price_confirmed',
+            'title' => 'Harga Pesanan #' . $order->order_id . ' Dikonfirmasi',
+            'message' => 'Admin telah mengonfirmasi harga pesanan Anda sebesar Rp ' . number_format($order->final_price, 0, ',', '.') . '. Anda sekarang dapat melakukan pembayaran.',
+            'related_id' => $order->order_id,
+        ]);
+        $this->sendPush($order->user, $notification, $order->order_id);
+
+        return redirect()->back()->with('success', 'Harga pesanan berhasil dikonfirmasi dan dikunci.');
     }
 }

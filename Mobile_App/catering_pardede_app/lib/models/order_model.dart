@@ -22,6 +22,7 @@ class OrderModel {
   final DateTime? deliveredAt;
   final String? deliveryProofImage;
   final bool isCancelling;
+  final bool isPriceConfirmed;
   final String? cancelReason;
   final OrderStatusModel? status;
   final List<OrderItemModel>? items;
@@ -50,6 +51,7 @@ class OrderModel {
     this.deliveredAt,
     this.deliveryProofImage,
     this.isCancelling = false,
+    this.isPriceConfirmed = false,
     this.cancelReason,
     this.status,
     this.items,
@@ -84,6 +86,7 @@ class OrderModel {
           : null,
       deliveryProofImage: json['delivery_proof_image'],
       isCancelling: json['is_cancelling'] == 1 || json['is_cancelling'] == true,
+      isPriceConfirmed: json['is_price_confirmed'] == 1 || json['is_price_confirmed'] == true,
       cancelReason: json['cancel_reason'],
       status: json['status'] != null
           ? OrderStatusModel.fromJson(json['status'])

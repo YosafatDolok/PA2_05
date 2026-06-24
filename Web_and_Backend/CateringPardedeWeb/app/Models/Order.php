@@ -33,6 +33,7 @@ class Order extends Model
         'started_delivery_at',
         'delivered_at',
         'delivery_proof_image',
+        'is_price_confirmed',
     ];
 
     protected $casts = [
@@ -41,6 +42,7 @@ class Order extends Model
         'started_delivery_at' => 'datetime',
         'delivered_at' => 'datetime',
         'final_price' => 'decimal:2',
+        'is_price_confirmed' => 'boolean',
     ];
 
     public function user()

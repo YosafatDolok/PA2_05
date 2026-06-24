@@ -14,7 +14,7 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $totalMenus = Menu::count();
         $ordersReceived = Order::count();
@@ -29,8 +29,10 @@ class DashboardController extends Controller
             'monthly_chart' => []
         ];
 
+        $filter = $request->query('filter', 'monthly');
+
         try {
-            $paymentUrl = env('PAYMENT_SERVICE_URL', 'http://localhost:8001') . '/api/stats/summary';
+            $paymentUrl = env('PAYMENT_SERVICE_URL', 'http://localhost:8001') . '/api/stats/summary?filter=' . $filter;
             $paymentResponse = Http::withHeaders([
                 'X-Internal-Secret' => config('services.internal_key')
             ])->timeout(2)->connectTimeout(1)->get($paymentUrl);

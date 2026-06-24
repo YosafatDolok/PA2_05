@@ -28,7 +28,7 @@ class SecureEditDriverTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_access_edit_driver_page()
+    public function admin_bisa_mengakses_halaman_edit_sopir()
     {
         $response = $this->actingAs($this->admin)
             ->get(route('drivers.edit', $this->driver));
@@ -39,7 +39,7 @@ class SecureEditDriverTest extends TestCase
     }
 
     /** @test */
-    public function non_admin_cannot_access_edit_driver_page()
+    public function bukan_admin_tidak_bisa_mengakses_halaman_edit_sopir()
     {
         $response = $this->actingAs($this->driver)
             ->get(route('drivers.edit', $this->driver));
@@ -48,7 +48,7 @@ class SecureEditDriverTest extends TestCase
     }
 
     /** @test */
-    public function update_fails_if_admin_password_is_missing()
+    public function pembaruan_gagal_jika_password_admin_tidak_diisi()
     {
         $response = $this->actingAs($this->admin)
             ->put(route('drivers.update', $this->driver), [
@@ -61,7 +61,7 @@ class SecureEditDriverTest extends TestCase
     }
 
     /** @test */
-    public function update_fails_if_admin_password_is_incorrect()
+    public function pembaruan_gagal_jika_password_admin_salah()
     {
         $response = $this->actingAs($this->admin)
             ->put(route('drivers.update', $this->driver), [
@@ -75,7 +75,7 @@ class SecureEditDriverTest extends TestCase
     }
 
     /** @test */
-    public function update_succeeds_with_correct_admin_password_and_does_not_trigger_email_if_email_unchanged()
+    public function pembaruan_berhasil_dengan_password_admin_yang_benar_dan_tidak_memicu_email_jika_email_tidak_diubah()
     {
         Mail::fake();
 
@@ -98,7 +98,7 @@ class SecureEditDriverTest extends TestCase
     }
 
     /** @test */
-    public function update_triggers_email_notification_when_email_changes()
+    public function pembaruan_memicu_notifikasi_email_saat_email_diubah()
     {
         Mail::fake();
 

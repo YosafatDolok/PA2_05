@@ -268,6 +268,20 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
 
+        // Validasi Pembayaran (defense-in-depth)
+        if (in_array((int)$request->status_id, [2, 3, 4, 5])) {
+            if ((float)$order->total_payable <= 0) {
+                return response()->json(['message' => 'Pesanan tidak dapat diproses karena harga final belum ditentukan oleh Admin.'], 400);
+            }
+            
+            $minRequired = (float)$order->total_payable * 0.5;
+            if ((float)$order->total_paid < $minRequired) {
+                return response()->json([
+                    'message' => 'Pesanan tidak dapat diproses karena pembayaran belum mencapai minimal DP 50% atau Lunas.'
+                ], 400);
+            }
+        }
+
         // Cek Idempotensi: Mencegah penghitungan ganda untuk transaksi yang sama
         if ($request->external_id && \App\Models\ProcessedPayment::where('external_id', $request->external_id)->exists()) {
             Log::info("Duplicate payment signal received for External ID: {$request->external_id}. Ignoring.");

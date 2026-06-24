@@ -981,12 +981,23 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Widget _buildReceiptActions() {
     return Column(
       children: [
-        if (_currentOrder!.totalPaid > 0) ...[
-          _buildPaymentSummaryRow("SUDAH DIBAYAR", "- Rp ${Helpers.formatNumber(_currentOrder!.totalPaid)}", Colors.green),
+        if (_currentOrder!.totalPayable > 0) ...[
+          _buildPaymentSummaryRow(
+            "SUDAH DIBAYAR",
+            _currentOrder!.totalPaid > 0
+                ? "- Rp ${Helpers.formatNumber(_currentOrder!.totalPaid)}"
+                : "Rp 0",
+            _currentOrder!.totalPaid > 0 ? Colors.green : Colors.grey,
+          ),
           const SizedBox(height: 12),
           const _DashedDivider(),
           const SizedBox(height: 12),
-          _buildPaymentSummaryRow("SISA TAGIHAN", "Rp ${Helpers.formatNumber(_currentOrder!.remainingBalance)}", AppColors.secondary, isBold: true),
+          _buildPaymentSummaryRow(
+            "SISA TAGIHAN",
+            "Rp ${Helpers.formatNumber(_currentOrder!.remainingBalance)}",
+            AppColors.secondary,
+            isBold: true,
+          ),
           const SizedBox(height: 24),
         ],
         if (!_isDriver)
@@ -1006,27 +1017,64 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             () => Helpers.pushNamedSafe(context, '/delivery-chat', arguments: _currentOrder!.id),
           ),
         ],
-        if (!_isDriver && _currentOrder!.statusId >= 2 && _currentOrder!.remainingBalance > 0 && !_isAdmin && _currentOrder!.statusId != 9 && _currentOrder!.totalPayable > 0) ...[
+        if (!_isDriver && _currentOrder!.remainingBalance > 0 && !_isAdmin && _currentOrder!.statusId != 9 && _currentOrder!.totalPayable > 0) ...[
           const SizedBox(height: 12),
-          _buildReceiptActionButton(
-            _currentOrder!.totalPaid > 0 ? "BAYAR SISA TAGIHAN" : "BAYAR SEKARANG",
-            Icons.payments_rounded,
-            const Color(0xFF8B0000),
-            () async {
-              final result = await Helpers.pushSafe(
-                context,
-                MaterialPageRoute(builder: (_) => PaymentMethodPage(order: _currentOrder!)),
-              );
+          if (!_currentOrder!.isPriceConfirmed) ...[
+            _buildReceiptActionButton(
+              "MENUNGGU KONFIRMASI HARGA",
+              Icons.lock_clock_rounded,
+              Colors.grey.shade500,
+              null,
+              isFilled: true,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50.withValues(alpha: 0.1),
+                border: Border.all(color: Colors.amber.shade500.withValues(alpha: 0.2)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Colors.amber.shade600, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Harga pesanan belum dikonfirmasi oleh Admin. Pelanggan baru dapat melakukan pembayaran setelah harga disetujui.",
+                      style: TextStyle(
+                        color: Colors.amber.shade600,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            _buildReceiptActionButton(
+              _currentOrder!.totalPaid > 0 ? "BAYAR SISA TAGIHAN" : "BAYAR SEKARANG",
+              Icons.payments_rounded,
+              const Color(0xFF8B0000),
+              () async {
+                final result = await Helpers.pushSafe(
+                  context,
+                  MaterialPageRoute(builder: (_) => PaymentMethodPage(order: _currentOrder!)),
+                );
 
-              if (result == true && mounted) {
-                // Beri jeda 2 detik agar callback Midtrans selesai diproses di server
-                await Future.delayed(const Duration(seconds: 2));
-                _fetchOrderDetails();
-                _fetchAdditions();
-              }
-            },
-            isFilled: true,
-          ),
+                if (result == true && mounted) {
+                  // Beri jeda 2 detik agar callback Midtrans selesai diproses di server
+                  await Future.delayed(const Duration(seconds: 2));
+                  _fetchOrderDetails();
+                  _fetchAdditions();
+                }
+              },
+              isFilled: true,
+            ),
+          ],
         ],
       ],
     );
@@ -1048,7 +1096,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
   }
 
-  Widget _buildReceiptActionButton(String label, IconData icon, Color color, VoidCallback onTap, {bool isFilled = false, int unreadCount = 0}) {
+  Widget _buildReceiptActionButton(String label, IconData icon, Color color, VoidCallback? onTap, {bool isFilled = false, int unreadCount = 0}) {
     return TapScale(
       onTap: onTap,
       child: Container(

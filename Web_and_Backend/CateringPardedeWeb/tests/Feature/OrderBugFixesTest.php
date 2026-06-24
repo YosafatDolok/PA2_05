@@ -21,13 +21,13 @@ class OrderBugFixesTest extends TestCase
     }
 
     /** @test */
-    public function order_addition_request_has_status_text_attribute()
+    public function permintaan_tambahan_pesanan_memiliki_atribut_status_text()
     {
         $order = Order::first();
         $request = OrderAdditionRequest::create([
             'order_id' => $order->order_id,
             'status_id' => 1,
-            'notes' => 'Test notes'
+            'notes' => 'Catatan tes'
         ]);
         $this->assertNotNull($request);
         
@@ -40,7 +40,7 @@ class OrderBugFixesTest extends TestCase
         $request->status_id = 3;
         $this->assertEquals('Rejected', $request->status_text);
 
-        // Check if status_text is appended in JSON serialization
+        // Memastikan status_text dilampirkan dalam serialisasi JSON
         $json = $request->toArray();
         $this->assertArrayHasKey('status_text', $json);
         $this->assertEquals('Rejected', $json['status_text']);
@@ -48,30 +48,30 @@ class OrderBugFixesTest extends TestCase
 
 
     /** @test */
-    public function driver_assigned_to_order_can_view_order_details()
+    public function sopir_yang_ditugaskan_pada_pesanan_bisa_melihat_detail_pesanan()
     {
         $order = Order::first();
         
-        // Find or create a driver
+        // Cari atau buat akun sopir
         $driver = User::where('role_id', 3)->first();
         if (!$driver) {
             $driver = User::factory()->create(['role_id' => 3]);
         }
 
-        // Assign the driver to the order
+        // Terapkan sopir ke pesanan
         $order->update(['driver_id' => $driver->user_id]);
 
-        // Act: request details as the driver
+        // Melakukan request detail pesanan sebagai sopir
         $response = $this->actingAs($driver, 'sanctum')
             ->getJson("/api/orders/{$order->order_id}");
 
-        // Assert: successful retrieval
+        // Memastikan data berhasil diambil
         $response->assertStatus(200);
         $response->assertJsonPath('order_id', $order->order_id);
     }
 
     /** @test */
-    public function send_push_notification_job_is_dispatchable()
+    public function job_pengiriman_push_notification_bisa_dijalankan()
     {
         \Illuminate\Support\Facades\Bus::fake();
 
@@ -82,33 +82,32 @@ class OrderBugFixesTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_manage_chat_messages_via_web_routes()
+    public function admin_bisa_mengelola_pesan_chat_melalui_rute_web()
     {
         $order = Order::first();
         $admin = User::where('role_id', 1)->first();
 
-        // 1. Get messages
+        // 1. Mengambil riwayat pesan
         $response = $this->actingAs($admin)
             ->get("/admin/orders/{$order->order_id}/messages");
         $response->assertStatus(200);
 
-        // 2. Send message
+        // 2. Mengirim pesan baru
         $response = $this->actingAs($admin)
             ->postJson("/admin/orders/{$order->order_id}/messages", [
-                'message' => 'Hello from Admin via Web'
+                'message' => 'Halo dari Admin via Web'
             ]);
         $response->assertStatus(201);
         $messageId = $response->json('message_id');
         $this->assertDatabaseHas('order_messages', [
             'message_id' => $messageId,
-            'message' => 'Hello from Admin via Web'
+            'message' => 'Halo dari Admin via Web'
         ]);
 
-        // 3. Delete message
+        // 3. Menghapus pesan
         $response = $this->actingAs($admin)
             ->deleteJson("/admin/orders/{$order->order_id}/messages/{$messageId}");
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
     }
 }
-

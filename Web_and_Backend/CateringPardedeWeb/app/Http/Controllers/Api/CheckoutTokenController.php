@@ -22,22 +22,39 @@ class CheckoutTokenController extends Controller
             return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
 
-        // Periksa apakah pesanan sudah lunas
+        $totalPayable = (float)$order->total_payable;
+        $totalPaid = (float)$order->total_paid;
         $remainingBalance = (float)$order->remaining_balance;
+
+        // Periksa apakah harga final sudah dikonfirmasi oleh Admin
+        if (!$order->is_price_confirmed) {
+            return response()->json(['message' => 'Harga pesanan belum dikonfirmasi oleh Admin.'], 400);
+        }
+
+        // Periksa apakah harga final belum ditentukan
+        if ((float)$order->total_payable <= 0) {
+            return response()->json(['message' => 'Harga final pesanan belum ditentukan oleh Admin.'], 400);
+        }
+
+        // Periksa apakah pesanan sudah lunas
         if ($remainingBalance <= 0) {
             return response()->json(['message' => 'Pesanan ini sudah lunas.'], 400);
         }
 
-        // Hitung jumlah pembayaran minimum yang diperbolehkan
-        $totalPayable = (float)$order->total_payable;
-        $totalPaid = (float)$order->total_paid;
-        
+        // Tentukan pilihan pembayaran yang diperbolehkan secara tepat (DP 50% atau Lunas 100%)
+        $allowedAmounts = [];
         $minTotalDp = $totalPayable * 0.5;
-        $shortfall = $minTotalDp - $totalPaid;
-        
-        $minPaymentAllowed = max(10000, $shortfall);
-        
-        if ($minPaymentAllowed > $remainingBalance) {
+
+        if ($totalPaid == 0) {
+            $allowedAmounts = [
+                'dp' => $minTotalDp,
+                'full' => $totalPayable
+            ];
+            $minPaymentAllowed = $minTotalDp;
+        } else {
+            $allowedAmounts = [
+                'full' => $remainingBalance
+            ];
             $minPaymentAllowed = $remainingBalance;
         }
 
@@ -50,6 +67,7 @@ class CheckoutTokenController extends Controller
             'user_phone' => $user->phone_number,
             'remaining_balance' => $remainingBalance,
             'min_payment_allowed' => $minPaymentAllowed,
+            'allowed_amounts' => $allowedAmounts,
             'exp' => time() + (15 * 60) // Token berlaku selama 15 menit
         ];
 
@@ -65,7 +83,8 @@ class CheckoutTokenController extends Controller
             'checkout_token' => $token,
             'expires_in' => 15 * 60,
             'remaining_balance' => $remainingBalance,
-            'min_payment_allowed' => $minPaymentAllowed
+            'min_payment_allowed' => $minPaymentAllowed,
+            'allowed_amounts' => $allowedAmounts
         ]);
     }
 }

@@ -40,7 +40,7 @@ class PaymentController extends Controller
         }
 
         $remainingBalance = (float)$billing['remaining_balance'];
-        $minPaymentAllowed = (float)$billing['min_payment_allowed'];
+        $allowedAmounts = $billing['allowed_amounts'] ?? [];
 
         $paymentAmount = $remainingBalance;
         if ($request->has('amount') && $request->amount > 0) {
@@ -48,8 +48,24 @@ class PaymentController extends Controller
             if ($paymentAmount > $remainingBalance) {
                 return response()->json(['message' => 'Nominal pembayaran tidak boleh melebihi sisa tagihan.'], 400);
             }
-            if ($paymentAmount < $minPaymentAllowed) {
-                return response()->json(['message' => 'Minimal pembayaran untuk pesanan ini adalah Rp ' . number_format($minPaymentAllowed, 0, ',', '.')], 400);
+            
+            // Validasi allowed_amounts secara presisi
+            if (!empty($allowedAmounts)) {
+                $isValid = false;
+                foreach ($allowedAmounts as $allowed) {
+                    if (abs($paymentAmount - (float)$allowed) < 0.01) {
+                        $isValid = true;
+                        break;
+                    }
+                }
+                if (!$isValid) {
+                    return response()->json(['message' => 'Nominal pembayaran harus sesuai dengan pilihan (DP 50% atau Lunas).'], 400);
+                }
+            } else {
+                $minPaymentAllowed = (float)$billing['min_payment_allowed'];
+                if ($paymentAmount < $minPaymentAllowed) {
+                    return response()->json(['message' => 'Minimal pembayaran untuk pesanan ini adalah Rp ' . number_format($minPaymentAllowed, 0, ',', '.')], 400);
+                }
             }
         }
 

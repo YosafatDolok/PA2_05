@@ -52,8 +52,19 @@
     <div class="row">
         <div class="col-md-8">
             <div class="card aura-card border-0 shadow-lg p-4 mb-4">
-                <h4 class="font-weight-bold mb-4 text-secondary border-bottom border-secondary pb-2">Menu yang Dipesan</h4>
-                <form action="{{ route('orders.updateItemPrices', $order->order_id) }}" method="POST">
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-2">
+                    <h4 class="font-weight-bold m-0 text-secondary">Menu yang Dipesan</h4>
+                    @if($order->is_price_confirmed)
+                        <span class="badge py-2 px-3 rounded-pill text-success" style="font-size: 0.8rem; background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.2);">
+                            <i class="fas fa-lock mr-1"></i> HARGA DIKONFIRMASI
+                        </span>
+                    @else
+                        <span class="badge py-2 px-3 rounded-pill text-warning" style="font-size: 0.8rem; background: rgba(255, 152, 0, 0.1); border: 1px solid rgba(255, 152, 0, 0.2);">
+                            <i class="fas fa-lock-open mr-1"></i> DRAF HARGA
+                        </span>
+                    @endif
+                </div>
+                <form id="item-prices-form" action="{{ route('orders.updateItemPrices', $order->order_id) }}" method="POST">
                     @csrf
                     <div class="table-responsive">
                         <table class="table text-white mb-0">
@@ -77,7 +88,7 @@
                                         <input type="text" class="form-control item-price-input" 
                                                data-item-id="{{ $item->order_item_id }}"
                                                value="{{ $item->final_price ? number_format($item->final_price, 0, ',', '') : '' }}"
-                                               placeholder="0" {{ $order->status_id > 1 ? 'readonly' : '' }}>
+                                               placeholder="0" {{ ($order->status_id > 1 || $order->is_price_confirmed) ? 'readonly' : '' }}>
                                         <input type="hidden" name="prices[{{ $item->order_item_id }}]" class="item-price-hidden" 
                                                value="{{ $item->final_price ? intval($item->final_price) : '' }}">
                                     </td>
@@ -89,10 +100,13 @@
                             </tbody>
                         </table>
                     </div>
-                    @if($order->status_id == 1)
+                    @if($order->status_id == 1 && !$order->is_price_confirmed)
                     <div class="text-right mt-3">
-                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4">
-                            <i class="fas fa-save mr-1"></i> Simpan Harga
+                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-4 mr-2">
+                            <i class="fas fa-save mr-1"></i> Simpan Harga (Draf)
+                        </button>
+                        <button type="button" onclick="confirmPrice()" class="btn btn-sm btn-success rounded-pill px-4">
+                            <i class="fas fa-check-double mr-1"></i> Konfirmasi Harga
                         </button>
                     </div>
                     @endif
@@ -332,7 +346,9 @@
                                 calculateTotal();
                             });
                         </script>
-                        @if($order->status_id > 1)
+                        @if($order->is_price_confirmed)
+                            <small class="text-muted mt-1">Harga telah dikonfirmasi dan dikunci.</small>
+                        @elseif($order->status_id > 1)
                             <small class="text-muted mt-1">Harga tidak dapat diubah setelah pesanan diproses.</small>
                         @endif
                         @error('final_price')
@@ -380,9 +396,19 @@
                                 <p class="small text-muted mb-0 mt-2">Tidak ada tindakan lebih lanjut yang diperlukan.</p>
                             </div>
                         @elseif($order->status_id == 1) {{-- Pending --}}
-                            <button type="button" onclick="submitStatus(2)" class="btn btn-success w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
-                                <i class="fas fa-check-circle mr-2"></i> KONFIRMASI & PROSES
-                            </button>
+                            @if(!$order->is_price_confirmed)
+                                <div class="alert alert-warning border-0 p-3 text-center mb-3" style="background: rgba(255, 152, 0, 0.1); color: #ff9800; border-radius: 15px;">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    <span class="small font-weight-bold">Konfirmasi harga terlebih dahulu agar pelanggan dapat melakukan pembayaran.</span>
+                                </div>
+                                <button type="button" class="btn btn-secondary w-100 rounded-pill font-weight-bold py-3 mb-3" style="opacity: 0.65; cursor: not-allowed;" disabled>
+                                    <i class="fas fa-lock mr-2"></i> BELUM DIKONFIRMASI
+                                </button>
+                            @else
+                                <button type="button" onclick="submitStatus(2)" class="btn btn-success w-100 rounded-pill font-weight-bold py-3 mb-3 shadow-lg">
+                                    <i class="fas fa-check-circle mr-2"></i> KONFIRMASI & PROSES
+                                </button>
+                            @endif
                             <button type="button" onclick="submitStatus(9)" class="btn btn-danger w-100 rounded-pill py-2 font-weight-bold text-white shadow-sm">
                                 <i class="fas fa-times-circle mr-1"></i> Batalkan Pesanan
                             </button>
@@ -621,6 +647,18 @@
     </style>
 
     <script>
+        function confirmPrice() {
+            showAuraConfirm(
+                'Konfirmasi Harga',
+                'Apakah Anda yakin ingin mengonfirmasi dan mengunci harga pesanan ini? Tindakan ini tidak dapat dibatalkan.',
+                function() {
+                    const form = document.getElementById('item-prices-form');
+                    form.action = "{{ route('orders.confirmPrice', $order->order_id) }}";
+                    form.submit();
+                }
+            );
+        }
+
         function submitStatus(statusId) {
             if (statusId == 9) {
                 showAuraConfirm(
