@@ -26,8 +26,8 @@ class CheckoutTokenController extends Controller
         $totalPaid = (float)$order->total_paid;
         $remainingBalance = (float)$order->remaining_balance;
 
-        // Periksa apakah harga final sudah dikonfirmasi oleh Admin
-        if (!$order->is_price_confirmed) {
+        // Periksa apakah harga final sudah dikonfirmasi oleh Admin (hanya untuk pesanan baru/Pending)
+        if ((int)$order->status_id === 1 && !$order->is_price_confirmed) {
             return response()->json(['message' => 'Harga pesanan belum dikonfirmasi oleh Admin.'], 400);
         }
 

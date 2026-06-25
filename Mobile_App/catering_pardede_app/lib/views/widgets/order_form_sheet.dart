@@ -98,6 +98,27 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
               ],
             ),
             _buildTextField(_addressController, "Masukkan atau pilih alamat...", maxLines: 2, readOnly: true, onTap: _pickOnMap),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50.withValues(alpha: 0.1),
+                border: Border.all(color: Colors.amber.shade500.withValues(alpha: 0.2)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Colors.amber.shade600, size: 16),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      "Wilayah pengiriman terbatas radius 70 km dari Pulau Samosir (Samosir Island Area Only).",
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.amber),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             _buildTextField(_locationNotesController, "Detail lokasi (Patokan, No. Rumah, Lantai...)", maxLines: 1),
             const SizedBox(height: 16),
@@ -247,8 +268,16 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   }
 
   Future<void> _submitOrder() async {
-    if (_addressController.text.isEmpty || _latitude == null) {
+    if (_addressController.text.isEmpty || _latitude == null || _longitude == null) {
       Helpers.showSnackBar(context, 'Mohon pilih lokasi di peta');
+      return;
+    }
+
+    // Double check Samosir Island region (~70km bounding radius: 0.63^2 = 0.40)
+    double latDiff = _latitude! - 2.58;
+    double lonDiff = _longitude! - 98.82;
+    if ((latDiff * latDiff + lonDiff * lonDiff) > 0.40) {
+      Helpers.showSnackBar(context, 'Maaf, wilayah pengiriman terbatas dalam radius 70 km dari Pulau Samosir.');
       return;
     }
     if (_selectedDate == null) {

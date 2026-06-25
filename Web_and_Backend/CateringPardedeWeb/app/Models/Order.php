@@ -34,6 +34,8 @@ class Order extends Model
         'delivered_at',
         'delivery_proof_image',
         'is_price_confirmed',
+        'total_paid',
+        'forfeited_amount',
     ];
 
     protected $casts = [
@@ -42,6 +44,8 @@ class Order extends Model
         'started_delivery_at' => 'datetime',
         'delivered_at' => 'datetime',
         'final_price' => 'decimal:2',
+        'total_paid' => 'decimal:2',
+        'forfeited_amount' => 'decimal:2',
         'is_price_confirmed' => 'boolean',
     ];
 

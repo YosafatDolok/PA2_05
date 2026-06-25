@@ -223,7 +223,8 @@ class OrderController extends Controller
         
         // Aturan Pembayaran sebelum diproses
         if (in_array((int)$request->status_id, [2, 3, 4, 5])) {
-            if (!$order->is_price_confirmed) {
+            // Konfirmasi harga wajib ketika memulai proses pesanan dari status Pending (1)
+            if ((int)$order->status_id === 1 && !$order->is_price_confirmed) {
                 return redirect()->back()->with('error', 'Pesanan tidak dapat diproses karena harga belum dikonfirmasi oleh Admin.');
             }
             if ((float)$order->total_payable <= 0) {

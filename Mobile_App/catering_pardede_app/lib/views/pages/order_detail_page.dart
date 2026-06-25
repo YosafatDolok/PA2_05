@@ -1019,7 +1019,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         ],
         if (!_isDriver && _currentOrder!.remainingBalance > 0 && !_isAdmin && _currentOrder!.statusId != 9 && _currentOrder!.totalPayable > 0) ...[
           const SizedBox(height: 12),
-          if (!_currentOrder!.isPriceConfirmed) ...[
+          if (!_currentOrder!.isPriceConfirmed && _currentOrder!.statusId == 1) ...[
             _buildReceiptActionButton(
               "MENUNGGU KONFIRMASI HARGA",
               Icons.lock_clock_rounded,

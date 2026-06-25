@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../../core/theme/app_colors.dart';
+import '/core/utils/helpers.dart';
 
 class MapPickerPage extends StatefulWidget {
   const MapPickerPage({super.key});
@@ -112,6 +113,13 @@ class _MapPickerPageState extends State<MapPickerPage> {
     }
   }
 
+  bool _isInLakeTobaArea(LatLng point) {
+    double latDiff = point.latitude - 2.58;
+    double lonDiff = point.longitude - 98.82;
+    // Bounding radius 70km from Samosir Island center (0.63^2 = 0.40)
+    return (latDiff * latDiff + lonDiff * lonDiff) <= 0.40;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,6 +167,43 @@ class _MapPickerPageState extends State<MapPickerPage> {
               child: Icon(Icons.location_on, size: 45, color: AppColors.primary),
             ),
           ),
+          // Top Warning Banner
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.amber.shade600),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.amber.shade800, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "Batasan: Pengiriman hanya melayani wilayah radius 70 km dari Pulau Samosir.",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           // Bottom Info Card
           Positioned(
             bottom: 20,
@@ -203,6 +248,10 @@ class _MapPickerPageState extends State<MapPickerPage> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: _isSearching ? null : () {
+                        if (!_isInLakeTobaArea(_currentCenter)) {
+                          Helpers.showSnackBar(context, "Maaf, wilayah pengiriman terbatas radius 70 km dari Pulau Samosir.");
+                          return;
+                        }
                         Navigator.pop(context, {
                           'address': _address,
                           'latitude': _currentCenter.latitude,
